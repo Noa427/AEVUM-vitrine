@@ -4,15 +4,14 @@ const currentPath = Astro.url.pathname;
 const navLinks = [
   { href: '/features', label: 'Fonctionnalités' },
   { href: '/pricing', label: 'Tarifs' },
-  { href: '/demo', label: 'Démo' },
-  { href: '/download', label: 'Téléchargement' },
+  { href: '/comment-ca-marche', label: 'Comment ça marche' },
 ];
 ---
 
 <header class="site-header" role="banner">
   <nav class="container header-nav" aria-label="Navigation principale">
-    <a href="/" class="header-logo" aria-label="AEVUM — Accueil">
-      <img src="/logo-aevum.webp" alt="AEVUM" width="210" height="70" loading="eager" decoding="async" fetchpriority="high" />
+    <a href="/" class="header-logo" aria-label="AutomatePro — Accueil">
+      <span class="logo-text">AutomatePro</span>
     </a>
 
     <button class="menu-toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="nav-menu">
@@ -36,7 +35,7 @@ const navLinks = [
         </li>
       ))}
       <li role="none">
-        <a href="/demo" class="btn btn-primary btn-sm" role="menuitem">Essai gratuit</a>
+        <a href="/contact" class="btn btn-primary btn-sm" role="menuitem">Prendre contact</a>
       </li>
     </ul>
   </nav>
@@ -80,12 +79,17 @@ const navLinks = [
   .header-logo {
     display: flex;
     align-items: center;
+    text-decoration: none;
   }
 
-  .header-logo img {
-    height: 70px;
-    width: auto;
-    object-fit: contain;
+  .logo-text {
+    font-size: 1.375rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #3B9BFF 0%, #2E8BF0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .nav-links {
@@ -119,13 +123,8 @@ const navLinks = [
     width: 100%;
   }
 
-  .nav-links a:hover {
-    color: var(--light);
-  }
-
-  .nav-links a.active {
-    color: var(--primary);
-  }
+  .nav-links a:hover { color: var(--light); }
+  .nav-links a.active { color: var(--primary); }
 
   .btn-sm {
     padding: 0.5rem 1.5rem;
@@ -133,10 +132,7 @@ const navLinks = [
     border-radius: var(--radius-sm);
   }
 
-  /* Remove underline from CTA button */
-  .nav-links .btn::after {
-    display: none;
-  }
+  .nav-links .btn::after { display: none; }
 
   .menu-toggle {
     display: none;
@@ -144,17 +140,9 @@ const navLinks = [
   }
 
   @media (max-width: 768px) {
-    .header-nav {
-      height: 72px;
-    }
+    .header-nav { height: 72px; }
 
-    .header-logo img {
-      height: 52px;
-    }
-
-    .menu-toggle {
-      display: flex;
-    }
+    .menu-toggle { display: flex; }
 
     .nav-links {
       position: fixed;
@@ -171,9 +159,7 @@ const navLinks = [
       transition: transform var(--transition);
     }
 
-    .nav-links.open {
-      transform: translateX(0);
-    }
+    .nav-links.open { transform: translateX(0); }
 
     .nav-links a {
       font-size: 1.125rem;
@@ -181,8 +167,6 @@ const navLinks = [
       width: 100%;
     }
 
-    .nav-links a::after {
-      display: none;
-    }
+    .nav-links a::after { display: none; }
   }
 </style>
