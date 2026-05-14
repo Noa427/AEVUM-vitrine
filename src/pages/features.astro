@@ -1,65 +1,52 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-const categories = [
+const pillars = [
   {
-    id: 'crm',
-    title: 'CRM & Contacts',
-    icon: '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>',
+    id: 'onboarding',
+    title: 'Onboarding automatique',
+    icon: '<path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>',
     features: [
-      { name: 'Fiches contacts enrichies', desc: 'Centralisez toutes les informations de vos contacts : coordonnées, historique, préférences et interactions.' },
-      { name: 'Segmentation intelligente', desc: 'Créez des segments dynamiques basés sur le comportement, le type de bien recherché ou la localisation.' },
-      { name: 'Historique des interactions', desc: 'Chaque appel, email et rendez-vous est tracé automatiquement pour un suivi sans faille.' },
-      { name: 'Import & export CSV', desc: 'Importez vos contacts existants en un clic et exportez vos données à tout moment.' },
-      { name: 'Pipeline personnalisable', desc: 'Adaptez les étapes de votre pipeline de vente à votre processus métier.' },
-      { name: 'Tags & filtres avancés', desc: 'Organisez vos contacts avec des tags personnalisés et des filtres multi-critères.' },
+      { name: 'Email J0 — Bienvenue & accès', desc: "Envoyé dès la confirmation du paiement Stripe. Contient vos identifiants d'accès, un mot de bienvenue et les premières étapes." },
+      { name: 'Email J3 — Premier check-in', desc: "Trois jours après l'inscription, un email de suivi pour s'assurer que l'élève a bien démarré et lui proposer une ressource." },
+      { name: 'Email J7 — Bonus & communauté', desc: "À J+7, un email bonus : accès à un contenu exclusif, invitation dans votre groupe ou tout autre élément de rétention." },
+      { name: 'Séquence personnalisable', desc: "Les templates J0, J3 et J7 sont entièrement éditables depuis votre portail client sans passer par nous." },
+      { name: 'Sender name configurable', desc: "Chaque email part avec votre nom et votre adresse d'expédition. L'élève ne voit jamais AutomatePro." },
+      { name: 'Déclenchement instantané', desc: "La séquence démarre dans les secondes qui suivent la confirmation Stripe. De nuit comme de jour." },
     ],
   },
   {
-    id: 'ia',
-    title: 'Intelligence Artificielle',
-    icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
+    id: 'impayes',
+    title: 'Récupération impayés',
+    icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
     features: [
-      { name: 'Détection de biens', desc: 'L\'IA analyse les signaux faibles pour identifier les propriétaires susceptibles de vendre.' },
-      { name: 'Scoring automatique', desc: 'Chaque contact est noté automatiquement selon sa probabilité de conversion.' },
-      { name: 'Relances intelligentes', desc: 'L\'IA déclenche les relances au moment optimal pour maximiser les réponses.' },
-      { name: 'Suggestions d\'actions', desc: 'Des recommandations personnalisées basées sur l\'analyse de votre portefeuille.' },
-      { name: 'Rapprochement acquéreur/bien', desc: 'Match automatique entre les critères de recherche et les biens disponibles.' },
-      { name: 'Prédiction de marché', desc: 'Anticipez les tendances de votre secteur grâce à l\'analyse prédictive.' },
+      { name: 'Relance J+1 — Rappel doux', desc: "Un email cordial 24h après l'échec de paiement. Ton empathique, lien de paiement direct, pas de pression." },
+      { name: 'Relance J+3 — Ton plus direct', desc: "Si aucun paiement à J+3, un second email plus direct avec un sentiment d'urgence modéré." },
+      { name: 'Relance J+7 — Avertissement', desc: "Dernier avertissement avant suspension. L'élève est informé clairement des conséquences." },
+      { name: 'Suspension automatique', desc: "Sans réponse à J+7, un email de suspension est envoyé. La reprise est automatique dès le prochain paiement réussi." },
+      { name: 'Reprise automatique', desc: "Dès qu'un paiement réussi est détecté, l'accès est rétabli et un email de confirmation part automatiquement." },
+      { name: 'Blacklist après N échecs', desc: "Après un nombre d'échecs configuré, le contact est blacklisté pour éviter les relances inutiles." },
     ],
   },
   {
-    id: 'gestion',
-    title: 'Gestion & Organisation',
-    icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    id: 'rapport',
+    title: 'Rapport hebdomadaire',
+    icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>',
     features: [
-      { name: 'Gestion des mandats', desc: 'Suivi complet de chaque mandat : documents, visites, offres et signatures.' },
-      { name: 'Agenda partagé', desc: 'Calendrier d\'équipe avec prise de rendez-vous en ligne et rappels automatiques.' },
-      { name: 'Gestion documentaire', desc: 'Stockez et partagez tous vos documents : mandats, diagnostics, compromis.' },
-      { name: 'Tableau de bord équipe', desc: 'Visualisez les performances de chaque collaborateur en temps réel.' },
-      { name: 'Rapports automatiques', desc: 'Rapports de performance générés automatiquement, exportables en PDF.' },
-      { name: 'Multi-agences', desc: 'Gérez plusieurs agences depuis un tableau de bord centralisé.' },
-    ],
-  },
-  {
-    id: 'detection',
-    title: 'Détection & Prospection',
-    icon: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
-    features: [
-      { name: 'Veille marché automatique', desc: 'Surveillance continue des annonces, mutations et mouvements de marché.' },
-      { name: 'Alertes en temps réel', desc: 'Notifications instantanées quand une opportunité correspond à vos critères.' },
-      { name: 'Zones de prospection', desc: 'Définissez vos secteurs et recevez les alertes géolocalisées.' },
-      { name: 'Analyse cadastrale', desc: 'Croisement des données cadastrales pour identifier les propriétaires potentiels.' },
-      { name: 'Pige immobilière intégrée', desc: 'Suivi automatique des nouvelles annonces sur les principaux portails.' },
-      { name: 'Estimation automatique', desc: 'Estimation de valeur basée sur les comparables et l\'analyse de marché.' },
+      { name: 'Envoi automatique lundi à 8h', desc: "Sans action de votre part, un rapport complet atterrit dans votre boîte chaque début de semaine." },
+      { name: 'Nouveaux élèves de la semaine', desc: "Liste des inscriptions confirmées via Stripe : nom, email, date, montant." },
+      { name: 'Impayés en cours', desc: "Tableau des paiements échoués non résolus avec le statut de la relance (J+1, J+3, J+7, suspendu)." },
+      { name: 'Emails envoyés & statuts', desc: "Nombre total d'emails expédiés dans la semaine par type (onboarding, relance, rapport)." },
+      { name: "Taux d'ouverture & clics", desc: "Performance de chaque séquence email : taux d'ouverture, de clic, et de réponse." },
+      { name: 'Historique glissant 4 semaines', desc: "Comparaison avec les semaines précédentes pour observer les tendances en un coup d'œil." },
     ],
   },
 ];
 ---
 
 <BaseLayout
-  title="Fonctionnalités — AEVUM CRM Immobilier"
-  description="Découvrez toutes les fonctionnalités AEVUM : CRM, IA, gestion des mandats, détection de biens et prospection automatisée."
+  title="Fonctionnalités — AutomatePro"
+  description="Les 3 piliers d'AutomatePro : onboarding automatique J0/J3/J7, récupération impayés et rapport hebdomadaire lundi 8h."
   canonical="/features"
 >
 
@@ -67,20 +54,20 @@ const categories = [
   <div class="container">
     <div class="section-header reveal">
       <span class="accent-line"></span>
-      <h1 id="features-title">Tout ce dont votre agence a besoin</h1>
-      <p>4 catégories, 24 fonctionnalités. Un seul outil.</p>
+      <h1 id="features-title">Tout ce dont vous avez besoin</h1>
+      <p>3 piliers, 18 fonctionnalités. Un seul système.</p>
     </div>
 
-    {categories.map((cat) => (
-      <div class="feature-category reveal" id={`cat-${cat.id}`}>
+    {pillars.map((pillar) => (
+      <div class="feature-category reveal" id={`cat-${pillar.id}`}>
         <div class="category-header">
           <div class="icon-box">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={cat.icon} />
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={pillar.icon} />
           </div>
-          <h2>{cat.title}</h2>
+          <h2>{pillar.title}</h2>
         </div>
         <div class="grid-3 feature-grid">
-          {cat.features.map((feat) => (
+          {pillar.features.map((feat) => (
             <div class="card feature-card">
               <h3>{feat.name}</h3>
               <p>{feat.desc}</p>
@@ -96,10 +83,10 @@ const categories = [
   <div class="container" style="text-align:center">
     <div class="reveal" style="display:flex;flex-direction:column;align-items:center">
       <h2 id="features-cta-title">Convaincu ?</h2>
-      <p style="margin-top:1rem">Découvrez AEVUM en action avec une démo personnalisée.</p>
+      <p style="margin-top:1rem">Prenez contact pour qu'on discute de votre situation.</p>
       <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">
-        <a href="/demo" class="btn btn-primary" id="features-cta-demo">Demander une démo</a>
-        <a href="/pricing" class="btn btn-secondary" id="features-cta-pricing">Voir les tarifs</a>
+        <a href="mailto:noa.pardal1@gmail.com" class="btn btn-primary">Prendre contact</a>
+        <a href="/pricing" class="btn btn-secondary">Voir les tarifs</a>
       </div>
     </div>
   </div>
@@ -110,13 +97,8 @@ const categories = [
 <style>
   .hero-features { padding-top: 8rem; }
 
-  .feature-category {
-    margin-bottom: 4rem;
-  }
-
-  .feature-category:last-of-type {
-    margin-bottom: 0;
-  }
+  .feature-category { margin-bottom: 4rem; }
+  .feature-category:last-of-type { margin-bottom: 0; }
 
   .category-header {
     display: flex;
@@ -125,30 +107,13 @@ const categories = [
     margin-bottom: 2rem;
   }
 
-  .category-header .icon-box {
-    margin-bottom: 0;
-  }
+  .category-header .icon-box { margin-bottom: 0; }
+  .category-header h2 { font-size: 1.5rem; }
 
-  .category-header h2 {
-    font-size: 1.5rem;
-  }
-
-  .feature-card {
-    padding: 1.75rem;
-  }
-
-  .feature-card h3 {
-    font-size: 1.0625rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .feature-card p {
-    font-size: 0.9375rem;
-  }
-
-  .feature-grid {
-    gap: 1.25rem;
-  }
+  .feature-card { padding: 1.75rem; }
+  .feature-card h3 { font-size: 1.0625rem; margin-bottom: 0.5rem; }
+  .feature-card p { font-size: 0.9375rem; }
+  .feature-grid { gap: 1.25rem; }
 
   .cta-section {
     background: linear-gradient(135deg, rgba(46, 139, 240, 0.08) 0%, rgba(46, 139, 240, 0.02) 100%);

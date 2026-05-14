@@ -1,98 +1,66 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-const STRIPE_LINKS = {
-  starter: 'https://buy.stripe.com/test_PLACEHOLDER_STARTER',
-  agence: 'https://buy.stripe.com/test_PLACEHOLDER_AGENCE',
-  reseau: '/contact',
-};
-// TODO: Remplacer après config Stripe
-
 const plans = [
   {
-    name: 'Starter',
-    target: 'Agent indépendant',
-    price: '99',
-    period: '/mois',
-    cta: 'Commencer',
-    link: STRIPE_LINKS.starter,
+    name: 'Case Study',
+    target: "En échange d'un témoignage vidéo",
+    setup: '1 500€',
+    monthly: '500€',
     popular: false,
+    note: '2 places disponibles par trimestre',
     features: [
-      '1 utilisateur',
-      'CRM contacts & mandats',
-      'Détection IA — 50 alertes/mois',
-      'Agenda intégré',
-      'Import CSV',
+      'Onboarding J0 / J3 / J7',
+      'Relances impayés (J+1, J+3, J+7)',
+      'Suspension et reprise automatiques',
+      'Rapport hebdomadaire lundi 8h',
+      'Portail client (lecture seule)',
       'Support email',
+      'Configuration initiale incluse',
     ],
   },
   {
-    name: 'Agence',
-    target: 'Agence de 2 à 10 agents',
-    price: '149',
-    period: '/mois',
-    cta: 'Choisir Agence',
-    link: STRIPE_LINKS.agence,
+    name: 'Standard',
+    target: 'Configuration complète sans contrepartie',
+    setup: '3 000€',
+    monthly: '1 200€',
     popular: true,
+    note: null,
     features: [
-      'Jusqu\'à 10 utilisateurs',
-      'Tout Starter inclus',
-      'Détection IA — illimitée',
-      'Automatisation relances',
-      'Tableau de bord équipe',
-      'Rapports & analytics',
-      'Support prioritaire',
-      'Migration assistée',
-    ],
-  },
-  {
-    name: 'Réseau',
-    target: 'Réseau multi-agences',
-    price: '449',
-    period: '/mois',
-    cta: 'Nous contacter',
-    link: STRIPE_LINKS.reseau,
-    popular: false,
-    features: [
-      'Utilisateurs illimités',
-      'Tout Agence inclus',
-      'Multi-agences centralisé',
-      'IA personnalisée',
-      'API & intégrations',
-      'Account manager dédié',
-      'Formation sur site',
-      'SLA garanti 99.9%',
+      'Tout le tier Case Study',
+      'Portail client avec édition templates',
+      'Support prioritaire (réponse sous 24h)',
+      'Configurations illimitées',
+      'Rapport personnalisé',
+      'Révisions de templates incluses',
     ],
   },
 ];
 
+const comparison = [
+  { feature: 'Onboarding J0 / J3 / J7', casestudy: true, standard: true },
+  { feature: 'Relances impayés automatiques', casestudy: true, standard: true },
+  { feature: 'Rapport hebdo lundi 8h', casestudy: true, standard: true },
+  { feature: 'Portail client', casestudy: 'Lecture seule', standard: 'Édition complète' },
+  { feature: 'Support email', casestudy: true, standard: true },
+  { feature: 'Support prioritaire (24h)', casestudy: false, standard: true },
+  { feature: 'Configurations illimitées', casestudy: false, standard: true },
+  { feature: 'Rapport personnalisé', casestudy: false, standard: true },
+  { feature: 'Révisions de templates', casestudy: false, standard: true },
+  { feature: 'Témoignage vidéo requis', casestudy: true, standard: false },
+];
+
 const faqPricing = [
-  {
-    q: 'Puis-je changer de plan à tout moment ?',
-    a: 'Oui. Vous pouvez upgrader ou downgrader à tout moment. La différence est calculée au prorata.',
-  },
-  {
-    q: 'Y a-t-il des frais de mise en place ?',
-    a: 'Un setup fee optionnel de 299€ est disponible pour une configuration assistée et une migration complète de vos données. Non obligatoire.',
-  },
-  {
-    q: 'Proposez-vous une facturation annuelle ?',
-    a: 'Oui. En payant annuellement, vous bénéficiez de 2 mois offerts, soit une économie de 15% sur tous les plans.',
-  },
-  {
-    q: 'Y a-t-il un engagement minimum ?',
-    a: 'Non. Tous les plans sont sans engagement. Vous pouvez résilier à tout moment depuis votre espace client.',
-  },
-  {
-    q: 'Comment fonctionne l\'essai gratuit ?',
-    a: 'Demandez une démo et bénéficiez de 14 jours d\'essai gratuit sur le plan de votre choix. Aucune carte bancaire requise.',
-  },
+  { q: "Y a-t-il un engagement minimum ?", a: "Non. Vous pouvez résilier à tout moment avec un préavis d'un mois. Le setup est facturé une seule fois à la mise en place." },
+  { q: "Quel est le délai de mise en place ?", a: "Comptez 3 à 5 jours ouvrés entre la signature et la mise en production. On a besoin de vos templates et de votre webhook Stripe." },
+  { q: "Qu'est-ce qui est inclus dans le setup ?", a: "La configuration complète de vos séquences dans notre système, les tests de bout en bout, la connexion Stripe et la livraison de votre portail client." },
+  { q: "Comment résilier ?", a: "Un email suffit avec un préavis d'un mois. Vous récupérez vos templates et l'historique de vos envois en CSV." },
 ];
 ---
 
 <BaseLayout
-  title="Tarifs — AEVUM CRM Immobilier"
-  description="Plans Starter, Agence et Réseau. À partir de 99€/mois. Sans engagement, essai gratuit 14 jours."
+  title="Tarifs — AutomatePro"
+  description="Setup 1 500€ + 500€/mois (Case Study) ou Setup 3 000€ + 1 200€/mois (Standard). Automatisation email complète pour infopreneurs francophones."
   canonical="/pricing"
 >
 
@@ -100,22 +68,27 @@ const faqPricing = [
   <div class="container">
     <div class="section-header reveal">
       <span class="accent-line"></span>
-      <h1 id="pricing-title">Un plan pour chaque ambition</h1>
-      <p>Sans engagement. Essai gratuit 14 jours. Évoluez quand vous êtes prêt.</p>
+      <h1 id="pricing-title">Deux formules, zéro compromis</h1>
+      <p>Un setup unique. Un abonnement mensuel. L'automatisation qui tourne pour vous.</p>
     </div>
 
-    <div class="grid-3 pricing-grid">
+    <div class="pricing-grid reveal">
       {plans.map((plan) => (
-        <div class:list={['card', 'pricing-card-full', 'reveal', { 'pricing-popular': plan.popular }]}>
-          {plan.popular && <span class="popular-tag">Le plus populaire</span>}
+        <div class:list={['card', 'pricing-card-full', { 'pricing-popular': plan.popular }]}>
+          {plan.popular && <span class="popular-tag">Recommandé</span>}
           <h2>{plan.name}</h2>
           <p class="pricing-target">{plan.target}</p>
           <div class="price">
-            <span class="price-amount">{plan.price}€</span>
-            <span class="price-period">{plan.period}</span>
+            <span class="price-amount">{plan.setup}</span>
+            <span class="price-period">setup</span>
           </div>
-          <a href={plan.link} class:list={['btn', 'btn-full', plan.popular ? 'btn-primary' : 'btn-secondary']} id={`pricing-cta-${plan.name.toLowerCase()}`}>
-            {plan.cta}
+          <p class="price-monthly">+ {plan.monthly}/mois</p>
+          {plan.note && <p class="pricing-note">{plan.note}</p>}
+          <a
+            href={`mailto:noa.pardal1@gmail.com?subject=${encodeURIComponent('AutomatePro — ' + plan.name)}`}
+            class:list={['btn', 'btn-full', plan.popular ? 'btn-primary' : 'btn-secondary']}
+          >
+            Prendre contact
           </a>
           <ul class="feature-list">
             {plan.features.map((feat) => (
@@ -131,34 +104,53 @@ const faqPricing = [
   </div>
 </section>
 
-<!-- Revenus additionnels -->
-<section class="section section-alt" aria-labelledby="extras-title">
+<!-- Tableau comparatif -->
+<section class="section section-alt" aria-labelledby="compare-title">
   <div class="container">
     <div class="section-header reveal">
       <span class="accent-line"></span>
-      <h2 id="extras-title">Options supplémentaires</h2>
+      <h2 id="compare-title">Comparatif détaillé</h2>
     </div>
-    <div class="grid-3">
-      <div class="card reveal" style="text-align:center">
-        <h3>Setup assisté</h3>
-        <div class="price"><span class="price-amount" style="font-size:2rem">299€</span><span class="price-period">unique</span></div>
-        <p>Migration de données, configuration personnalisée et formation de votre équipe.</p>
-      </div>
-      <div class="card reveal" style="text-align:center">
-        <h3>Facturation annuelle</h3>
-        <div class="price"><span class="price-amount" style="font-size:2rem">-15%</span></div>
-        <p>2 mois offerts sur tous les plans en choisissant la facturation annuelle.</p>
-      </div>
-      <div class="card reveal" style="text-align:center">
-        <h3>Formation sur site</h3>
-        <div class="price"><span class="price-amount" style="font-size:2rem">Sur devis</span></div>
-        <p>Formation personnalisée dans vos locaux pour les réseaux et grandes agences.</p>
-      </div>
+    <div class="table-wrapper reveal">
+      <table class="compare-table" aria-label="Comparatif des formules">
+        <thead>
+          <tr>
+            <th scope="col">Fonctionnalité</th>
+            <th scope="col">Case Study</th>
+            <th scope="col">Standard</th>
+          </tr>
+        </thead>
+        <tbody>
+          {comparison.map((row) => (
+            <tr>
+              <td>{row.feature}</td>
+              <td>
+                {row.casestudy === true && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" aria-label="Inclus"><path d="M20 6L9 17l-5-5"/></svg>
+                )}
+                {row.casestudy === false && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-label="Non inclus"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                )}
+                {typeof row.casestudy === 'string' && <span class="table-text">{row.casestudy}</span>}
+              </td>
+              <td>
+                {row.standard === true && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" aria-label="Inclus"><path d="M20 6L9 17l-5-5"/></svg>
+                )}
+                {row.standard === false && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-label="Non inclus"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                )}
+                {typeof row.standard === 'string' && <span class="table-text">{row.standard}</span>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
-<!-- FAQ Pricing -->
+<!-- FAQ -->
 <section class="section" aria-labelledby="faq-pricing-title">
   <div class="container faq-container">
     <div class="section-header reveal">
@@ -183,10 +175,10 @@ const faqPricing = [
 <section class="section cta-section" aria-labelledby="pricing-cta-title">
   <div class="container" style="text-align:center">
     <div class="reveal" style="display:flex;flex-direction:column;align-items:center">
-      <h2 id="pricing-cta-title">Pas encore convaincu ?</h2>
-      <p style="margin-top:1rem">Demandez une démo personnalisée et découvrez AEVUM en action.</p>
+      <h2 id="pricing-cta-title">Une question sur les tarifs ?</h2>
+      <p style="margin-top:1rem">On vous répond sous 48h.</p>
       <div style="margin-top:2rem">
-        <a href="/demo" class="btn btn-primary" id="pricing-cta-demo">Demander une démo gratuite</a>
+        <a href="mailto:noa.pardal1@gmail.com" class="btn btn-primary">Prendre contact</a>
       </div>
     </div>
   </div>
@@ -197,6 +189,14 @@ const faqPricing = [
 <style>
   .hero-pricing { padding-top: 8rem; }
 
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
   .pricing-card-full {
     display: flex;
     flex-direction: column;
@@ -205,8 +205,21 @@ const faqPricing = [
     padding: 2.5rem 2rem;
   }
 
-  .pricing-card-full h2 {
-    font-size: 1.5rem;
+  .pricing-card-full h2 { font-size: 1.5rem; }
+  .pricing-target { font-size: 0.875rem; color: var(--gray); margin-top: 0.25rem; }
+
+  .price-monthly {
+    font-size: 1rem;
+    color: var(--gray-light);
+    margin-top: -0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .pricing-note {
+    font-size: 0.8125rem;
+    color: var(--gray);
+    font-style: italic;
+    margin-bottom: 1rem;
   }
 
   .btn-full { width: 100%; }
@@ -219,10 +232,51 @@ const faqPricing = [
     padding-top: 1.5rem;
   }
 
+  .section-alt { background: var(--dark-soft); }
+
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-border);
+  }
+
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+
+  .compare-table thead { background: var(--dark-elevated); }
+
+  .compare-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray);
+  }
+
+  .compare-table th:not(:first-child) { text-align: center; }
+
+  .compare-table td {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--gray-border);
+    color: var(--gray-light);
+  }
+
+  .compare-table td:not(:first-child) { text-align: center; vertical-align: middle; }
+  .compare-table td svg { display: inline-block; }
+  .compare-table tbody tr:hover { background: var(--dark-elevated); }
+  .table-text { font-size: 0.875rem; color: var(--gray-light); }
+
   .faq-container { max-width: 800px; }
 
   .cta-section {
     background: linear-gradient(135deg, rgba(46, 139, 240, 0.08) 0%, rgba(46, 139, 240, 0.02) 100%);
     border-top: 1px solid rgba(46, 139, 240, 0.15);
   }
+
+  @media (max-width: 768px) { .pricing-grid { grid-template-columns: 1fr; } }
 </style>

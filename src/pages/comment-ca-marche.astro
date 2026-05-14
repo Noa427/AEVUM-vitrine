@@ -1,0 +1,263 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Comment ça marche — AutomatePro"
+  description="Du paiement Stripe à l'email livré en automatique. Découvrez le flow complet d'AutomatePro en 3 étapes."
+  canonical="/comment-ca-marche"
+>
+
+<!-- ═══ HERO ═══ -->
+<section class="section hero-ccm" aria-labelledby="ccm-title">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="accent-line"></span>
+      <h1 id="ccm-title">Comment ça marche</h1>
+      <p>Du paiement Stripe à l'email livré — en automatique, tout le temps.</p>
+    </div>
+
+    <div class="grid-3">
+      <div class="card reveal">
+        <div class="step-number" aria-hidden="true">1</div>
+        <h3>Vous nous donnez votre webhook Stripe</h3>
+        <p>Dans votre dashboard Stripe, vous nous transmettez l'URL du webhook et la clé secrète. C'est la seule action technique que vous effectuez.</p>
+      </div>
+      <div class="card reveal">
+        <div class="step-number" aria-hidden="true">2</div>
+        <h3>On configure tout</h3>
+        <p>On paramètre vos séquences d'onboarding (J0/J3/J7), vos templates de relance impayés et la fréquence de votre rapport hebdo selon vos instructions.</p>
+      </div>
+      <div class="card reveal">
+        <div class="step-number" aria-hidden="true">3</div>
+        <h3>Vos emails partent seuls</h3>
+        <p>À partir de là, chaque événement Stripe déclenche la bonne séquence. Vous vous concentrez sur votre contenu, vos emails se gèrent tout seuls.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FLOW DÉTAILLÉ ═══ -->
+<section class="section section-alt" aria-labelledby="flow-title">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="accent-line"></span>
+      <h2 id="flow-title">Le flow en détail</h2>
+      <p>Ce qui se passe sous le capot à chaque paiement.</p>
+    </div>
+    <div class="flow-steps">
+      <div class="flow-step reveal">
+        <div class="flow-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <div class="flow-content">
+          <h3>Un élève paie sur Stripe</h3>
+          <p>Un abonnement souscrit ou un paiement unique confirmé génère un événement Stripe <code>payment_intent.succeeded</code> ou <code>invoice.paid</code>.</p>
+        </div>
+      </div>
+      <div class="flow-arrow" aria-hidden="true">↓</div>
+      <div class="flow-step reveal">
+        <div class="flow-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <div class="flow-content">
+          <h3>AutomatePro reçoit le webhook</h3>
+          <p>Notre système écoute en temps réel. L'événement Stripe arrive chez nous dans les secondes qui suivent, vérifié et validé.</p>
+        </div>
+      </div>
+      <div class="flow-arrow" aria-hidden="true">↓</div>
+      <div class="flow-step reveal">
+        <div class="flow-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div class="flow-content">
+          <h3>L'email J0 part immédiatement</h3>
+          <p>Votre template de bienvenue est envoyé avec votre sender name et votre adresse d'expédition. L'élève voit votre nom, pas le nôtre.</p>
+        </div>
+      </div>
+      <div class="flow-arrow" aria-hidden="true">↓</div>
+      <div class="flow-step reveal">
+        <div class="flow-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="flow-content">
+          <h3>J3, J7, lundi 8h — tout s'enchaîne</h3>
+          <p>Le système planifie automatiquement J3, J7, et ajoute l'élève à votre prochain rapport hebdo du lundi matin.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ EXEMPLE CONCRET ═══ -->
+<section class="section" aria-labelledby="example-title">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="accent-line"></span>
+      <h2 id="example-title">Exemple concret</h2>
+      <p>Marie s'inscrit à votre formation un vendredi à 21h.</p>
+    </div>
+    <div class="timeline">
+      <div class="timeline-item reveal">
+        <div class="timeline-dot"></div>
+        <div class="card timeline-card">
+          <span class="timeline-time">Vendredi 21h03</span>
+          <h3>Paiement confirmé</h3>
+          <p>Marie clique sur "Payer". Stripe confirme. AutomatePro reçoit le webhook.</p>
+        </div>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-dot"></div>
+        <div class="card timeline-card">
+          <span class="timeline-time">Vendredi 21h03</span>
+          <h3>Email J0 envoyé</h3>
+          <p>Marie reçoit votre email de bienvenue avec son accès, signé de votre nom. Vous dormez, Marie est accueillie.</p>
+        </div>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-dot"></div>
+        <div class="card timeline-card">
+          <span class="timeline-time">Lundi 21h03</span>
+          <h3>Email J3 envoyé</h3>
+          <p>Trois jours après l'inscription, Marie reçoit votre check-in et votre ressource.</p>
+        </div>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-dot"></div>
+        <div class="card timeline-card">
+          <span class="timeline-time">Vendredi suivant 21h03</span>
+          <h3>Email J7 envoyé</h3>
+          <p>À J+7, votre invitation dans le groupe et votre contenu exclusif partent automatiquement.</p>
+        </div>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-dot timeline-dot-accent"></div>
+        <div class="card timeline-card">
+          <span class="timeline-time">Lundi suivant 08h00</span>
+          <h3>Rapport dans votre boîte</h3>
+          <p>Marie apparaît dans votre rapport hebdo : nouvel élève, emails envoyés, statut ouvertures.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section cta-section" aria-labelledby="ccm-cta-title">
+  <div class="container" style="text-align:center">
+    <div class="reveal" style="display:flex;flex-direction:column;align-items:center">
+      <h2 id="ccm-cta-title">Prêt à mettre ça en place ?</h2>
+      <p style="margin-top:1rem">Contactez-nous pour démarrer la configuration.</p>
+      <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">
+        <a href="mailto:noa.pardal1@gmail.com" class="btn btn-primary">Prendre contact</a>
+        <a href="/pricing" class="btn btn-secondary">Voir les tarifs</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</BaseLayout>
+
+<style>
+  .hero-ccm { padding-top: 8rem; }
+  .section-alt { background: var(--dark-soft); }
+
+  .flow-steps {
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    width: 100%;
+    padding: 1.75rem;
+    background: var(--dark-card);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius);
+  }
+
+  .flow-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius);
+    background: var(--primary-light);
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  .flow-content h3 { font-size: 1.125rem; margin-bottom: 0.5rem; }
+  .flow-content p { font-size: 0.9375rem; }
+
+  .flow-content code {
+    font-family: monospace;
+    font-size: 0.8125rem;
+    background: var(--dark-elevated);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    color: var(--primary);
+  }
+
+  .flow-arrow { font-size: 1.5rem; color: var(--primary); padding: 0.5rem 0; line-height: 1; }
+
+  .timeline {
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--gray-border);
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+    position: relative;
+  }
+
+  .timeline-item:last-child { padding-bottom: 0; }
+
+  .timeline-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--dark-card);
+    border: 2px solid var(--gray-border);
+    flex-shrink: 0;
+    margin-top: 1.5rem;
+    z-index: 1;
+  }
+
+  .timeline-dot-accent { border-color: var(--primary); background: var(--primary-light); }
+
+  .timeline-card { flex: 1; }
+  .timeline-time { font-size: 0.8125rem; color: var(--primary); font-weight: 600; display: block; margin-bottom: 0.5rem; }
+  .timeline-card h3 { font-size: 1.0625rem; margin-bottom: 0.375rem; }
+  .timeline-card p { font-size: 0.9375rem; }
+
+  .cta-section {
+    background: linear-gradient(135deg, rgba(46, 139, 240, 0.08) 0%, rgba(46, 139, 240, 0.02) 100%);
+    border-top: 1px solid rgba(46, 139, 240, 0.15);
+  }
+
+  @media (max-width: 768px) {
+    .flow-step { flex-direction: column; }
+    .timeline::before { left: 12px; }
+    .timeline-dot { width: 26px; height: 26px; }
+  }
+</style>

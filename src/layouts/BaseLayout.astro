@@ -29,7 +29,7 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:url" content={fullCanonical} />
-  <meta property="og:site_name" content="AEVUM" />
+  <meta property="og:site_name" content="AutomatePro" />
   <meta property="og:locale" content="fr_FR" />
 
   <!-- Twitter -->
@@ -44,10 +44,10 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
   <!-- Client-side router for instant page navigation -->
   <ClientRouter />
 
-  <!-- Prefetch key pages for instant navigation -->
+  <!-- Prefetch key pages -->
   <link rel="prefetch" href="/features" />
   <link rel="prefetch" href="/pricing" />
-  <link rel="prefetch" href="/demo" />
+  <link rel="prefetch" href="/comment-ca-marche" />
   <link rel="prefetch" href="/contact" />
   <link rel="prefetch" href="/cgu" />
   <link rel="prefetch" href="/confidentialite" />
@@ -57,27 +57,25 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "AEVUM",
+    "name": "AutomatePro",
     "url": siteUrl,
-    "description": "Logiciel CRM tout-en-un pour agences immobilières : IA, gestion des mandats, détection de biens.",
+    "description": "Service d'automatisation email pour infopreneurs, coachs et formateurs francophones.",
     "logo": `${siteUrl}/favicon.svg`,
     "contactPoint": {
       "@type": "ContactPoint",
-      "email": "contact@aevum.fr",
+      "email": "noa.pardal1@gmail.com",
       "contactType": "sales"
     }
   })} />
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "AEVUM",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Web",
-    "description": "CRM immobilier augmenté par l'IA — gestion mandats, détection biens, automatisation.",
+    "@type": "Service",
+    "name": "AutomatePro",
+    "description": "Automatisation email : onboarding élèves, relances impayés, rapport hebdomadaire.",
     "offers": {
       "@type": "AggregateOffer",
-      "lowPrice": "99",
-      "highPrice": "449",
+      "lowPrice": "500",
+      "highPrice": "1200",
       "priceCurrency": "EUR"
     }
   })} />
@@ -90,7 +88,6 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
   </main>
   <Footer />
 
-  <!-- Scroll reveal — minimal vanilla JS, re-runs on View Transitions -->
   <script>
     function initReveal() {
       const observer = new IntersectionObserver(
@@ -110,7 +107,6 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
     document.addEventListener('astro:after-swap', initReveal);
   </script>
 
-  <!-- FAQ toggle — minimal vanilla JS, re-runs on View Transitions -->
   <script>
     function initFAQ() {
       document.querySelectorAll('.faq-question').forEach((btn) => {

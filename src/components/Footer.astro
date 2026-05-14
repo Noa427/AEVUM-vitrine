@@ -5,8 +5,8 @@ const footerLinks = {
   produit: [
     { href: '/features', label: 'Fonctionnalités' },
     { href: '/pricing', label: 'Tarifs' },
-    { href: '/demo', label: 'Demander une démo' },
-    { href: '/download', label: 'Téléchargement' },
+    { href: '/comment-ca-marche', label: 'Comment ça marche' },
+    { href: '/contact', label: 'Contact' },
   ],
   legal: [
     { href: '/cgu', label: 'CGU' },
@@ -20,10 +20,10 @@ const footerLinks = {
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="/" class="footer-logo" aria-label="AEVUM">
-          <img src="/logo-aevum.webp" alt="AEVUM" width="168" height="56" loading="lazy" decoding="async" />
+        <a href="/" class="footer-logo" aria-label="AutomatePro">
+          <span class="logo-text-footer">AutomatePro</span>
         </a>
-        <p>Le CRM immobilier augmenté par l'IA. Gestion des mandats, détection de biens et automatisation pour agences performantes.</p>
+        <p>L'automatisation email pour infopreneurs et coachs francophones.</p>
       </div>
 
       <div class="footer-col">
@@ -48,12 +48,13 @@ const footerLinks = {
         <h4>Contact</h4>
         <ul>
           <li><a href="/contact">Nous contacter</a></li>
+          <li><a href="mailto:noa.pardal1@gmail.com">noa.pardal1@gmail.com</a></li>
         </ul>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <p>&copy; {year} AEVUM. Tous droits réservés.</p>
+      <p>&copy; {year} AutomatePro. Tous droits réservés.</p>
     </div>
   </div>
 </footer>
@@ -76,12 +77,17 @@ const footerLinks = {
     display: flex;
     align-items: center;
     margin-bottom: 1rem;
+    text-decoration: none;
   }
 
-  .footer-logo img {
-    height: 56px;
-    width: auto;
-    object-fit: contain;
+  .logo-text-footer {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #3B9BFF 0%, #2E8BF0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .footer-brand p {
@@ -131,15 +137,10 @@ const footerLinks = {
       grid-template-columns: 1fr 1fr;
       gap: 2rem;
     }
-
-    .footer-brand {
-      grid-column: 1 / -1;
-    }
+    .footer-brand { grid-column: 1 / -1; }
   }
 
   @media (max-width: 480px) {
-    .footer-grid {
-      grid-template-columns: 1fr;
-    }
+    .footer-grid { grid-template-columns: 1fr; }
   }
 </style>
