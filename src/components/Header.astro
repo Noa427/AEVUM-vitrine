@@ -1,0 +1,188 @@
+---
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/features', label: 'Fonctionnalités' },
+  { href: '/pricing', label: 'Tarifs' },
+  { href: '/demo', label: 'Démo' },
+  { href: '/download', label: 'Téléchargement' },
+];
+---
+
+<header class="site-header" role="banner">
+  <nav class="container header-nav" aria-label="Navigation principale">
+    <a href="/" class="header-logo" aria-label="AEVUM — Accueil">
+      <img src="/logo-aevum.webp" alt="AEVUM" width="210" height="70" loading="eager" decoding="async" fetchpriority="high" />
+    </a>
+
+    <button class="menu-toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="nav-menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6" class="line-top" />
+        <line x1="3" y1="12" x2="21" y2="12" class="line-mid" />
+        <line x1="3" y1="18" x2="21" y2="18" class="line-bot" />
+      </svg>
+    </button>
+
+    <ul id="nav-menu" class="nav-links" role="menubar">
+      {navLinks.map(({ href, label }) => (
+        <li role="none">
+          <a
+            href={href}
+            role="menuitem"
+            class:list={[{ active: currentPath.startsWith(href) }]}
+          >
+            {label}
+          </a>
+        </li>
+      ))}
+      <li role="none">
+        <a href="/demo" class="btn btn-primary btn-sm" role="menuitem">Essai gratuit</a>
+      </li>
+    </ul>
+  </nav>
+</header>
+
+<script>
+  function initMenu() {
+    const toggle = document.querySelector('.menu-toggle');
+    const menu = document.getElementById('nav-menu');
+    if (toggle && menu) {
+      toggle.addEventListener('click', () => {
+        const expanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!expanded));
+        menu.classList.toggle('open');
+      });
+    }
+  }
+  initMenu();
+  document.addEventListener('astro:after-swap', initMenu);
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(11, 17, 32, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(46, 139, 240, 0.1);
+    will-change: transform;
+  }
+
+  .header-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 80px;
+  }
+
+  .header-logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-logo img {
+    height: 70px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav-links a {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--gray-light);
+    transition: color var(--transition);
+    position: relative;
+  }
+
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--gradient);
+    transition: width var(--transition);
+    border-radius: 1px;
+  }
+
+  .nav-links a:hover::after,
+  .nav-links a.active::after {
+    width: 100%;
+  }
+
+  .nav-links a:hover {
+    color: var(--light);
+  }
+
+  .nav-links a.active {
+    color: var(--primary);
+  }
+
+  .btn-sm {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.875rem;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Remove underline from CTA button */
+  .nav-links .btn::after {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: none;
+    color: var(--light);
+  }
+
+  @media (max-width: 768px) {
+    .header-nav {
+      height: 72px;
+    }
+
+    .header-logo img {
+      height: 52px;
+    }
+
+    .menu-toggle {
+      display: flex;
+    }
+
+    .nav-links {
+      position: fixed;
+      top: 72px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 2rem 1.5rem;
+      gap: 0.5rem;
+      background: var(--dark);
+      transform: translateX(100%);
+      transition: transform var(--transition);
+    }
+
+    .nav-links.open {
+      transform: translateX(0);
+    }
+
+    .nav-links a {
+      font-size: 1.125rem;
+      padding: 0.75rem 0;
+      width: 100%;
+    }
+
+    .nav-links a::after {
+      display: none;
+    }
+  }
+</style>

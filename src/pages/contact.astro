@@ -1,0 +1,221 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Contact — AEVUM"
+  description="Contactez l'équipe AEVUM. Posez vos questions, demandez un devis ou obtenez de l'aide."
+  canonical="/contact"
+>
+
+<section class="section hero-contact" aria-labelledby="contact-title">
+  <div class="container">
+    <div class="contact-grid">
+      <div class="contact-info reveal">
+        <span class="accent-line" style="margin:0 0 1.25rem"></span>
+        <h1 id="contact-title">Contactez-nous</h1>
+        <p>Une question, un besoin spécifique ou une demande de partenariat ? Notre équipe vous répond sous 24h.</p>
+
+        <div class="contact-details">
+          <div class="contact-detail-item">
+            <div class="icon-box" style="width:44px;height:44px;margin-bottom:0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div>
+              <strong>Email</strong>
+              <p>contact@aevum.fr</p>
+            </div>
+          </div>
+          <div class="contact-detail-item">
+            <div class="icon-box" style="width:44px;height:44px;margin-bottom:0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div>
+              <strong>Réponse</strong>
+              <p>Sous 24h ouvrées</p>
+            </div>
+          </div>
+          <div class="contact-detail-item">
+            <div class="icon-box" style="width:44px;height:44px;margin-bottom:0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div>
+              <strong>Localisation</strong>
+              <p>France</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-form-wrapper reveal">
+        <form id="contact-form" class="contact-form" novalidate>
+          <h2>Envoyez-nous un message</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contact-prenom" class="form-label">Prénom</label>
+              <input type="text" id="contact-prenom" name="prenom" class="form-input" placeholder="Votre prénom" required autocomplete="given-name" />
+            </div>
+            <div class="form-group">
+              <label for="contact-nom" class="form-label">Nom</label>
+              <input type="text" id="contact-nom" name="nom" class="form-input" placeholder="Votre nom" required autocomplete="family-name" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="contact-email" class="form-label">Email</label>
+            <input type="email" id="contact-email" name="email" class="form-input" placeholder="vous@exemple.fr" required autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="contact-sujet" class="form-label">Sujet</label>
+            <select id="contact-sujet" name="sujet" class="form-input" required>
+              <option value="" disabled selected>Choisissez un sujet</option>
+              <option value="information">Demande d'information</option>
+              <option value="devis">Demande de devis</option>
+              <option value="support">Support technique</option>
+              <option value="partenariat">Partenariat</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="contact-message" class="form-label">Message</label>
+            <textarea id="contact-message" name="message" class="form-input" placeholder="Décrivez votre demande..." rows="5" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%" id="contact-submit">
+            Envoyer le message
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+          </button>
+          <p class="form-legal">En soumettant, vous acceptez notre <a href="/confidentialite">politique de confidentialité</a>.</p>
+        </form>
+        <div id="contact-success" class="success-msg" style="display:none" role="alert">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          <div><strong>Message envoyé !</strong><p style="margin-top:0.25rem;font-weight:400;font-size:0.875rem">Notre équipe vous répondra sous 24h ouvrées.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</BaseLayout>
+
+<script>
+  function initContactForm() {
+    const form = document.getElementById('contact-form') as HTMLFormElement | null;
+    const success = document.getElementById('contact-success');
+    if (!form) return;
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+      // POST /api/contact — Backend à créer plus tard
+      console.log('Contact request:', data);
+      form.style.display = 'none';
+      if (success) success.style.display = 'flex';
+    });
+  }
+  initContactForm();
+  document.addEventListener('astro:after-swap', initContactForm);
+</script>
+
+<style>
+  .hero-contact { padding-top: 8rem; }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .contact-info h1 {
+    margin-bottom: 1rem;
+  }
+
+  .contact-info > p {
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+
+  .contact-details {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .contact-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .contact-detail-item strong {
+    display: block;
+    font-size: 0.9375rem;
+    color: var(--light);
+  }
+
+  .contact-detail-item p {
+    font-size: 0.875rem;
+    color: var(--gray-light);
+    margin-top: 0.125rem;
+  }
+
+  .contact-form-wrapper {
+    background: var(--dark-card);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .contact-form h2 {
+    font-size: 1.375rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .form-legal {
+    font-size: 0.75rem;
+    color: var(--gray);
+    text-align: center;
+  }
+
+  .form-legal a {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+
+  /* Select styling */
+  select.form-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+  }
+
+  /* Textarea styling */
+  textarea.form-input {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  @media (max-width: 768px) {
+    .contact-grid {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

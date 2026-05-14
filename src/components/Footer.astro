@@ -1,0 +1,145 @@
+---
+const year = new Date().getFullYear();
+
+const footerLinks = {
+  produit: [
+    { href: '/features', label: 'Fonctionnalités' },
+    { href: '/pricing', label: 'Tarifs' },
+    { href: '/demo', label: 'Demander une démo' },
+    { href: '/download', label: 'Téléchargement' },
+  ],
+  legal: [
+    { href: '/cgu', label: 'CGU' },
+    { href: '/confidentialite', label: 'Confidentialité' },
+    { href: '/mentions-legales', label: 'Mentions légales' },
+  ],
+};
+---
+
+<footer class="site-footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="/" class="footer-logo" aria-label="AEVUM">
+          <img src="/logo-aevum.webp" alt="AEVUM" width="168" height="56" loading="lazy" decoding="async" />
+        </a>
+        <p>Le CRM immobilier augmenté par l'IA. Gestion des mandats, détection de biens et automatisation pour agences performantes.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Produit</h4>
+        <ul>
+          {footerLinks.produit.map(({ href, label }) => (
+            <li><a href={href}>{label}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Légal</h4>
+        <ul>
+          {footerLinks.legal.map(({ href, label }) => (
+            <li><a href={href}>{label}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="/contact">Nous contacter</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; {year} AEVUM. Tous droits réservés.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--dark-soft);
+    border-top: 1px solid var(--gray-border);
+    padding: 4rem 0 2rem;
+    margin-top: 4rem;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem;
+  }
+
+  .footer-logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .footer-logo img {
+    height: 56px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .footer-brand p {
+    font-size: 0.875rem;
+    color: var(--gray);
+    max-width: 300px;
+    line-height: 1.6;
+  }
+
+  .footer-col h4 {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray);
+    margin-bottom: 1.25rem;
+  }
+
+  .footer-col ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .footer-col a {
+    font-size: 0.9375rem;
+    color: var(--gray-light);
+    transition: color var(--transition);
+  }
+
+  .footer-col a:hover { color: var(--primary); }
+
+  .footer-bottom {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-border);
+    text-align: center;
+  }
+
+  .footer-bottom p {
+    font-size: 0.8125rem;
+    color: var(--gray);
+  }
+
+  @media (max-width: 768px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

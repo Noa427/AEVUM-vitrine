@@ -1,0 +1,228 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const STRIPE_LINKS = {
+  starter: 'https://buy.stripe.com/test_PLACEHOLDER_STARTER',
+  agence: 'https://buy.stripe.com/test_PLACEHOLDER_AGENCE',
+  reseau: '/contact',
+};
+// TODO: Remplacer après config Stripe
+
+const plans = [
+  {
+    name: 'Starter',
+    target: 'Agent indépendant',
+    price: '99',
+    period: '/mois',
+    cta: 'Commencer',
+    link: STRIPE_LINKS.starter,
+    popular: false,
+    features: [
+      '1 utilisateur',
+      'CRM contacts & mandats',
+      'Détection IA — 50 alertes/mois',
+      'Agenda intégré',
+      'Import CSV',
+      'Support email',
+    ],
+  },
+  {
+    name: 'Agence',
+    target: 'Agence de 2 à 10 agents',
+    price: '149',
+    period: '/mois',
+    cta: 'Choisir Agence',
+    link: STRIPE_LINKS.agence,
+    popular: true,
+    features: [
+      'Jusqu\'à 10 utilisateurs',
+      'Tout Starter inclus',
+      'Détection IA — illimitée',
+      'Automatisation relances',
+      'Tableau de bord équipe',
+      'Rapports & analytics',
+      'Support prioritaire',
+      'Migration assistée',
+    ],
+  },
+  {
+    name: 'Réseau',
+    target: 'Réseau multi-agences',
+    price: '449',
+    period: '/mois',
+    cta: 'Nous contacter',
+    link: STRIPE_LINKS.reseau,
+    popular: false,
+    features: [
+      'Utilisateurs illimités',
+      'Tout Agence inclus',
+      'Multi-agences centralisé',
+      'IA personnalisée',
+      'API & intégrations',
+      'Account manager dédié',
+      'Formation sur site',
+      'SLA garanti 99.9%',
+    ],
+  },
+];
+
+const faqPricing = [
+  {
+    q: 'Puis-je changer de plan à tout moment ?',
+    a: 'Oui. Vous pouvez upgrader ou downgrader à tout moment. La différence est calculée au prorata.',
+  },
+  {
+    q: 'Y a-t-il des frais de mise en place ?',
+    a: 'Un setup fee optionnel de 299€ est disponible pour une configuration assistée et une migration complète de vos données. Non obligatoire.',
+  },
+  {
+    q: 'Proposez-vous une facturation annuelle ?',
+    a: 'Oui. En payant annuellement, vous bénéficiez de 2 mois offerts, soit une économie de 15% sur tous les plans.',
+  },
+  {
+    q: 'Y a-t-il un engagement minimum ?',
+    a: 'Non. Tous les plans sont sans engagement. Vous pouvez résilier à tout moment depuis votre espace client.',
+  },
+  {
+    q: 'Comment fonctionne l\'essai gratuit ?',
+    a: 'Demandez une démo et bénéficiez de 14 jours d\'essai gratuit sur le plan de votre choix. Aucune carte bancaire requise.',
+  },
+];
+---
+
+<BaseLayout
+  title="Tarifs — AEVUM CRM Immobilier"
+  description="Plans Starter, Agence et Réseau. À partir de 99€/mois. Sans engagement, essai gratuit 14 jours."
+  canonical="/pricing"
+>
+
+<section class="section hero-pricing" aria-labelledby="pricing-title">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="accent-line"></span>
+      <h1 id="pricing-title">Un plan pour chaque ambition</h1>
+      <p>Sans engagement. Essai gratuit 14 jours. Évoluez quand vous êtes prêt.</p>
+    </div>
+
+    <div class="grid-3 pricing-grid">
+      {plans.map((plan) => (
+        <div class:list={['card', 'pricing-card-full', 'reveal', { 'pricing-popular': plan.popular }]}>
+          {plan.popular && <span class="popular-tag">Le plus populaire</span>}
+          <h2>{plan.name}</h2>
+          <p class="pricing-target">{plan.target}</p>
+          <div class="price">
+            <span class="price-amount">{plan.price}€</span>
+            <span class="price-period">{plan.period}</span>
+          </div>
+          <a href={plan.link} class:list={['btn', 'btn-full', plan.popular ? 'btn-primary' : 'btn-secondary']} id={`pricing-cta-${plan.name.toLowerCase()}`}>
+            {plan.cta}
+          </a>
+          <ul class="feature-list">
+            {plan.features.map((feat) => (
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                {feat}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- Revenus additionnels -->
+<section class="section section-alt" aria-labelledby="extras-title">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="accent-line"></span>
+      <h2 id="extras-title">Options supplémentaires</h2>
+    </div>
+    <div class="grid-3">
+      <div class="card reveal" style="text-align:center">
+        <h3>Setup assisté</h3>
+        <div class="price"><span class="price-amount" style="font-size:2rem">299€</span><span class="price-period">unique</span></div>
+        <p>Migration de données, configuration personnalisée et formation de votre équipe.</p>
+      </div>
+      <div class="card reveal" style="text-align:center">
+        <h3>Facturation annuelle</h3>
+        <div class="price"><span class="price-amount" style="font-size:2rem">-15%</span></div>
+        <p>2 mois offerts sur tous les plans en choisissant la facturation annuelle.</p>
+      </div>
+      <div class="card reveal" style="text-align:center">
+        <h3>Formation sur site</h3>
+        <div class="price"><span class="price-amount" style="font-size:2rem">Sur devis</span></div>
+        <p>Formation personnalisée dans vos locaux pour les réseaux et grandes agences.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ Pricing -->
+<section class="section" aria-labelledby="faq-pricing-title">
+  <div class="container faq-container">
+    <div class="section-header reveal">
+      <span class="accent-line"></span>
+      <h2 id="faq-pricing-title">Questions sur les tarifs</h2>
+    </div>
+    <div class="faq-list reveal" role="list">
+      {faqPricing.map(({ q, a }) => (
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false">
+            {q}
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="faq-answer" role="region"><p>{a}</p></div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section cta-section" aria-labelledby="pricing-cta-title">
+  <div class="container" style="text-align:center">
+    <div class="reveal" style="display:flex;flex-direction:column;align-items:center">
+      <h2 id="pricing-cta-title">Pas encore convaincu ?</h2>
+      <p style="margin-top:1rem">Demandez une démo personnalisée et découvrez AEVUM en action.</p>
+      <div style="margin-top:2rem">
+        <a href="/demo" class="btn btn-primary" id="pricing-cta-demo">Demander une démo gratuite</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</BaseLayout>
+
+<style>
+  .hero-pricing { padding-top: 8rem; }
+
+  .pricing-card-full {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    padding: 2.5rem 2rem;
+  }
+
+  .pricing-card-full h2 {
+    font-size: 1.5rem;
+  }
+
+  .btn-full { width: 100%; }
+
+  .pricing-card-full .feature-list {
+    width: 100%;
+    text-align: left;
+    margin-top: 2rem;
+    border-top: 1px solid var(--gray-border);
+    padding-top: 1.5rem;
+  }
+
+  .faq-container { max-width: 800px; }
+
+  .cta-section {
+    background: linear-gradient(135deg, rgba(46, 139, 240, 0.08) 0%, rgba(46, 139, 240, 0.02) 100%);
+    border-top: 1px solid rgba(46, 139, 240, 0.15);
+  }
+</style>

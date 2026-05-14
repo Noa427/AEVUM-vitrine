@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Téléchargement — AEVUM"
+  description="L'application AEVUM sera bientôt disponible. Inscrivez-vous pour être notifié de la sortie."
+  canonical="/download"
+>
+
+<section class="section hero-download" aria-labelledby="download-title">
+  <div class="container download-center">
+    <div class="reveal" style="max-width:600px;margin:0 auto;text-align:center">
+      <div class="icon-box" style="margin:0 auto 2rem">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2a10 10 0 0110 10c0 5.52-4.48 10-10 10S2 17.52 2 12"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <h1 id="download-title">L'application sera bientôt disponible</h1>
+      <p style="margin-top:1.5rem;text-align:center">Nous travaillons activement sur AEVUM pour vous offrir la meilleure expérience possible. L'application est actuellement en phase de développement final.</p>
+      <p style="margin-top:1rem;text-align:center">Soyez parmi les premiers à utiliser AEVUM dès sa sortie en vous inscrivant ci-dessous.</p>
+
+      <form id="notify-form" class="notify-form" style="margin-top:2.5rem" novalidate>
+        <div class="notify-row">
+          <label for="notify-email" class="sr-only">Votre adresse email</label>
+          <input type="email" id="notify-email" name="email" class="form-input" placeholder="Votre email pour être notifié" required autocomplete="email" />
+          <button type="submit" class="btn btn-primary" id="notify-submit">Me notifier</button>
+        </div>
+        <p class="form-legal" style="margin-top:0.75rem">Nous ne partagerons jamais votre email. <a href="/confidentialite">Politique de confidentialité</a>.</p>
+      </form>
+
+      <div id="notify-success" class="success-msg" style="display:none;margin-top:2rem;justify-content:center" role="alert">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+        <span>Vous serez notifié dès la sortie d'AEVUM !</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById('notify-form') as HTMLFormElement | null;
+  const success = document.getElementById('notify-success');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+    console.log('Notify request:', data);
+    form.style.display = 'none';
+    if (success) success.style.display = 'flex';
+  });
+</script>
+
+</BaseLayout>
+
+<style>
+  .hero-download { padding-top: 10rem; padding-bottom: 10rem; }
+  .download-center { display: flex; justify-content: center; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  .notify-row { display: flex; gap: 0.75rem; }
+  .notify-row .form-input { flex: 1; }
+  .notify-row .btn { white-space: nowrap; }
+  .form-legal { font-size: 0.75rem; color: var(--gray); text-align: center; }
+  .form-legal a { color: var(--primary); text-decoration: underline; }
+  @media (max-width: 480px) { .notify-row { flex-direction: column; } .notify-row .btn { width: 100%; } }
+</style>
