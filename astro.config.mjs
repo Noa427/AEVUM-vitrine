@@ -3,7 +3,6 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://aevum.fr',
-  output: 'hybrid',
   integrations: [sitemap()],
   prefetch: {
     prefetchAll: true,
