@@ -49,9 +49,6 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
   <link rel="prefetch" href="/pricing" />
   <link rel="prefetch" href="/comment-ca-marche" />
   <link rel="prefetch" href="/contact" />
-  <link rel="prefetch" href="/cgu" />
-  <link rel="prefetch" href="/confidentialite" />
-  <link rel="prefetch" href="/mentions-legales" />
 
   <!-- Schema.org -->
   <script type="application/ld+json" set:html={JSON.stringify({
@@ -94,14 +91,26 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
         (entries) => {
           entries.forEach((e) => {
             if (e.isIntersecting) {
+              e.target.classList.remove('will-animate');
               e.target.classList.add('visible');
               observer.unobserve(e.target);
             }
           });
         },
-        { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+        { threshold: 0.08, rootMargin: '0px 0px -32px 0px' }
       );
-      document.querySelectorAll('.reveal:not(.visible)').forEach((el) => observer.observe(el));
+      const vh = window.innerHeight;
+      document.querySelectorAll('.reveal:not(.visible)').forEach((el) => {
+        const top = el.getBoundingClientRect().top;
+        if (top < vh - 32) {
+          // Already in view — mark visible immediately, no animation
+          el.classList.add('visible');
+        } else {
+          // Below fold — hide and animate on entry
+          el.classList.add('will-animate');
+          observer.observe(el);
+        }
+      });
     }
     initReveal();
     document.addEventListener('astro:after-swap', initReveal);

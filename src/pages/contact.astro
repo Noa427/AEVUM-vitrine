@@ -1,5 +1,7 @@
-﻿---
+---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const formUrl = import.meta.env.PUBLIC_CONTACT_FORM_URL ?? '';
 ---
 
 <BaseLayout
@@ -11,7 +13,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <section class="section hero-contact" aria-labelledby="contact-title">
   <div class="container">
     <div class="contact-grid">
-      <div class="contact-info reveal">
+      <div class="contact-info">
         <span class="accent-line" style="margin:0 0 1.25rem"></span>
         <h1 id="contact-title">Parlons de votre projet</h1>
         <p>Dites-nous où vous en êtes. On vous répond sous 48h pour discuter de votre situation et voir si AEVUM est fait pour vous.</p>
@@ -38,7 +40,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
       </div>
 
-      <div class="contact-form-wrapper reveal">
+      <div class="contact-form-wrapper">
         <form id="contact-form" class="contact-form" novalidate>
           <h2>Envoyez un message</h2>
           <div class="form-group">
@@ -59,6 +61,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </button>
           <p class="form-legal">En soumettant, vous acceptez notre <a href="/confidentialite">politique de confidentialité</a>.</p>
         </form>
+
+        <div id="contact-success" class="success-msg" style="display:none" role="alert">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          <div>
+            <strong>Message envoyé !</strong>
+            <p style="margin-top:0.25rem;font-weight:400;font-size:0.875rem">On vous répond sous 48h ouvrées.</p>
+          </div>
+        </div>
+
+        <div id="contact-error" class="contact-error-msg" style="display:none" role="alert">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div>
+            <strong>Erreur d'envoi</strong>
+            <p style="margin-top:0.25rem;font-weight:400;font-size:0.875rem">Réessayez ou écrivez directement à noa.pardal1@gmail.com.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -66,20 +84,58 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 </BaseLayout>
 
-<script>
+<script define:vars={{ formUrl }}>
   function initContactForm() {
-    const form = document.getElementById('contact-form') as HTMLFormElement | null;
+    const form = document.getElementById('contact-form');
+    const successMsg = document.getElementById('contact-success');
+    const errorMsg = document.getElementById('contact-error');
+    const submitBtn = document.getElementById('contact-submit');
     if (!form) return;
-    form.addEventListener('submit', (e) => {
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const nom = (form.querySelector('#contact-nom') as HTMLInputElement).value.trim();
-      const email = (form.querySelector('#contact-email') as HTMLInputElement).value.trim();
-      const message = (form.querySelector('#contact-message') as HTMLTextAreaElement).value.trim();
-      const subject = encodeURIComponent('Contact AEVUM — ' + nom);
-      const body = encodeURIComponent(`De : ${nom} <${email}>\n\n${message}`);
-      window.location.href = `mailto:noa.pardal1@gmail.com?subject=${subject}&body=${body}`;
+      if (errorMsg) errorMsg.style.display = 'none';
+      if (submitBtn) submitBtn.setAttribute('disabled', '');
+
+      const data = {
+        nom: form.querySelector('#contact-nom').value.trim(),
+        email: form.querySelector('#contact-email').value.trim(),
+        message: form.querySelector('#contact-message').value.trim(),
+      };
+
+      // Validation basique
+      if (!data.nom || !data.email || !data.message) {
+        if (submitBtn) submitBtn.removeAttribute('disabled');
+        return;
+      }
+
+      if (!formUrl) {
+        // Fallback si PUBLIC_CONTACT_FORM_URL non configuré
+        window.location.href = `mailto:noa.pardal1@gmail.com?subject=${encodeURIComponent('Contact AEVUM — ' + data.nom)}&body=${encodeURIComponent('De : ' + data.nom + ' <' + data.email + '>\n\n' + data.message)}`;
+        return;
+      }
+
+      try {
+        const res = await fetch(formUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ name: data.nom, email: data.email, message: data.message }),
+        });
+
+        if (res.ok) {
+          form.style.display = 'none';
+          if (successMsg) successMsg.style.display = 'flex';
+        } else {
+          throw new Error('Erreur serveur');
+        }
+      } catch {
+        if (errorMsg) errorMsg.style.display = 'flex';
+      } finally {
+        if (submitBtn) submitBtn.removeAttribute('disabled');
+      }
     });
   }
+
   initContactForm();
   document.addEventListener('astro:after-swap', initContactForm);
 </script>
@@ -122,6 +178,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .form-legal { font-size: 0.75rem; color: var(--gray); text-align: center; }
   .form-legal a { color: var(--primary); text-decoration: underline; }
+
+  .contact-error-msg {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    font-weight: 600;
+    margin-top: 1rem;
+  }
 
   @media (max-width: 768px) {
     .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
