@@ -1,10 +1,10 @@
----
+﻿---
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout
-  title="Contact — AutomatePro"
-  description="Contactez AutomatePro. Posez vos questions ou discutez de votre projet d'automatisation email."
+  title="Contact — AEVUM"
+  description="Contactez AEVUM. Posez vos questions ou discutez de votre projet d'automatisation email."
   canonical="/contact"
 >
 
@@ -14,7 +14,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="contact-info reveal">
         <span class="accent-line" style="margin:0 0 1.25rem"></span>
         <h1 id="contact-title">Parlons de votre projet</h1>
-        <p>Dites-nous où vous en êtes. On vous répond sous 48h pour discuter de votre situation et voir si AutomatePro est fait pour vous.</p>
+        <p>Dites-nous où vous en êtes. On vous répond sous 48h pour discuter de votre situation et voir si AEVUM est fait pour vous.</p>
 
         <div class="contact-details">
           <div class="contact-detail-item">
@@ -75,7 +75,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       const nom = (form.querySelector('#contact-nom') as HTMLInputElement).value.trim();
       const email = (form.querySelector('#contact-email') as HTMLInputElement).value.trim();
       const message = (form.querySelector('#contact-message') as HTMLTextAreaElement).value.trim();
-      const subject = encodeURIComponent('Contact AutomatePro — ' + nom);
+      const subject = encodeURIComponent('Contact AEVUM — ' + nom);
       const body = encodeURIComponent(`De : ${nom} <${email}>\n\n${message}`);
       window.location.href = `mailto:noa.pardal1@gmail.com?subject=${subject}&body=${body}`;
     });

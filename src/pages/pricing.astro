@@ -1,4 +1,4 @@
----
+﻿---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const plans = [
@@ -59,7 +59,7 @@ const faqPricing = [
 ---
 
 <BaseLayout
-  title="Tarifs — AutomatePro"
+  title="Tarifs — AEVUM"
   description="Setup 1 500€ + 500€/mois (Case Study) ou Setup 3 000€ + 1 200€/mois (Standard). Automatisation email complète pour infopreneurs francophones."
   canonical="/pricing"
 >
@@ -85,7 +85,7 @@ const faqPricing = [
           <p class="price-monthly">+ {plan.monthly}/mois</p>
           {plan.note && <p class="pricing-note">{plan.note}</p>}
           <a
-            href={`mailto:noa.pardal1@gmail.com?subject=${encodeURIComponent('AutomatePro — ' + plan.name)}`}
+            href={`mailto:noa.pardal1@gmail.com?subject=${encodeURIComponent('AEVUM — ' + plan.name)}`}
             class:list={['btn', 'btn-full', plan.popular ? 'btn-primary' : 'btn-secondary']}
           >
             Prendre contact
