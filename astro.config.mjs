@@ -3,6 +3,7 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://aevum.fr',
+  output: 'hybrid',
   integrations: [sitemap()],
   prefetch: {
     prefetchAll: true,
@@ -12,4 +13,8 @@ export default defineConfig({
     inlineStylesheets: 'always',
   },
   compressHTML: true,
+  redirects: {
+    '/demo': '/comment-ca-marche',
+    '/download': '/',
+  },
 });
