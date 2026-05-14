@@ -85,7 +85,7 @@ const faqPricing = [
           <p class="price-monthly">+ {plan.monthly}/mois</p>
           {plan.note && <p class="pricing-note">{plan.note}</p>}
           <a
-            href={`mailto:noa.pardal1@gmail.com?subject=${encodeURIComponent('AEVUM — ' + plan.name)}`}
+            href="/contact"
             class:list={['btn', 'btn-full', plan.popular ? 'btn-primary' : 'btn-secondary']}
           >
             Prendre contact
@@ -178,7 +178,7 @@ const faqPricing = [
       <h2 id="pricing-cta-title">Une question sur les tarifs ?</h2>
       <p style="margin-top:1rem">On vous répond sous 48h.</p>
       <div style="margin-top:2rem">
-        <a href="mailto:noa.pardal1@gmail.com" class="btn btn-primary">Prendre contact</a>
+        <a href="/contact" class="btn btn-primary">Prendre contact</a>
       </div>
     </div>
   </div>
