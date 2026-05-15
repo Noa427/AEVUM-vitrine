@@ -1,0 +1,395 @@
+---
+// Requires SSR adapter (e.g. @astrojs/node or @astrojs/cloudflare) — token unknown at build time
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Portail client — AEVUM"
+  description="Gérez vos paramètres et consultez votre historique d'envois."
+>
+
+<section class="section portal-section" aria-label="Portail client">
+  <div class="container portal-container">
+
+    <!-- Auth wall -->
+    <div id="auth-wall">
+      <div class="card" style="max-width:420px;margin:0 auto;padding:2.5rem 2rem">
+        <span class="accent-line" style="margin:0 0 1.5rem"></span>
+        <h1 style="font-size:1.5rem;margin-bottom:0.5rem">Accès sécurisé</h1>
+        <p style="margin-bottom:2rem;color:var(--gray-light)">Entrez votre adresse email pour accéder à votre espace client.</p>
+        <form id="auth-form" novalidate style="display:flex;flex-direction:column;gap:1.25rem">
+          <div class="form-group">
+            <label for="auth-email" class="form-label">Adresse email</label>
+            <input
+              type="email"
+              id="auth-email"
+              name="email"
+              class="form-input"
+              placeholder="vous@exemple.com"
+              required
+              autocomplete="email"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary" id="auth-btn">Accéder</button>
+          <div id="auth-error" style="display:none" role="alert" class="auth-error-msg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="auth-error-text"></span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Loading (hidden until auth succeeds) -->
+    <div id="portal-loading" style="display:none;text-align:center;padding:4rem 0">
+      <div class="spinner" aria-label="Chargement..."></div>
+      <p style="margin-top:1.5rem;text-align:center">Chargement de votre espace...</p>
+    </div>
+
+    <!-- Error -->
+    <div id="portal-error" style="display:none">
+      <div class="card" style="text-align:center;padding:4rem 2rem;max-width:500px;margin:0 auto">
+        <div class="icon-box" style="margin:0 auto 1.5rem">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h2>Lien invalide</h2>
+        <p style="margin-top:0.75rem;text-align:center">Ce lien de portail client n'existe pas ou a expiré. Contactez-nous si vous pensez qu'il s'agit d'une erreur.</p>
+        <div style="margin-top:2rem">
+          <a href="/contact" class="btn btn-primary">Nous contacter</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard (hidden until auth + data loaded) -->
+    <div id="portal-content" style="display:none">
+
+      <div style="margin-bottom:2.5rem">
+        <span class="accent-line" style="margin:0 0 1rem"></span>
+        <h1 id="client-name" style="font-size:clamp(1.5rem,3vw,2rem)">Bonjour</h1>
+        <p>Gérez vos paramètres et consultez l'historique de vos envois.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:2rem">
+        <h2 style="font-size:1.25rem;margin-bottom:1.5rem">Paramètres</h2>
+        <form id="config-form" style="display:flex;flex-direction:column;gap:1.25rem">
+          <div class="form-group">
+            <label for="sender-name" class="form-label">Sender name (nom d'expéditeur)</label>
+            <input type="text" id="sender-name" name="sender_name" class="form-input" placeholder="Votre Nom" />
+          </div>
+          <div class="form-group">
+            <label for="template-j0" class="form-label">Template J0 — Bienvenue</label>
+            <textarea id="template-j0" name="template_j0" class="form-input template-field" rows="5" placeholder="Contenu de l'email de bienvenue..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="template-j3" class="form-label">Template J3 — Check-in</label>
+            <textarea id="template-j3" name="template_j3" class="form-input template-field" rows="5" placeholder="Contenu de l'email J+3..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="template-j7" class="form-label">Template J7 — Bonus</label>
+            <textarea id="template-j7" name="template_j7" class="form-input template-field" rows="5" placeholder="Contenu de l'email J+7..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="template-impaye" class="form-label">Template impayé — Relance</label>
+            <textarea id="template-impaye" name="template_impaye" class="form-input template-field" rows="5" placeholder="Contenu de l'email de relance impayé..."></textarea>
+          </div>
+          <div>
+            <button type="submit" class="btn btn-primary" id="save-btn">Enregistrer les modifications</button>
+          </div>
+          <div id="save-success" class="success-msg" style="display:none" role="alert">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+            <span>Modifications enregistrées avec succès.</span>
+          </div>
+          <div id="save-error" class="save-error-msg" style="display:none" role="alert">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Erreur lors de la sauvegarde. Réessayez.</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:1.25rem;margin-bottom:1.5rem">Historique des envois</h2>
+        <div id="history-loading" style="text-align:center;padding:2rem;color:var(--gray)">Chargement...</div>
+        <div id="history-content" style="display:none;overflow-x:auto">
+          <table class="history-table" aria-label="Historique des 20 derniers envois">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Type</th>
+                <th scope="col">Destinataire</th>
+                <th scope="col">Statut</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+          <p id="history-empty" style="display:none;text-align:center;padding:2rem;color:var(--gray)">Aucun envoi pour le moment.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</BaseLayout>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_AEVUM_API_URL ?? '';
+
+  // In-memory auth state — resets on page reload (intentional for MVP)
+  let authenticated = false;
+
+  function getToken(): string {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    return parts[parts.length - 1] ?? '';
+  }
+
+  const $ = (id: string) => document.getElementById(id);
+  function show(el: HTMLElement | null, flex?: boolean) { if (el) el.style.display = flex ? 'flex' : 'block'; }
+  function hide(el: HTMLElement | null) { if (el) el.style.display = 'none'; }
+
+  // ── Auth wall ──────────────────────────────────────────────────────────────
+
+  const authForm = $('auth-form');
+  if (authForm) {
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = getToken();
+      const emailEl = $('auth-email') as HTMLInputElement | null;
+      const email = emailEl?.value.trim() ?? '';
+      const authBtn = $('auth-btn') as HTMLButtonElement | null;
+      const authError = $('auth-error');
+      const authErrorText = $('auth-error-text');
+
+      hide(authError);
+      if (authBtn) { authBtn.disabled = true; authBtn.textContent = 'Vérification…'; }
+
+      try {
+        const res = await fetch(`${API_URL}/client/${token}/auth`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        if (res.status === 200) {
+          authenticated = true;
+          hide($('auth-wall'));
+          show($('portal-loading'));
+          await loadDashboard(token);
+        } else if (res.status === 401) {
+          if (authErrorText) authErrorText.textContent = 'Email incorrect pour ce lien.';
+          show(authError, true);
+        } else if (res.status === 404) {
+          if (authErrorText) authErrorText.textContent = 'Lien invalide ou expiré.';
+          show(authError, true);
+        } else {
+          if (authErrorText) authErrorText.textContent = 'Une erreur est survenue. Réessayez.';
+          show(authError, true);
+        }
+      } catch {
+        if (authErrorText) authErrorText.textContent = 'Impossible de joindre le serveur. Réessayez.';
+        show(authError, true);
+      } finally {
+        if (authBtn) { authBtn.disabled = false; authBtn.textContent = 'Accéder'; }
+      }
+    });
+  }
+
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+
+  async function loadDashboard(token: string) {
+    let clientData: any;
+    try {
+      const res = await fetch(`${API_URL}/client/${token}`);
+      if (res.status === 404) { hide($('portal-loading')); show($('portal-error')); return; }
+      if (!res.ok) throw new Error('API error');
+      clientData = await res.json();
+    } catch {
+      hide($('portal-loading'));
+      show($('portal-error'));
+      return;
+    }
+
+    const nameEl = $('client-name');
+    if (nameEl) nameEl.textContent = `Bonjour ${clientData.nom || ''}`;
+
+    const senderInput = $('sender-name') as HTMLInputElement | null;
+    if (senderInput) senderInput.value = clientData.sender_name || '';
+
+    const templates = clientData.templates || {};
+    const fieldMap: Record<string, string> = {
+      'template-j0': 'j0',
+      'template-j3': 'j3',
+      'template-j7': 'j7',
+      'template-impaye': 'impaye',
+    };
+    for (const [id, key] of Object.entries(fieldMap)) {
+      const el = $(id) as HTMLTextAreaElement | null;
+      if (el) el.value = templates[key] || '';
+    }
+
+    hide($('portal-loading'));
+    show($('portal-content'));
+    loadHistory(token);
+  }
+
+  async function loadHistory(token: string) {
+    try {
+      const res = await fetch(`${API_URL}/client/${token}/history`);
+      if (!res.ok) throw new Error('History error');
+      const rows: any[] = await res.json();
+
+      hide($('history-loading'));
+
+      if (!rows || rows.length === 0) {
+        show($('history-content'));
+        show($('history-empty'));
+        return;
+      }
+
+      const tbody = $('history-tbody');
+      rows.slice(0, 20).forEach((row) => {
+        const tr = document.createElement('tr');
+        const date = new Date(row.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+        const statut = (row.statut || '').toLowerCase();
+        tr.innerHTML = `
+          <td>${date}</td>
+          <td>${row.type || '—'}</td>
+          <td>${row.destinataire || '—'}</td>
+          <td><span class="status-badge status-${statut}">${row.statut || '—'}</span></td>
+        `;
+        if (tbody) tbody.appendChild(tr);
+      });
+
+      show($('history-content'));
+    } catch {
+      const hl = $('history-loading');
+      if (hl) hl.textContent = "Impossible de charger l'historique.";
+    }
+  }
+
+  // ── Config save ────────────────────────────────────────────────────────────
+
+  const configForm = $('config-form');
+  if (configForm) {
+    configForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!authenticated) return;
+      const token = getToken();
+      hide($('save-success'));
+      hide($('save-error'));
+
+      const saveBtn = $('save-btn') as HTMLButtonElement | null;
+      if (saveBtn) saveBtn.disabled = true;
+
+      const payload = {
+        sender_name: ($('sender-name') as HTMLInputElement).value,
+        templates: {
+          j0: ($('template-j0') as HTMLTextAreaElement).value,
+          j3: ($('template-j3') as HTMLTextAreaElement).value,
+          j7: ($('template-j7') as HTMLTextAreaElement).value,
+          impaye: ($('template-impaye') as HTMLTextAreaElement).value,
+        },
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/client/${token}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error('Save failed');
+        show($('save-success'), true);
+      } catch {
+        show($('save-error'), true);
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+      }
+    });
+  }
+</script>
+
+<style>
+  .portal-section { padding-top: 6rem; }
+  .portal-container { max-width: 900px; }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--gray-border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .auth-error-msg {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.875rem 1.25rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+
+  .history-table th {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray);
+    border-bottom: 1px solid var(--gray-border);
+  }
+
+  .history-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--gray-border);
+    color: var(--gray-light);
+  }
+
+  .history-table tbody tr:last-child td { border-bottom: none; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--dark-elevated);
+    color: var(--gray-light);
+  }
+
+  .status-badge.status-envoyé,
+  .status-badge.status-envoye { background: var(--success-light); color: var(--success); }
+
+  .status-badge.status-ouvert { background: rgba(46,139,240,0.15); color: var(--primary); }
+
+  .status-badge.status-échec,
+  .status-badge.status-echec { background: rgba(239,68,68,0.12); color: #EF4444; }
+
+  .template-field { font-family: monospace; font-size: 0.875rem; resize: vertical; min-height: 100px; }
+
+  .save-error-msg {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    font-weight: 600;
+  }
+</style>
