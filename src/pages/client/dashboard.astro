@@ -26,25 +26,29 @@ type HistoryEntry = { date: string; action: string; details?: string };
 let stats: StatsData | null = null;
 let automations: AutomationData | null = null;
 let recentHistory: HistoryEntry[] = [];
-let globalError = '';
 
-try {
-  const [statsRes, autoRes, histRes] = await Promise.all([
-    fetch(`${base}/client/stats`, { headers }),
-    fetch(`${base}/client/automations`, { headers }),
-    fetch(`${base}/client/history?limit=5`, { headers }),
-  ]);
+const [statsResult, autoResult, histResult] = await Promise.allSettled([
+  fetch(`${base}/client/stats`, { headers }),
+  fetch(`${base}/client/automations`, { headers }),
+  fetch(`${base}/client/history?limit=5`, { headers }),
+]);
 
-  if ([statsRes, autoRes, histRes].some((r) => r.status === 401)) {
-    Astro.cookies.delete('aevum_token', { path: '/' });
-    return Astro.redirect('/login');
-  }
+const responses = [statsResult, autoResult, histResult];
+const fulfilled = responses.filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled');
+if (fulfilled.some((r) => r.value.status === 401)) {
+  Astro.cookies.delete('aevum_token', { path: '/' });
+  return Astro.redirect('/login');
+}
 
-  if (statsRes.ok) stats = await statsRes.json();
-  if (autoRes.ok) automations = await autoRes.json();
-  if (histRes.ok) recentHistory = await histRes.json();
-} catch {
-  globalError = 'Erreur réseau. Réessayez ou contactez le support.';
+if (statsResult.status === 'fulfilled' && statsResult.value.ok) {
+  stats = await statsResult.value.json();
+}
+if (autoResult.status === 'fulfilled' && autoResult.value.ok) {
+  automations = await autoResult.value.json();
+}
+if (histResult.status === 'fulfilled' && histResult.value.ok) {
+  const data = await histResult.value.json();
+  recentHistory = Array.isArray(data) ? data : [];
 }
 
 function fmt(n: number | undefined): string {
@@ -73,12 +77,6 @@ function fmtDate(iso: string): string {
       <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Mon espace</h1>
       <p style="margin-top:0.5rem">Bienvenue, {auth.email}</p>
     </div>
-
-    {globalError && (
-      <div class="dash-error" role="alert">
-        {globalError} <a href="/contact" style="color:inherit;text-decoration:underline">Nous contacter</a>
-      </div>
-    )}
 
     <!-- SECTION 1 : Stats -->
     <div class="dash-block">
@@ -186,15 +184,6 @@ function fmtDate(iso: string): string {
   .dash-container { max-width: 960px; }
   .dash-header { margin-bottom: 2.5rem; }
   .dash-header p { max-width: none; margin: 0; font-size: 1rem; color: var(--gray-light); }
-
-  .dash-error {
-    padding: 1rem 1.5rem;
-    background: rgba(239,68,68,0.1);
-    border: 1px solid #EF4444;
-    border-radius: var(--radius-sm);
-    color: #EF4444;
-    margin-bottom: 2rem;
-  }
 
   .dash-block { margin-bottom: 3rem; }
   .block-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--light); letter-spacing: -0.01em; }
