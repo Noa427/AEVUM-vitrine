@@ -1,0 +1,193 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getClientFromCookie } from '../../lib/auth';
+
+const auth = await getClientFromCookie(Astro.request);
+if (!auth) return Astro.redirect('/login');
+
+const base = import.meta.env.AEVUM_URL;
+const headers = { Authorization: `Bearer ${auth.token}` };
+
+let successType = '';
+let errorType = '';
+let errorMsg = '';
+
+// Traitement POST
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const configType = (form.get('config_type') as string ?? '').trim();
+  const value = (form.get('value') as string ?? '');
+
+  if (configType) {
+    try {
+      const res = await fetch(`${base}/client/configs`, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config_type: configType, value }),
+      });
+      if (res.status === 401) {
+        Astro.cookies.delete('aevum_token', { path: '/' });
+        return Astro.redirect('/login');
+      }
+      if (res.ok) {
+        successType = configType;
+      } else {
+        const data = await res.json().catch(() => ({}));
+        errorType = configType;
+        errorMsg = data.message ?? data.error ?? 'Erreur lors de la sauvegarde.';
+      }
+    } catch {
+      errorType = configType;
+      errorMsg = 'Erreur réseau. Réessayez.';
+    }
+  }
+}
+
+// Toujours re-fetcher après POST pour afficher valeurs fraîches
+type ConfigEntry = { config_type: string; value: string };
+let configs: Record<string, string> = {};
+let senderName = '';
+let fetchError = '';
+
+try {
+  const [configsRes, autoRes] = await Promise.all([
+    fetch(`${base}/client/configs`, { headers }),
+    fetch(`${base}/client/automations`, { headers }),
+  ]);
+
+  if (configsRes.status === 401 || autoRes.status === 401) {
+    Astro.cookies.delete('aevum_token', { path: '/' });
+    return Astro.redirect('/login');
+  }
+
+  if (configsRes.ok) {
+    const arr: ConfigEntry[] = await configsRes.json();
+    if (Array.isArray(arr)) {
+      for (const c of arr) configs[c.config_type] = c.value;
+    }
+  }
+  if (autoRes.ok) {
+    const auto = await autoRes.json();
+    senderName = auto.sender_name ?? '';
+  }
+} catch {
+  fetchError = 'Impossible de charger vos configurations. Réessayez.';
+}
+
+const CONFIG_TYPES = [
+  { key: 'sender_name', label: 'Nom d\'expéditeur', multiline: false, defaultValue: senderName },
+  { key: 'template_onboarding_j0', label: 'Email onboarding J0', multiline: true, defaultValue: '' },
+  { key: 'template_onboarding_j3', label: 'Email onboarding J3', multiline: true, defaultValue: '' },
+  { key: 'template_onboarding_j7', label: 'Email onboarding J7', multiline: true, defaultValue: '' },
+  { key: 'template_failed_payment', label: 'Email relance impayé', multiline: true, defaultValue: '' },
+] as const;
+---
+
+<BaseLayout
+  title="Personnalisation — AEVUM"
+  description="Personnalisez vos templates d'emails et votre nom d'expéditeur."
+  canonical="/client/customize"
+>
+
+<section class="section customize-section">
+  <div class="container customize-container">
+
+    <div class="customize-header">
+      <a href="/client/dashboard" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Retour au tableau de bord
+      </a>
+      <span class="accent-line" style="margin:1rem 0"></span>
+      <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Personnaliser les templates</h1>
+      <p style="margin-top:0.5rem;max-width:none">Configurez vos emails envoyés automatiquement par AEVUM.</p>
+    </div>
+
+    {fetchError && (
+      <div class="cust-error" role="alert">{fetchError}</div>
+    )}
+
+    {CONFIG_TYPES.map(({ key, label, multiline, defaultValue }) => {
+      const currentValue = configs[key] ?? defaultValue;
+      const isSuccess = successType === key;
+      const isError = errorType === key;
+      return (
+        <div class="card cust-card">
+          <h2 class="cust-card-title">{label}</h2>
+          {isSuccess && (
+            <div class="success-msg" role="alert"><span>Sauvegardé avec succès.</span></div>
+          )}
+          {isError && (
+            <div class="cust-field-error" role="alert">{errorMsg}</div>
+          )}
+          <form method="POST" class="cust-form">
+            <input type="hidden" name="config_type" value={key} />
+            {multiline ? (
+              <textarea
+                name="value"
+                class="form-input cust-textarea"
+                rows={6}
+                placeholder={`Contenu de votre ${label.toLowerCase()}...`}
+              >{currentValue}</textarea>
+            ) : (
+              <input
+                type="text"
+                name="value"
+                class="form-input"
+                value={currentValue}
+                placeholder="Ex : Jean Dupont"
+              />
+            )}
+            <button type="submit" class="btn btn-primary" style="align-self:flex-start;margin-top:0.75rem">
+              Sauvegarder
+            </button>
+          </form>
+        </div>
+      );
+    })}
+
+  </div>
+</section>
+
+</BaseLayout>
+
+<style>
+  .customize-section { padding-top: 7rem; }
+  .customize-container { max-width: 700px; }
+  .customize-header { margin-bottom: 2.5rem; }
+  .customize-header p { color: var(--gray-light); }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--gray-light);
+    transition: color var(--transition);
+    margin-bottom: 0.25rem;
+  }
+  .back-link:hover { color: var(--primary); }
+
+  .cust-error {
+    padding: 1rem 1.5rem;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    margin-bottom: 2rem;
+  }
+  .cust-field-error {
+    padding: 0.75rem 1rem;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .cust-card { padding: 1.75rem 2rem; margin-bottom: 1.5rem; }
+  .cust-card-title { font-size: 1rem; font-weight: 600; color: var(--light); margin-bottom: 1rem; }
+  .cust-form { display: flex; flex-direction: column; }
+  .cust-textarea { font-family: monospace; font-size: 0.875rem; resize: vertical; min-height: 130px; }
+</style>
