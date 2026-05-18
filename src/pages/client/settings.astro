@@ -123,6 +123,7 @@ if (Astro.request.method === 'POST') {
     </div>
 
     <!-- Email form -->
+    {!forceChange && (
     <div class="card settings-card">
       <h2 style="font-size:1.125rem;margin-bottom:1.5rem">Changer l'email</h2>
       {emailMsg && <div class="success-msg" role="alert"><span>{emailMsg}</span></div>}
@@ -140,6 +141,7 @@ if (Astro.request.method === 'POST') {
         <button type="submit" class="btn btn-primary" style="align-self:flex-start">Mettre à jour l'email</button>
       </form>
     </div>
+    )}
 
     <!-- Logout -->
     <div style="margin-top:2rem">
