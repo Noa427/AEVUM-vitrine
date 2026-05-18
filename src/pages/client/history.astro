@@ -1,0 +1,148 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getClientFromCookie } from '../../lib/auth';
+
+const auth = await getClientFromCookie(Astro.request);
+if (!auth) return Astro.redirect('/login');
+
+type HistoryEntry = { date: string; action: string; details?: string };
+
+let history: HistoryEntry[] = [];
+let fetchError = '';
+
+try {
+  const res = await fetch(`${import.meta.env.AEVUM_URL}/client/history?limit=100`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
+  if (res.status === 401) {
+    Astro.cookies.delete('aevum_token', { path: '/' });
+    return Astro.redirect('/login');
+  }
+  if (res.ok) {
+    const data = await res.json();
+    history = Array.isArray(data) ? data : [];
+  } else {
+    fetchError = 'Impossible de charger l\'historique.';
+  }
+} catch {
+  fetchError = 'Erreur réseau. Réessayez.';
+}
+
+function fmtDate(iso: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? '—' : d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+}
+---
+
+<BaseLayout
+  title="Historique — AEVUM"
+  description="Historique complet de vos activités AEVUM."
+  canonical="/client/history"
+>
+
+<section class="section history-section">
+  <div class="container history-container">
+
+    <div class="history-header">
+      <a href="/client/dashboard" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Retour au tableau de bord
+      </a>
+      <span class="accent-line" style="margin:1rem 0"></span>
+      <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Historique d'activité</h1>
+    </div>
+
+    {fetchError && (
+      <div class="hist-error" role="alert">{fetchError}</div>
+    )}
+
+    {!fetchError && history.length === 0 && (
+      <div class="card" style="padding:2rem;color:var(--gray);text-align:center">Aucune activité enregistrée pour le moment.</div>
+    )}
+
+    {history.length > 0 && (
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="hist-table" aria-label="Historique d'activité">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Action</th>
+              <th scope="col">Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((entry) => (
+              <tr>
+                <td class="td-date">{fmtDate(entry.date)}</td>
+                <td class="td-action">{entry.action}</td>
+                <td class="td-details">{entry.details ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+  </div>
+</section>
+
+</BaseLayout>
+
+<style>
+  .history-section { padding-top: 7rem; }
+  .history-container { max-width: 900px; }
+  .history-header { margin-bottom: 2rem; }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--gray-light);
+    transition: color var(--transition);
+    margin-bottom: 0.25rem;
+  }
+  .back-link:hover { color: var(--primary); }
+
+  .hist-error {
+    padding: 1rem 1.5rem;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    margin-bottom: 1.5rem;
+  }
+
+  .hist-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+  .hist-table th {
+    padding: 0.875rem 1.25rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray);
+    border-bottom: 1px solid var(--gray-border);
+    background: var(--dark-elevated);
+  }
+  .hist-table td {
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--gray-border);
+    vertical-align: top;
+  }
+  .hist-table tbody tr:last-child td { border-bottom: none; }
+  .td-date { white-space: nowrap; color: var(--gray); font-size: 0.8125rem; width: 10rem; }
+  .td-action { color: var(--light); font-weight: 500; }
+  .td-details { color: var(--gray-light); }
+
+  @media (max-width: 600px) {
+    .hist-table th:last-child,
+    .hist-table td:last-child { display: none; }
+  }
+</style>
