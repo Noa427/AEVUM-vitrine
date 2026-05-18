@@ -1,0 +1,129 @@
+---
+export const prerender = false;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getClientFromCookie } from '../lib/auth';
+
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  let email = '';
+  let password = '';
+
+  try {
+    const form = await Astro.request.formData();
+    email = (form.get('email') as string ?? '').trim();
+    password = (form.get('password') as string ?? '').trim();
+  } catch {
+    error = 'Une erreur est survenue, réessayez';
+  }
+
+  if (!error) {
+    try {
+      const res = await fetch(`${import.meta.env.AEVUM_URL}/client/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        Astro.cookies.set('aevum_token', data.token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 604800,
+          path: '/',
+        });
+        return Astro.redirect('/client/dashboard');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        error = data.message ?? data.error ?? 'Identifiants incorrects';
+      }
+    } catch {
+      error = 'Une erreur est survenue, réessayez';
+    }
+  }
+} else {
+  const client = await getClientFromCookie(Astro.request);
+  if (client) {
+    return Astro.redirect('/client/dashboard');
+  }
+}
+---
+
+<BaseLayout
+  title="Connexion — AEVUM"
+  description="Connectez-vous à votre espace client AEVUM."
+  canonical="/login"
+>
+
+<section class="section login-section">
+  <div class="container">
+    <div class="login-card card">
+      <span class="accent-line" style="margin:0 0 1.5rem"></span>
+      <h1 style="font-size:1.5rem;margin-bottom:0.5rem">Connexion</h1>
+      <p style="color:var(--gray-light);margin-bottom:2rem">Accédez à votre espace client.</p>
+
+      {error && (
+        <div class="login-error" role="alert">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>{error}</span>
+        </div>
+      )}
+
+      <form method="POST" style="display:flex;flex-direction:column;gap:1.25rem">
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="form-input"
+            placeholder="vous@exemple.fr"
+            required
+            autocomplete="email"
+          />
+        </div>
+        <div class="form-group">
+          <label for="password" class="form-label">Mot de passe</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            placeholder="••••••••"
+            required
+            autocomplete="current-password"
+          />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%">
+          Se connecter
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+</BaseLayout>
+
+<style>
+  .login-section { padding-top: 8rem; }
+  .login-card {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+  }
+  .login-error {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.875rem 1.25rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+  }
+</style>
