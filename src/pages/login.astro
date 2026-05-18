@@ -12,7 +12,7 @@ if (Astro.request.method === 'POST') {
   try {
     const form = await Astro.request.formData();
     email = (form.get('email') as string ?? '').trim();
-    password = (form.get('password') as string ?? '').trim();
+    password = (form.get('password') as string ?? '');
   } catch {
     error = 'Une erreur est survenue, réessayez';
   }
@@ -27,14 +27,18 @@ if (Astro.request.method === 'POST') {
 
       if (res.ok) {
         const data = await res.json();
-        Astro.cookies.set('aevum_token', data.token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'strict',
-          maxAge: 604800,
-          path: '/',
-        });
-        return Astro.redirect('/client/dashboard');
+        if (!data?.token) {
+          error = 'Identifiants incorrects';
+        } else {
+          Astro.cookies.set('aevum_token', data.token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+            maxAge: 604800,
+            path: '/',
+          });
+          return Astro.redirect('/client/dashboard');
+        }
       } else {
         const data = await res.json().catch(() => ({}));
         error = data.message ?? data.error ?? 'Identifiants incorrects';
