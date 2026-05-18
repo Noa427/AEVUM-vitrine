@@ -17,6 +17,9 @@ try {
   });
   if (res.ok) {
     clientData = await res.json();
+  } else if (res.status === 401) {
+    Astro.cookies.delete('aevum_token', { path: '/' });
+    return Astro.redirect('/login');
   } else {
     fetchError = 'Impossible de charger vos informations.';
   }
@@ -29,7 +32,10 @@ if (clientData?.must_change_password) {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-FR', {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('fr-FR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -51,7 +57,9 @@ function formatDate(iso: string): string {
     </div>
 
     {fetchError && (
-      <div class="dash-error" role="alert">{fetchError}</div>
+      <div class="dash-error" role="alert">
+        {fetchError} <a href="/contact" style="color:inherit;text-decoration:underline">Nous contacter</a>
+      </div>
     )}
 
     {clientData && (
