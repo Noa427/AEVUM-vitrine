@@ -1,0 +1,112 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getClientFromCookie } from '../../lib/auth';
+
+const auth = await getClientFromCookie(Astro.request);
+if (!auth) {
+  return Astro.redirect('/login');
+}
+
+let clientData: { email: string; statut: string; created_at: string; must_change_password?: boolean } | null = null;
+let fetchError = '';
+
+try {
+  const res = await fetch(`${import.meta.env.AEVUM_URL}/client/me`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
+  if (res.ok) {
+    clientData = await res.json();
+  } else {
+    fetchError = 'Impossible de charger vos informations.';
+  }
+} catch {
+  fetchError = 'Erreur réseau. Réessayez.';
+}
+
+if (clientData?.must_change_password) {
+  return Astro.redirect('/client/settings?force=true');
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+---
+
+<BaseLayout
+  title="Mon espace — AEVUM"
+  description="Votre espace client AEVUM."
+  canonical="/client/dashboard"
+>
+
+<section class="section dashboard-section">
+  <div class="container dashboard-container">
+    <div style="margin-bottom:2.5rem">
+      <span class="accent-line" style="margin:0 0 1rem"></span>
+      <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Mon espace</h1>
+    </div>
+
+    {fetchError && (
+      <div class="dash-error" role="alert">{fetchError}</div>
+    )}
+
+    {clientData && (
+      <div class="card dash-info">
+        <h2 style="font-size:1.125rem;margin-bottom:1.5rem">Informations du compte</h2>
+        <dl class="info-grid">
+          <div class="info-row">
+            <dt>Email</dt>
+            <dd>{clientData.email}</dd>
+          </div>
+          <div class="info-row">
+            <dt>Statut</dt>
+            <dd><span class={`status-badge status-${clientData.statut?.toLowerCase()}`}>{clientData.statut}</span></dd>
+          </div>
+          <div class="info-row">
+            <dt>Membre depuis</dt>
+            <dd>{formatDate(clientData.created_at)}</dd>
+          </div>
+        </dl>
+        <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap">
+          <a href="/client/settings" class="btn btn-primary">Paramètres</a>
+          <a href="/client/settings?logout=1" class="btn" style="background:var(--dark-elevated);color:var(--gray-light)">Se déconnecter</a>
+        </div>
+      </div>
+    )}
+  </div>
+</section>
+
+</BaseLayout>
+
+<style>
+  .dashboard-section { padding-top: 8rem; }
+  .dashboard-container { max-width: 700px; }
+  .dash-error {
+    padding: 1rem 1.5rem;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    margin-bottom: 1.5rem;
+  }
+  .dash-info { padding: 2rem; }
+  .info-grid { display: flex; flex-direction: column; gap: 1rem; }
+  .info-row { display: flex; gap: 1rem; align-items: baseline; }
+  .info-row dt { width: 140px; font-size: 0.875rem; color: var(--gray); flex-shrink: 0; }
+  .info-row dd { font-size: 0.9375rem; color: var(--gray-light); }
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--dark-elevated);
+    color: var(--gray-light);
+  }
+  .status-badge.status-actif { background: var(--success-light); color: var(--success); }
+  .status-badge.status-inactif { background: rgba(239,68,68,0.12); color: #EF4444; }
+</style>
