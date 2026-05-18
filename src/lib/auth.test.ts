@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SignJWT } from 'jose';
 import { getClientFromCookie, clearAuthCookie } from './auth';
 
@@ -24,6 +24,10 @@ describe('getClientFromCookie', () => {
     process.env.JWT_SECRET = TEST_SECRET;
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('returns null when cookie is absent', async () => {
     const result = await getClientFromCookie(makeRequest(''));
     expect(result).toBeNull();
@@ -31,7 +35,7 @@ describe('getClientFromCookie', () => {
 
   it('returns null when token has wrong signature', async () => {
     const token = await makeToken({ clientId: '1', email: 'a@b.com' });
-    process.env.JWT_SECRET = 'different-secret-also-32-chars-xxx';
+    vi.stubEnv('JWT_SECRET', 'different-secret-also-32-chars-xxx');
     const result = await getClientFromCookie(makeRequest(`aevum_token=${token}`));
     expect(result).toBeNull();
   });
