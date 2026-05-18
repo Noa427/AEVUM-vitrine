@@ -1,0 +1,175 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getClientFromCookie } from '../../lib/auth';
+
+const auth = await getClientFromCookie(Astro.request);
+if (!auth) {
+  return Astro.redirect('/login');
+}
+
+// Logout shortcut
+if (Astro.url.searchParams.get('logout') === '1') {
+  Astro.cookies.delete('aevum_token', { path: '/' });
+  return Astro.redirect('/login');
+}
+
+const forceChange = Astro.url.searchParams.get('force') === 'true';
+
+let passwordMsg = '';
+let passwordError = '';
+let emailMsg = '';
+let emailError = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = form.get('action') as string;
+
+  if (action === 'password') {
+    const currentPassword = form.get('currentPassword') as string;
+    const newPassword = form.get('newPassword') as string;
+    const confirmNewPassword = form.get('confirmNewPassword') as string;
+
+    if (newPassword !== confirmNewPassword) {
+      passwordError = 'Les nouveaux mots de passe ne correspondent pas.';
+    } else {
+      try {
+        const res = await fetch(`${import.meta.env.AEVUM_URL}/client/settings/password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${auth.token}`,
+          },
+          body: JSON.stringify({ currentPassword, newPassword }),
+        });
+        if (res.ok) {
+          passwordMsg = 'Mot de passe mis à jour.';
+        } else {
+          const data = await res.json().catch(() => ({}));
+          passwordError = data.message ?? data.error ?? 'Erreur lors du changement de mot de passe.';
+        }
+      } catch {
+        passwordError = 'Une erreur est survenue, réessayez.';
+      }
+    }
+  }
+
+  if (action === 'email') {
+    const currentPassword = form.get('currentPassword') as string;
+    const newEmail = form.get('newEmail') as string;
+
+    try {
+      const res = await fetch(`${import.meta.env.AEVUM_URL}/client/settings/email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({ currentPassword, newEmail }),
+      });
+      if (res.ok) {
+        emailMsg = 'Email mis à jour.';
+      } else {
+        const data = await res.json().catch(() => ({}));
+        emailError = data.message ?? data.error ?? 'Erreur lors du changement d\'email.';
+      }
+    } catch {
+      emailError = 'Une erreur est survenue, réessayez.';
+    }
+  }
+}
+---
+
+<BaseLayout
+  title="Paramètres — AEVUM"
+  description="Gérez votre mot de passe et votre adresse email."
+  canonical="/client/settings"
+>
+
+<section class="section settings-section">
+  <div class="container settings-container">
+    <div style="margin-bottom:2.5rem">
+      <span class="accent-line" style="margin:0 0 1rem"></span>
+      <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Paramètres</h1>
+    </div>
+
+    {forceChange && (
+      <div class="force-banner" role="alert">
+        Vous devez changer votre mot de passe avant de continuer.
+      </div>
+    )}
+
+    <!-- Password form -->
+    <div class="card settings-card">
+      <h2 style="font-size:1.125rem;margin-bottom:1.5rem">Changer le mot de passe</h2>
+      {passwordMsg && <div class="success-msg" role="alert"><span>{passwordMsg}</span></div>}
+      {passwordError && <div class="settings-error" role="alert">{passwordError}</div>}
+      <form method="POST" style="display:flex;flex-direction:column;gap:1.25rem">
+        <input type="hidden" name="action" value="password" />
+        <div class="form-group">
+          <label for="pw-current" class="form-label">Mot de passe actuel</label>
+          <input type="password" id="pw-current" name="currentPassword" class="form-input" required autocomplete="current-password" />
+        </div>
+        <div class="form-group">
+          <label for="pw-new" class="form-label">Nouveau mot de passe</label>
+          <input type="password" id="pw-new" name="newPassword" class="form-input" required autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="pw-confirm" class="form-label">Confirmer le nouveau mot de passe</label>
+          <input type="password" id="pw-confirm" name="confirmNewPassword" class="form-input" required autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-start">Mettre à jour le mot de passe</button>
+      </form>
+    </div>
+
+    <!-- Email form -->
+    <div class="card settings-card">
+      <h2 style="font-size:1.125rem;margin-bottom:1.5rem">Changer l'email</h2>
+      {emailMsg && <div class="success-msg" role="alert"><span>{emailMsg}</span></div>}
+      {emailError && <div class="settings-error" role="alert">{emailError}</div>}
+      <form method="POST" style="display:flex;flex-direction:column;gap:1.25rem">
+        <input type="hidden" name="action" value="email" />
+        <div class="form-group">
+          <label for="email-pw" class="form-label">Mot de passe actuel</label>
+          <input type="password" id="email-pw" name="currentPassword" class="form-input" required autocomplete="current-password" />
+        </div>
+        <div class="form-group">
+          <label for="email-new" class="form-label">Nouvel email</label>
+          <input type="email" id="email-new" name="newEmail" class="form-input" placeholder="nouveau@exemple.fr" required autocomplete="email" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-start">Mettre à jour l'email</button>
+      </form>
+    </div>
+
+    <!-- Logout -->
+    <div style="margin-top:2rem">
+      <a href="/client/settings?logout=1" class="btn" style="background:var(--dark-elevated);color:var(--gray-light)">Se déconnecter</a>
+    </div>
+  </div>
+</section>
+
+</BaseLayout>
+
+<style>
+  .settings-section { padding-top: 8rem; }
+  .settings-container { max-width: 600px; }
+  .settings-card { padding: 2rem; margin-bottom: 2rem; }
+  .force-banner {
+    padding: 1rem 1.5rem;
+    background: rgba(234,179,8,0.12);
+    border: 1px solid #ca8a04;
+    border-radius: var(--radius-sm);
+    color: #ca8a04;
+    font-weight: 500;
+    margin-bottom: 2rem;
+  }
+  .settings-error {
+    padding: 0.875rem 1.25rem;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    font-size: 0.9375rem;
+    margin-bottom: 1rem;
+  }
+</style>
