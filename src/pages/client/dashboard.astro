@@ -4,117 +4,270 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getClientFromCookie } from '../../lib/auth';
 
 const auth = await getClientFromCookie(Astro.request);
-if (!auth) {
-  return Astro.redirect('/login');
-}
+if (!auth) return Astro.redirect('/login');
 
-let clientData: { email: string; statut: string; created_at: string; must_change_password?: boolean } | null = null;
-let fetchError = '';
+const base = import.meta.env.AEVUM_URL;
+const headers = { Authorization: `Bearer ${auth.token}` };
+
+type StatsData = {
+  emails_this_month?: number;
+  total_emails?: number;
+  recouvrement_envoyes?: number;
+  upsells_envoyes?: number;
+};
+type AutomationData = {
+  onboarding?: boolean;
+  recouvrement?: boolean;
+  support_ia?: boolean;
+  upsell?: boolean;
+};
+type HistoryEntry = { date: string; action: string; details?: string };
+
+let stats: StatsData | null = null;
+let automations: AutomationData | null = null;
+let recentHistory: HistoryEntry[] = [];
+let globalError = '';
 
 try {
-  const res = await fetch(`${import.meta.env.AEVUM_URL}/client/me`, {
-    headers: { Authorization: `Bearer ${auth.token}` },
-  });
-  if (res.ok) {
-    clientData = await res.json();
-  } else if (res.status === 401) {
+  const [statsRes, autoRes, histRes] = await Promise.all([
+    fetch(`${base}/client/stats`, { headers }),
+    fetch(`${base}/client/automations`, { headers }),
+    fetch(`${base}/client/history?limit=5`, { headers }),
+  ]);
+
+  if ([statsRes, autoRes, histRes].some((r) => r.status === 401)) {
     Astro.cookies.delete('aevum_token', { path: '/' });
     return Astro.redirect('/login');
-  } else {
-    fetchError = 'Impossible de charger vos informations.';
   }
+
+  if (statsRes.ok) stats = await statsRes.json();
+  if (autoRes.ok) automations = await autoRes.json();
+  if (histRes.ok) recentHistory = await histRes.json();
 } catch {
-  fetchError = 'Erreur réseau. Réessayez.';
+  globalError = 'Erreur réseau. Réessayez ou contactez le support.';
 }
 
-if (clientData?.must_change_password) {
-  return Astro.redirect('/client/settings?force=true');
+function fmt(n: number | undefined): string {
+  return n != null ? String(n) : '—';
 }
 
-function formatDate(iso: string): string {
+function fmtDate(iso: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  return isNaN(d.getTime()) ? '—' : d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 }
 ---
 
 <BaseLayout
   title="Mon espace — AEVUM"
-  description="Votre espace client AEVUM."
+  description="Tableau de bord de votre espace client AEVUM."
   canonical="/client/dashboard"
 >
 
-<section class="section dashboard-section">
-  <div class="container dashboard-container">
-    <div style="margin-bottom:2.5rem">
+<section class="section dash-section">
+  <div class="container dash-container">
+
+    <!-- Header -->
+    <div class="dash-header">
       <span class="accent-line" style="margin:0 0 1rem"></span>
       <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Mon espace</h1>
+      <p style="margin-top:0.5rem">Bienvenue, {auth.email}</p>
     </div>
 
-    {fetchError && (
+    {globalError && (
       <div class="dash-error" role="alert">
-        {fetchError} <a href="/contact" style="color:inherit;text-decoration:underline">Nous contacter</a>
+        {globalError} <a href="/contact" style="color:inherit;text-decoration:underline">Nous contacter</a>
       </div>
     )}
 
-    {clientData && (
-      <div class="card dash-info">
-        <h2 style="font-size:1.125rem;margin-bottom:1.5rem">Informations du compte</h2>
-        <dl class="info-grid">
-          <div class="info-row">
-            <dt>Email</dt>
-            <dd>{clientData.email}</dd>
-          </div>
-          <div class="info-row">
-            <dt>Statut</dt>
-            <dd><span class={`status-badge status-${clientData.statut?.toLowerCase()}`}>{clientData.statut}</span></dd>
-          </div>
-          <div class="info-row">
-            <dt>Membre depuis</dt>
-            <dd>{formatDate(clientData.created_at)}</dd>
-          </div>
-        </dl>
-        <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap">
-          <a href="/client/settings" class="btn btn-primary">Paramètres</a>
-          <a href="/client/settings?logout=1" class="btn" style="background:var(--dark-elevated);color:var(--gray-light)">Se déconnecter</a>
+    <!-- SECTION 1 : Stats -->
+    <div class="dash-block">
+      <h2 class="block-title">Statistiques</h2>
+      <div class="stats-grid">
+        <div class="stat-card card">
+          <p class="stat-label">Emails ce mois</p>
+          <p class="stat-value">{fmt(stats?.emails_this_month)}</p>
+        </div>
+        <div class="stat-card card">
+          <p class="stat-label">Total emails envoyés</p>
+          <p class="stat-value">{fmt(stats?.total_emails)}</p>
+        </div>
+        <div class="stat-card card">
+          <p class="stat-label">Relances impayés</p>
+          <p class="stat-value">{fmt(stats?.recouvrement_envoyes)}</p>
+        </div>
+        <div class="stat-card card">
+          <p class="stat-label">Upsells envoyés</p>
+          <p class="stat-value">{fmt(stats?.upsells_envoyes)}</p>
         </div>
       </div>
-    )}
+    </div>
+
+    <!-- SECTION 2 : Automatisations -->
+    <div class="dash-block">
+      <h2 class="block-title">Automatisations actives</h2>
+      <div class="auto-grid">
+        <div class="auto-card card">
+          <p class="auto-name">Onboarding J0 / J3 / J7</p>
+          <span class={`auto-badge ${automations?.onboarding ? 'badge-actif' : 'badge-off'}`}>
+            {automations?.onboarding ? 'Actif' : 'Non configuré'}
+          </span>
+        </div>
+        <div class="auto-card card">
+          <p class="auto-name">Recouvrement impayés</p>
+          <span class={`auto-badge ${automations?.recouvrement ? 'badge-actif' : 'badge-off'}`}>
+            {automations?.recouvrement ? 'Actif' : 'Non configuré'}
+          </span>
+        </div>
+        <div class="auto-card card">
+          <p class="auto-name">Support IA</p>
+          <span class={`auto-badge ${automations?.support_ia ? 'badge-actif' : 'badge-off'}`}>
+            {automations?.support_ia ? 'Actif' : 'Non configuré'}
+          </span>
+        </div>
+        <div class="auto-card card">
+          <p class="auto-name">Upsell J+30</p>
+          <span class={`auto-badge ${automations?.upsell ? 'badge-actif' : 'badge-off'}`}>
+            {automations?.upsell ? 'Actif' : 'Non configuré'}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3 : Dernières activités -->
+    <div class="dash-block">
+      <h2 class="block-title">Dernières activités</h2>
+      {recentHistory.length === 0 ? (
+        <div class="card" style="padding:1.5rem;color:var(--gray)">Aucune activité récente.</div>
+      ) : (
+        <div class="card" style="padding:0;overflow:hidden">
+          <ul class="activity-list">
+            {recentHistory.map((entry) => (
+              <li class="activity-item">
+                <span class="activity-date">{fmtDate(entry.date)}</span>
+                <span class="activity-action">{entry.action}</span>
+                {entry.details && <span class="activity-details">{entry.details}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+
+    <!-- SECTION 4 : Navigation -->
+    <div class="dash-block">
+      <h2 class="block-title">Accès rapide</h2>
+      <div class="nav-grid">
+        <a href="/client/history" class="nav-card card">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          <p class="nav-card-title">Historique complet</p>
+          <p class="nav-card-desc">Tous vos logs d'activité</p>
+        </a>
+        <a href="/client/customize" class="nav-card card">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <p class="nav-card-title">Personnaliser les templates</p>
+          <p class="nav-card-desc">Emails d'onboarding, relances, upsell</p>
+        </a>
+        <a href="/client/settings" class="nav-card card">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <p class="nav-card-title">Paramètres du compte</p>
+          <p class="nav-card-desc">Mot de passe, email, déconnexion</p>
+        </a>
+      </div>
+    </div>
+
   </div>
 </section>
 
 </BaseLayout>
 
 <style>
-  .dashboard-section { padding-top: 8rem; }
-  .dashboard-container { max-width: 700px; }
+  .dash-section { padding-top: 7rem; }
+  .dash-container { max-width: 960px; }
+  .dash-header { margin-bottom: 2.5rem; }
+  .dash-header p { max-width: none; margin: 0; font-size: 1rem; color: var(--gray-light); }
+
   .dash-error {
     padding: 1rem 1.5rem;
     background: rgba(239,68,68,0.1);
     border: 1px solid #EF4444;
     border-radius: var(--radius-sm);
     color: #EF4444;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
-  .dash-info { padding: 2rem; }
-  .info-grid { display: flex; flex-direction: column; gap: 1rem; }
-  .info-row { display: flex; gap: 1rem; align-items: baseline; }
-  .info-row dt { width: 140px; font-size: 0.875rem; color: var(--gray); flex-shrink: 0; }
-  .info-row dd { font-size: 0.9375rem; color: var(--gray-light); }
-  .status-badge {
+
+  .dash-block { margin-bottom: 3rem; }
+  .block-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--light); letter-spacing: -0.01em; }
+
+  /* Stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  .stat-card { padding: 1.5rem; }
+  .stat-label { font-size: 0.8125rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; max-width: none; }
+  .stat-value { font-size: 2rem; font-weight: 700; color: var(--light); letter-spacing: -0.03em; }
+
+  /* Automations */
+  .auto-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .auto-card { padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+  .auto-name { font-size: 0.9375rem; color: var(--light); max-width: none; }
+  .auto-badge {
     display: inline-block;
-    padding: 0.25rem 0.625rem;
+    padding: 0.25rem 0.75rem;
     border-radius: 999px;
     font-size: 0.75rem;
     font-weight: 600;
-    background: var(--dark-elevated);
-    color: var(--gray-light);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
-  .status-badge.status-actif { background: var(--success-light); color: var(--success); }
-  .status-badge.status-inactif { background: rgba(239,68,68,0.12); color: #EF4444; }
+  .badge-actif { background: var(--success-light); color: var(--success); }
+  .badge-off { background: var(--dark-elevated); color: var(--gray); }
+
+  /* Activity */
+  .activity-list { list-style: none; }
+  .activity-item {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.875rem 1.5rem;
+    border-bottom: 1px solid var(--gray-border);
+    flex-wrap: wrap;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-date { font-size: 0.8125rem; color: var(--gray); white-space: nowrap; flex-shrink: 0; }
+  .activity-action { font-size: 0.9375rem; color: var(--light); font-weight: 500; }
+  .activity-details { font-size: 0.875rem; color: var(--gray-light); }
+
+  /* Nav cards */
+  .nav-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .nav-card {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+  }
+  .nav-card svg { color: var(--primary); margin-bottom: 0.25rem; }
+  .nav-card-title { font-size: 1rem; font-weight: 600; color: var(--light); max-width: none; }
+  .nav-card-desc { font-size: 0.875rem; color: var(--gray-light); max-width: none; }
+
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .auto-grid { grid-template-columns: 1fr; }
+    .nav-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+  }
 </style>
