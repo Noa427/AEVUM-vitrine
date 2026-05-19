@@ -5,6 +5,7 @@
 - TypeScript strict, ESM, Node ≥ 22
 - Pas de framework UI — HTML/CSS pur, CSS variables globales
 - `<ClientRouter />` (View Transitions Astro) présent dans les deux layouts
+- Backend repo : `../AEVUM_LOGI_INFOPRENEUR/backend/` (accessible depuis ce workspace)
 
 ## SSR
 - Pages statiques (marketing) : pas de `prerender`
@@ -47,8 +48,16 @@ if (res.status === 401) {
 | `/client/configs` | PUT `{config_type, value}` | update config |
 | `/client/settings/password` | POST `{currentPassword, newPassword}` | |
 | `/client/settings/email` | POST `{currentPassword, newEmail}` | |
+| `/client/ai/generate` | POST `{emailType, formationName, tone, objective}` → `{subject, body}` | IA génération |
+| `/client/ai/improve` | POST `{content, emailType}` → `{subject, body}` | IA amélioration |
 
 Config types : `sender_name`, `template_onboarding_j0`, `template_onboarding_j3`, `template_onboarding_j7`, `template_failed_payment`
+
+**Templates par défaut (hardcodés dans `../AEVUM_LOGI_INFOPRENEUR/backend/src/utils/getEmailTemplate.ts`) :**
+- `template_onboarding_j0` : sujet "Bienvenue {{nom}}, voici vos accès", corps bienvenue + identifiants
+- `template_onboarding_j3` : sujet "{{nom}}, comment se passe votre début ?"
+- `template_onboarding_j7` : sujet "{{nom}} — votre première semaine"
+- `template_failed_payment` : sujet "Action requise — problème de paiement"
 
 ## Pages client (toutes SSR)
 | URL | Fichier | Description |
@@ -57,7 +66,7 @@ Config types : `sender_name`, `template_onboarding_j0`, `template_onboarding_j3`
 | `/client` | `src/pages/client/index.astro` | Redirect → `/client/dashboard` |
 | `/client/dashboard` | `src/pages/client/dashboard.astro` | Stats (`0` si null), automations (lien `/client/customize` si non configuré), 5 dernières activités |
 | `/client/history` | `src/pages/client/history.astro` | Tableau Date/Type/Détails, pagination JS 50/page si >50 entrées |
-| `/client/customize` | `src/pages/client/customize.astro` | 5 formulaires templates, badges variables cliquables (click-to-insert) |
+| `/client/customize` | `src/pages/client/customize.astro` | Éditeur 3 modes (Manuel + Générer IA), bannière défaut, badges variables |
 | `/client/settings` | `src/pages/client/settings.astro` | Email actuel (readonly), changement mdp + email, logout danger |
 
 ## Layouts
@@ -74,7 +83,34 @@ Utilisé par : `/`, `/features`, `/pricing`, `/contact`, `/comment-ca-marche`, `
 ```
 Utilisé par toutes les pages `/client/*` sauf `/login`.
 
-Fournit : sidebar fixe 220px (logo, 4 liens nav, email + logout), topbar hamburger mobile (<860px), skip-link accessibilité, `<ClientRouter />`, prefetch des 4 pages client.
+Fournit : sidebar fixe 220px (logo, 4 liens nav, email + logout), topbar hamburger mobile (<860px), skip-link accessibilité, `<ClientRouter />`, prefetch des 4 pages client, `astro:before-swap` ferme le drawer mobile.
+
+## customize.astro — état actuel
+- 5 configs : `sender_name` (tab unique), 4 templates email (éditeur 3 modes)
+- **Éditeur** : onglet "✏️ Rédiger moi-même" (sujet + corps + variables + bouton Améliorer IA désactivé) + onglet "✨ Générer avec l'IA" (form + bouton désactivé)
+- **Sauvegarde** : form POST SSR → `value = JSON.stringify({subject, body})` (via `.hidden-value` pré-rempli, intercepté avant submit)
+- **Rétrocompat** : `parseConfig()` gère ancien format plain-text → `{subject:'', body: rawString}`
+- **Bannière** : visible si `allDefaultTemplates` (tous vides), dismissible via sessionStorage `aevum_banner_dismissed`
+- **Variables** disponibles par template :
+  - onboarding j0 : `{{nom}}` `{{prenom}}` `{{email}}` `{{nom_formation}}` `{{lien_acces}}` `{{mot_de_passe}}`
+  - onboarding j3/j7 : idem sans `{{mot_de_passe}}`
+  - failed_payment : `{{nom}}` `{{prenom}}` `{{email}}` `{{montant}}` `{{lien_paiement}}`
+- **Boutons IA** : désactivés (`disabled`) — endpoints `/client/ai/generate` et `/client/ai/improve` déjà déployés côté backend, à brancher via une API route proxy Astro
+
+## TODO — prochaine session
+1. **Section "mail par défaut"** dans `customize.astro` :
+   - Lien collapsible "Voir le template par défaut ▾" dans chaque carte template
+   - Affiche sujet + corps par défaut en lecture seule (valeurs hardcodées depuis `getEmailTemplate.ts`)
+   - Optionnel : bouton "Utiliser ce template" pour copier le défaut dans l'éditeur
+
+2. **Brancher les boutons IA** dans `customize.astro` :
+   - Créer `src/pages/api/ai-generate.ts` et `src/pages/api/ai-improve.ts` (SSR proxy — lit le cookie HttpOnly, appelle AEVUM_URL avec le Bearer token)
+   - Activer les boutons Générer + Améliorer avec fetch vers ces routes + états chargement + gestion d'erreur
+
+3. **Custom automations** (3 sous-projets séparés) :
+   - **A — Backend** : migration `009_custom_automations.sql`, routes GET/POST/PUT/DELETE `/client/automations/custom`, intégration cron
+   - **B — Vitrine** : section "Mes automatisations personnalisées" dans `customize.astro` (modal création + liste + toggle actif/inactif), dépend de A déployé
+   - Utiliser le pattern form POST SSR pour la création, fetch API route proxy pour le toggle (PUT)
 
 ## CSS
 `global.css` est intentionnellement vide — tous les styles sont injectés via `<style is:global>` dans les layouts (pattern Astro, bypasse les caches).
@@ -86,6 +122,7 @@ Fournit : sidebar fixe 220px (logo, 4 liens nav, email + logout), topbar hamburg
 - Fond : `--bg: #0a0a0f`
 - Cartes : `--bg-1: #12151f`, border-radius `--r-lg: 16px`
 - Logo / boutons primaires : blanc (`--ink: #fafafa`) — pas de bleu
+- Accents IA/action : bleu `#2E8BF0` (tabs actifs uniquement)
 - Grille de fond : `body::before` (`position: fixed`, grid 96px, mask radial)
 - Fonts : Inter uniquement (client), Inter + Instrument Serif (marketing) — chargées en **async** (`media="print" onload`)
 
@@ -113,3 +150,6 @@ npm run build   # vérification TypeScript + build Vercel
 - `null` sur les données optionnelles avant affichage : optional chaining `?.`
 - Stats nulles/undefined → afficher `'0'`, pas `'—'`
 - Scripts JS dans les pages client : wrapper dans une fonction + `document.addEventListener('astro:page-load', fn)` pour ré-init après View Transitions
+- Guard double listeners : `if (card.dataset.initialized) return; card.dataset.initialized = 'true';`
+- Sauvegarde templates : form POST SSR avec `hidden-value = JSON.stringify({subject, body})`
+- API routes proxy Astro (`src/pages/api/*.ts`) pour les appels backend nécessitant le Bearer token depuis JS client
