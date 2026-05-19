@@ -181,7 +181,6 @@ for (const k of EMAIL_KEYS) {
       <div class="editor-tabs">
         <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
         <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
-        <button class="editor-tab" data-tab="improve">🔧 Améliorer avec l'IA</button>
       </div>
 
       <div class="tab-panel" data-panel="manual">
@@ -205,8 +204,11 @@ for (const k of EMAIL_KEYS) {
               </div>
             </div>
           )}
-          <button type="submit" class="btn btn-primary cust-save-btn"
-                  style="align-self:flex-start;margin-top:0.75rem">Sauvegarder</button>
+          <div class="manual-actions">
+            <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+            <button type="button" class="btn btn-secondary btn-improve" disabled
+                    title="Fonctionnalité disponible prochainement">🔧 Améliorer avec l'IA</button>
+          </div>
         </form>
       </div>
 
@@ -230,25 +232,6 @@ for (const k of EMAIL_KEYS) {
                     readonly placeholder="Contenu généré"></textarea>
           <button class="btn btn-secondary btn-use-result"
                   style="align-self:flex-start">Utiliser ce contenu →</button>
-        </div>
-      </div>
-
-      <div class="tab-panel hidden" data-panel="improve">
-        <p class="improve-hint">Rédigez votre email ci-dessous, puis cliquez "Améliorer" pour que l'IA le peaufine.</p>
-        <input type="text" class="form-input improve-subject"
-               placeholder="Sujet de l'email..." />
-        <textarea class="form-input cust-textarea improve-body" rows={7}
-                  placeholder="Votre email à améliorer..."></textarea>
-        <button class="btn btn-primary btn-improve"
-                style="align-self:flex-start" disabled>🔧 Améliorer avec l'IA</button>
-        <p class="ai-coming-soon">✦ Fonctionnalité disponible prochainement</p>
-        <div class="improve-result hidden">
-          <input type="text" class="form-input subject-improved"
-                 readonly placeholder="Sujet amélioré" />
-          <textarea class="form-input body-improved" rows={6}
-                    readonly placeholder="Contenu amélioré"></textarea>
-          <button class="btn btn-secondary btn-use-improved"
-                  style="align-self:flex-start">Utiliser la version améliorée →</button>
         </div>
       </div>
 
@@ -343,14 +326,6 @@ for (const k of EMAIL_KEYS) {
         card.querySelector<HTMLButtonElement>('[data-tab="manual"]')?.click();
       });
 
-      // 6. "Utiliser la version améliorée" — copy improved result into manual mode and switch tab
-      card.querySelector<HTMLElement>('.btn-use-improved')?.addEventListener('click', () => {
-        const subject = card.querySelector<HTMLInputElement>('.subject-improved')?.value ?? '';
-        const body    = card.querySelector<HTMLTextAreaElement>('.body-improved')?.value  ?? '';
-        if (subjectInput) subjectInput.value = subject;
-        if (bodyInput)    bodyInput.value    = body;
-        card.querySelector<HTMLButtonElement>('[data-tab="manual"]')?.click();
-      });
     });
   }
 
@@ -463,16 +438,22 @@ for (const k of EMAIL_KEYS) {
   font-style: italic;
   margin: 0;
 }
-.improve-hint { font-size: 0.875rem; color: var(--gray-light); margin: 0; }
 
-.generation-result,
-.improve-result {
+.generation-result {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--line);
 }
-.generation-result.hidden,
-.improve-result.hidden { display: none; }
+.generation-result.hidden { display: none; }
+
+.manual-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+.btn-improve:disabled { opacity: 0.45; cursor: not-allowed; }
 </style>
