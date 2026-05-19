@@ -28,8 +28,10 @@ const p = Astro.url.pathname;
 </head>
 <body data-mode="dark">
 
+  <a href="#main-content" class="skip-link">Aller au contenu principal</a>
+
   <!-- Mobile topbar -->
-  <div class="cl-topbar" aria-hidden="true">
+  <div class="cl-topbar">
     <a href="/client/dashboard" class="cl-topbar__brand">AEVUM<span class="cl-brand__dot"></span></a>
     <button class="cl-hamburger" id="cl-hamburger" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="cl-sidebar">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -102,6 +104,12 @@ const p = Astro.url.pathname;
       toggleMenu(!isOpen);
     });
     overlay?.addEventListener('click', () => toggleMenu(false));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && hamburger?.getAttribute('aria-expanded') === 'true') {
+        toggleMenu(false);
+        hamburger?.focus();
+      }
+    });
   </script>
 
 </body>
@@ -311,6 +319,15 @@ textarea.form-input { resize: vertical; min-height: 120px; }
   font-weight: 600;
   margin-bottom: 1rem;
 }
+
+/* Skip link */
+.skip-link {
+  position: absolute; top: -100%; left: 1rem;
+  padding: 0.75rem 1.5rem; background: var(--ink); color: var(--bg);
+  border-radius: var(--r-sm); font-weight: 600; z-index: 1000;
+  transition: top 0.2s;
+}
+.skip-link:focus { top: 1rem; }
 
 /* ── Client Shell ── */
 .cl-shell {
