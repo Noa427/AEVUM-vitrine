@@ -1,6 +1,6 @@
 ---
 export const prerender = false;
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ClientLayout from '../../layouts/ClientLayout.astro';
 import { getClientFromCookie } from '../../lib/auth';
 
 const auth = await getClientFromCookie(Astro.request);
@@ -23,7 +23,7 @@ try {
     const data = await res.json();
     history = Array.isArray(data) ? data : [];
   } else {
-    fetchError = 'Impossible de charger l\'historique.';
+    fetchError = "Impossible de charger l'historique.";
   }
 } catch {
   fetchError = 'Erreur réseau. Réessayez.';
@@ -36,21 +36,18 @@ function fmtDate(iso: string): string {
 }
 ---
 
-<BaseLayout
+<ClientLayout
   title="Historique — AEVUM"
   description="Historique complet de vos activités AEVUM."
   canonical="/client/history"
+  email={auth.email}
 >
 
 <section class="section history-section">
   <div class="container history-container">
 
     <div class="history-header">
-      <a href="/client/dashboard" class="back-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-        Retour au tableau de bord
-      </a>
-      <span class="accent-line" style="margin:1rem 0"></span>
+      <span class="accent-line" style="margin:0 0 1rem"></span>
       <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Historique d'activité</h1>
     </div>
 
@@ -59,16 +56,18 @@ function fmtDate(iso: string): string {
     )}
 
     {!fetchError && history.length === 0 && (
-      <div class="card" style="padding:2rem;color:var(--gray);text-align:center">Aucune activité enregistrée pour le moment.</div>
+      <div class="card" style="padding:2rem;color:var(--gray);text-align:center">
+        Aucune activité pour le moment. Les automatisations apparaîtront ici dès le premier déclenchement.
+      </div>
     )}
 
     {history.length > 0 && (
-      <div class="card" style="padding:0;overflow:hidden">
-        <table class="hist-table" aria-label="Historique d'activité">
+      <div class="card hist-card" style="padding:0;overflow:hidden">
+        <table class="hist-table" id="hist-table" aria-label="Historique d'activité">
           <thead>
             <tr>
               <th scope="col">Date</th>
-              <th scope="col">Action</th>
+              <th scope="col">Type d'action</th>
               <th scope="col">Détails</th>
             </tr>
           </thead>
@@ -88,23 +87,51 @@ function fmtDate(iso: string): string {
   </div>
 </section>
 
-</BaseLayout>
+</ClientLayout>
+
+<script>
+  const PAGE_SIZE = 50;
+  const table = document.getElementById('hist-table');
+  if (table) {
+    const rows = Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr'));
+    if (rows.length > PAGE_SIZE) {
+      let currentPage = 0;
+      const totalPages = Math.ceil(rows.length / PAGE_SIZE);
+
+      const pager = document.createElement('div');
+      pager.className = 'hist-pager';
+      pager.innerHTML = `
+        <button class="btn btn-secondary hist-btn" id="hist-prev" disabled>← Précédent</button>
+        <span class="hist-page-info" id="hist-info"></span>
+        <button class="btn btn-secondary hist-btn" id="hist-next">Suivant →</button>
+      `;
+      table.closest('.hist-card')?.after(pager);
+
+      const prevBtn = document.getElementById('hist-prev') as HTMLButtonElement;
+      const nextBtn = document.getElementById('hist-next') as HTMLButtonElement;
+      const infoEl  = document.getElementById('hist-info');
+
+      function showPage(page: number) {
+        rows.forEach((row, i) => {
+          row.style.display = (i >= page * PAGE_SIZE && i < (page + 1) * PAGE_SIZE) ? '' : 'none';
+        });
+        currentPage = page;
+        if (infoEl) infoEl.textContent = `Page ${page + 1} / ${totalPages}`;
+        prevBtn.disabled = page === 0;
+        nextBtn.disabled = page === totalPages - 1;
+      }
+
+      prevBtn.addEventListener('click', () => showPage(currentPage - 1));
+      nextBtn.addEventListener('click', () => showPage(currentPage + 1));
+      showPage(0);
+    }
+  }
+</script>
 
 <style>
-  .history-section { padding-top: 7rem; }
+  .history-section { padding-top: 0; }
   .history-container { max-width: 900px; }
   .history-header { margin-bottom: 2rem; }
-
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9375rem;
-    color: var(--gray-light);
-    transition: color var(--transition);
-    margin-bottom: 0.25rem;
-  }
-  .back-link:hover { color: var(--primary); }
 
   .hist-error {
     padding: 1rem 1.5rem;
@@ -140,6 +167,16 @@ function fmtDate(iso: string): string {
   .td-date { white-space: nowrap; color: var(--gray); font-size: 0.8125rem; width: 10rem; }
   .td-action { color: var(--light); font-weight: 500; }
   .td-details { color: var(--gray-light); }
+
+  .hist-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .hist-btn { padding: 10px 18px; font-size: 14px; }
+  .hist-page-info { font-size: 0.875rem; color: var(--gray); min-width: 80px; text-align: center; }
 
   @media (max-width: 600px) {
     .hist-table th:last-child,

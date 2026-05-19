@@ -1,6 +1,6 @@
 ---
 export const prerender = false;
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ClientLayout from '../../layouts/ClientLayout.astro';
 import { getClientFromCookie } from '../../lib/auth';
 
 const auth = await getClientFromCookie(Astro.request);
@@ -8,7 +8,6 @@ if (!auth) {
   return Astro.redirect('/login');
 }
 
-// Logout shortcut
 if (Astro.url.searchParams.get('logout') === '1') {
   Astro.cookies.delete('aevum_token', { path: '/' });
   return Astro.redirect('/login');
@@ -71,7 +70,7 @@ if (Astro.request.method === 'POST') {
         emailMsg = 'Email mis à jour.';
       } else {
         const data = await res.json().catch(() => ({}));
-        emailError = data.message ?? data.error ?? 'Erreur lors du changement d\'email.';
+        emailError = data.message ?? data.error ?? "Erreur lors du changement d'email.";
       }
     } catch {
       emailError = 'Une erreur est survenue, réessayez.';
@@ -80,20 +79,18 @@ if (Astro.request.method === 'POST') {
 }
 ---
 
-<BaseLayout
+<ClientLayout
   title="Paramètres — AEVUM"
   description="Gérez votre mot de passe et votre adresse email."
   canonical="/client/settings"
+  email={auth.email}
 >
 
 <section class="section settings-section">
   <div class="container settings-container">
+
     <div style="margin-bottom:2.5rem">
-      <a href="/client/dashboard" class="settings-back-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-        Tableau de bord
-      </a>
-      <span class="accent-line" style="margin:1rem 0"></span>
+      <span class="accent-line" style="margin:0 0 1rem"></span>
       <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Paramètres</h1>
     </div>
 
@@ -103,9 +100,21 @@ if (Astro.request.method === 'POST') {
       </div>
     )}
 
+    <!-- Email actuel -->
+    <div class="card settings-card">
+      <h2 class="settings-card-title">Email actuel</h2>
+      <input
+        type="text"
+        value={auth.email}
+        disabled
+        class="form-input"
+        aria-label="Email actuel (lecture seule)"
+      />
+    </div>
+
     <!-- Password form -->
     <div class="card settings-card">
-      <h2 style="font-size:1.125rem;margin-bottom:1.5rem">Changer le mot de passe</h2>
+      <h2 class="settings-card-title">Changer le mot de passe</h2>
       {passwordMsg && <div class="success-msg" role="alert"><span>{passwordMsg}</span></div>}
       {passwordError && <div class="settings-error" role="alert">{passwordError}</div>}
       <form method="POST" style="display:flex;flex-direction:column;gap:1.25rem">
@@ -128,38 +137,49 @@ if (Astro.request.method === 'POST') {
 
     <!-- Email form -->
     {!forceChange && (
-    <div class="card settings-card">
-      <h2 style="font-size:1.125rem;margin-bottom:1.5rem">Changer l'email</h2>
-      {emailMsg && <div class="success-msg" role="alert"><span>{emailMsg}</span></div>}
-      {emailError && <div class="settings-error" role="alert">{emailError}</div>}
-      <form method="POST" style="display:flex;flex-direction:column;gap:1.25rem">
-        <input type="hidden" name="action" value="email" />
-        <div class="form-group">
-          <label for="email-pw" class="form-label">Mot de passe actuel</label>
-          <input type="password" id="email-pw" name="currentPassword" class="form-input" required autocomplete="current-password" />
-        </div>
-        <div class="form-group">
-          <label for="email-new" class="form-label">Nouvel email</label>
-          <input type="email" id="email-new" name="newEmail" class="form-input" placeholder="nouveau@exemple.fr" required autocomplete="email" />
-        </div>
-        <button type="submit" class="btn btn-primary" style="align-self:flex-start">Mettre à jour l'email</button>
-      </form>
-    </div>
+      <div class="card settings-card">
+        <h2 class="settings-card-title">Changer l'email</h2>
+        {emailMsg && <div class="success-msg" role="alert"><span>{emailMsg}</span></div>}
+        {emailError && <div class="settings-error" role="alert">{emailError}</div>}
+        <form method="POST" style="display:flex;flex-direction:column;gap:1.25rem">
+          <input type="hidden" name="action" value="email" />
+          <div class="form-group">
+            <label for="email-pw" class="form-label">Mot de passe actuel</label>
+            <input type="password" id="email-pw" name="currentPassword" class="form-input" required autocomplete="current-password" />
+          </div>
+          <div class="form-group">
+            <label for="email-new" class="form-label">Nouvel email</label>
+            <input type="email" id="email-new" name="newEmail" class="form-input" placeholder="nouveau@exemple.fr" required autocomplete="email" />
+          </div>
+          <button type="submit" class="btn btn-primary" style="align-self:flex-start">Mettre à jour l'email</button>
+        </form>
+      </div>
     )}
 
     <!-- Logout -->
-    <div style="margin-top:2rem">
-      <a href="/client/settings?logout=1" class="btn" style="background:var(--dark-elevated);color:var(--gray-light)">Se déconnecter</a>
+    <div class="settings-logout-section">
+      <hr class="settings-divider" />
+      <h2 class="settings-card-title">Déconnexion</h2>
+      <p style="color:var(--gray-light);font-size:0.9375rem;margin:0.5rem 0 1.5rem">
+        Vous serez redirigé vers la page de connexion.
+      </p>
+      <a href="/client/settings?logout=1" class="btn btn-logout">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Se déconnecter
+      </a>
     </div>
+
   </div>
 </section>
 
-</BaseLayout>
+</ClientLayout>
 
 <style>
-  .settings-section { padding-top: 8rem; }
+  .settings-section { padding-top: 0; }
   .settings-container { max-width: 600px; }
-  .settings-card { padding: 2rem; margin-bottom: 2rem; }
+  .settings-card { padding: 2rem; margin-bottom: 1.5rem; }
+  .settings-card-title { font-size: 1.0625rem; font-weight: 600; color: var(--light); margin-bottom: 1.25rem; }
+
   .force-banner {
     padding: 1rem 1.5rem;
     background: rgba(234,179,8,0.12);
@@ -178,14 +198,22 @@ if (Astro.request.method === 'POST') {
     font-size: 0.9375rem;
     margin-bottom: 1rem;
   }
-  .settings-back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9375rem;
-    color: var(--gray-light);
-    transition: color var(--transition);
-    margin-bottom: 0.25rem;
+
+  .settings-logout-section { margin-top: 1rem; }
+  .settings-divider {
+    border: none;
+    border-top: 1px solid var(--gray-border);
+    margin: 0 0 2rem;
   }
-  .settings-back-link:hover { color: var(--primary); }
+  .btn-logout {
+    background: rgba(239,68,68,0.10);
+    color: #EF4444;
+    border-color: rgba(239,68,68,0.28);
+    border-radius: 999px;
+  }
+  .btn-logout:hover {
+    background: rgba(239,68,68,0.18);
+    border-color: #EF4444;
+    transform: translateY(-1px);
+  }
 </style>

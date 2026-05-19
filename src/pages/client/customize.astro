@@ -1,6 +1,6 @@
 ---
 export const prerender = false;
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ClientLayout from '../../layouts/ClientLayout.astro';
 import { getClientFromCookie } from '../../lib/auth';
 
 const auth = await getClientFromCookie(Astro.request);
@@ -13,7 +13,6 @@ let successType = '';
 let errorType = '';
 let errorMsg = '';
 
-// Traitement POST
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
   const configType = (form.get('config_type') as string ?? '').trim();
@@ -44,7 +43,6 @@ if (Astro.request.method === 'POST') {
   }
 }
 
-// Toujours re-fetcher après POST pour afficher valeurs fraîches
 type ConfigEntry = { config_type: string; value: string };
 let configs: Record<string, string> = {};
 let senderName = '';
@@ -75,8 +73,15 @@ try {
   fetchError = 'Impossible de charger vos configurations. Réessayez.';
 }
 
+const VARIABLE_HINTS: Record<string, string[]> = {
+  template_onboarding_j0: ['{{nom_client}}', '{{lien_acces}}', '{{nom_formateur}}'],
+  template_onboarding_j3: ['{{nom_client}}', '{{lien_acces}}', '{{nom_formateur}}'],
+  template_onboarding_j7: ['{{nom_client}}', '{{lien_acces}}', '{{nom_formateur}}'],
+  template_failed_payment: ['{{nom_client}}', '{{montant}}', '{{lien_paiement}}'],
+};
+
 const CONFIG_TYPES = [
-  { key: 'sender_name', label: 'Nom d\'expéditeur', multiline: false, defaultValue: senderName },
+  { key: 'sender_name', label: "Nom d'expéditeur", multiline: false, defaultValue: senderName },
   { key: 'template_onboarding_j0', label: 'Email onboarding J0', multiline: true, defaultValue: '' },
   { key: 'template_onboarding_j3', label: 'Email onboarding J3', multiline: true, defaultValue: '' },
   { key: 'template_onboarding_j7', label: 'Email onboarding J7', multiline: true, defaultValue: '' },
@@ -84,23 +89,20 @@ const CONFIG_TYPES = [
 ] as const;
 ---
 
-<BaseLayout
+<ClientLayout
   title="Personnalisation — AEVUM"
   description="Personnalisez vos templates d'emails et votre nom d'expéditeur."
   canonical="/client/customize"
+  email={auth.email}
 >
 
 <section class="section customize-section">
   <div class="container customize-container">
 
     <div class="customize-header">
-      <a href="/client/dashboard" class="back-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-        Retour au tableau de bord
-      </a>
-      <span class="accent-line" style="margin:1rem 0"></span>
+      <span class="accent-line" style="margin:0 0 1rem"></span>
       <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Personnaliser les templates</h1>
-      <p style="margin-top:0.5rem;max-width:none">Configurez vos emails envoyés automatiquement par AEVUM.</p>
+      <p style="margin-top:0.5rem;max-width:none;color:var(--gray-light)">Configurez vos emails envoyés automatiquement par AEVUM.</p>
     </div>
 
     {fetchError && (
@@ -111,8 +113,9 @@ const CONFIG_TYPES = [
       const currentValue = configs[key] ?? defaultValue;
       const isSuccess = successType === key;
       const isError = errorType === key;
+      const hints = VARIABLE_HINTS[key];
       return (
-        <div class="card cust-card">
+        <div class="card cust-card" data-config={key}>
           <h2 class="cust-card-title">{label}</h2>
           {isSuccess && (
             <div class="success-msg" role="alert"><span>Sauvegardé avec succès.</span></div>
@@ -123,12 +126,24 @@ const CONFIG_TYPES = [
           <form method="POST" class="cust-form">
             <input type="hidden" name="config_type" value={key} />
             {multiline ? (
-              <textarea
-                name="value"
-                class="form-input cust-textarea"
-                rows={6}
-                placeholder={`Contenu de votre ${label.toLowerCase()}...`}
-              >{currentValue}</textarea>
+              <>
+                <textarea
+                  name="value"
+                  class="form-input cust-textarea"
+                  rows={6}
+                  placeholder={`Contenu de votre ${label.toLowerCase()}...`}
+                >{currentValue}</textarea>
+                {hints && (
+                  <div class="cust-hints">
+                    <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+                    <div class="cust-hints-list">
+                      {hints.map((v) => (
+                        <code class="cust-hint" data-var={v}>{v}</code>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <input
                 type="text"
@@ -149,24 +164,28 @@ const CONFIG_TYPES = [
   </div>
 </section>
 
-</BaseLayout>
+</ClientLayout>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.cust-hint').forEach((hint) => {
+    hint.addEventListener('click', () => {
+      const variable = hint.dataset.var;
+      const card = hint.closest<HTMLElement>('.cust-card');
+      const textarea = card?.querySelector<HTMLTextAreaElement>('textarea');
+      if (!textarea || !variable) return;
+      const start = textarea.selectionStart ?? textarea.value.length;
+      const end = textarea.selectionEnd ?? textarea.value.length;
+      textarea.value = textarea.value.substring(0, start) + variable + textarea.value.substring(end);
+      textarea.selectionStart = textarea.selectionEnd = start + variable.length;
+      textarea.focus();
+    });
+  });
+</script>
 
 <style>
-  .customize-section { padding-top: 7rem; }
+  .customize-section { padding-top: 0; }
   .customize-container { max-width: 700px; }
   .customize-header { margin-bottom: 2.5rem; }
-  .customize-header p { color: var(--gray-light); }
-
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9375rem;
-    color: var(--gray-light);
-    transition: color var(--transition);
-    margin-bottom: 0.25rem;
-  }
-  .back-link:hover { color: var(--primary); }
 
   .cust-error {
     padding: 1rem 1.5rem;
@@ -190,4 +209,21 @@ const CONFIG_TYPES = [
   .cust-card-title { font-size: 1rem; font-weight: 600; color: var(--light); margin-bottom: 1rem; }
   .cust-form { display: flex; flex-direction: column; }
   .cust-textarea { font-family: monospace; font-size: 0.875rem; resize: vertical; min-height: 130px; }
+
+  .cust-hints { margin-top: 0.625rem; }
+  .cust-hints-label { font-size: 0.75rem; color: var(--gray); margin-bottom: 0.4rem; }
+  .cust-hints-list { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+  .cust-hint {
+    font-size: 0.75rem;
+    font-family: monospace;
+    background: var(--dark-elevated);
+    color: var(--gray-light);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-sm);
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    user-select: none;
+  }
+  .cust-hint:hover { background: var(--primary-light); color: var(--light); }
 </style>
