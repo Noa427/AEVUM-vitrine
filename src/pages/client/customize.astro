@@ -280,6 +280,18 @@ for (const k of EMAIL_KEYS) {
   /* ── Editor interactions ── */
   function initEditor() {
     document.querySelectorAll<HTMLElement>('.cust-card').forEach((card) => {
+      // Pre-fill on every load (DOM is fresh after View Transitions)
+      const subjectInput = card.querySelector<HTMLInputElement>('.subject-input');
+      const bodyInput    = card.querySelector<HTMLTextAreaElement>('.body-input');
+      if (subjectInput && bodyInput) {
+        subjectInput.value = card.dataset.subject ?? '';
+        bodyInput.value    = card.dataset.body    ?? '';
+      }
+
+      // Event listeners — register only once
+      if (card.dataset.initialized) return;
+      card.dataset.initialized = 'true';
+
       const tabs   = card.querySelectorAll<HTMLButtonElement>('.editor-tab');
       const panels = card.querySelectorAll<HTMLElement>('.tab-panel');
 
@@ -295,15 +307,7 @@ for (const k of EMAIL_KEYS) {
         });
       });
 
-      // 2. Pre-fill manual mode fields from data-* attributes (email templates only)
-      const subjectInput = card.querySelector<HTMLInputElement>('.subject-input');
-      const bodyInput    = card.querySelector<HTMLTextAreaElement>('.body-input');
-      if (subjectInput && bodyInput) {
-        subjectInput.value = card.dataset.subject ?? '';
-        bodyInput.value    = card.dataset.body    ?? '';
-      }
-
-      // 3. Save interceptor — serialize {subject, body} into hidden-value before form POST
+      // 2. Save interceptor — serialize {subject, body} into hidden-value before form POST
       const form = card.querySelector<HTMLFormElement>('form.cust-form');
       if (form) {
         form.addEventListener('submit', () => {
