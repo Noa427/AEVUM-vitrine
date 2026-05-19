@@ -1,6 +1,6 @@
 ---
 export const prerender = false;
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ClientLayout from '../../layouts/ClientLayout.astro';
 import { getClientFromCookie } from '../../lib/auth';
 
 const auth = await getClientFromCookie(Astro.request);
@@ -52,7 +52,7 @@ if (histResult.status === 'fulfilled' && histResult.value.ok) {
 }
 
 function fmt(n: number | undefined): string {
-  return n != null ? String(n) : '—';
+  return n != null ? String(n) : '0';
 }
 
 function fmtDate(iso: string): string {
@@ -62,10 +62,11 @@ function fmtDate(iso: string): string {
 }
 ---
 
-<BaseLayout
+<ClientLayout
   title="Mon espace — AEVUM"
   description="Tableau de bord de votre espace client AEVUM."
   canonical="/client/dashboard"
+  email={auth.email}
 >
 
 <section class="section dash-section">
@@ -105,30 +106,55 @@ function fmtDate(iso: string): string {
     <div class="dash-block">
       <h2 class="block-title">Automatisations actives</h2>
       <div class="auto-grid">
-        <div class="auto-card card">
-          <p class="auto-name">Onboarding J0 / J3 / J7</p>
-          <span class={`auto-badge ${automations?.onboarding ? 'badge-actif' : 'badge-off'}`}>
-            {automations?.onboarding ? 'Actif' : 'Non configuré'}
-          </span>
-        </div>
-        <div class="auto-card card">
-          <p class="auto-name">Recouvrement impayés</p>
-          <span class={`auto-badge ${automations?.recouvrement ? 'badge-actif' : 'badge-off'}`}>
-            {automations?.recouvrement ? 'Actif' : 'Non configuré'}
-          </span>
-        </div>
-        <div class="auto-card card">
-          <p class="auto-name">Support IA</p>
-          <span class={`auto-badge ${automations?.support_ia ? 'badge-actif' : 'badge-off'}`}>
-            {automations?.support_ia ? 'Actif' : 'Non configuré'}
-          </span>
-        </div>
-        <div class="auto-card card">
-          <p class="auto-name">Upsell J+30</p>
-          <span class={`auto-badge ${automations?.upsell ? 'badge-actif' : 'badge-off'}`}>
-            {automations?.upsell ? 'Actif' : 'Non configuré'}
-          </span>
-        </div>
+
+        {automations?.onboarding ? (
+          <div class="auto-card card">
+            <p class="auto-name">Onboarding J0 / J3 / J7</p>
+            <span class="auto-badge badge-actif">Actif</span>
+          </div>
+        ) : (
+          <a href="/client/customize" class="auto-card auto-card--link card">
+            <p class="auto-name">Onboarding J0 / J3 / J7</p>
+            <span class="auto-badge badge-off">Non configuré →</span>
+          </a>
+        )}
+
+        {automations?.recouvrement ? (
+          <div class="auto-card card">
+            <p class="auto-name">Recouvrement impayés</p>
+            <span class="auto-badge badge-actif">Actif</span>
+          </div>
+        ) : (
+          <a href="/client/customize" class="auto-card auto-card--link card">
+            <p class="auto-name">Recouvrement impayés</p>
+            <span class="auto-badge badge-off">Non configuré →</span>
+          </a>
+        )}
+
+        {automations?.support_ia ? (
+          <div class="auto-card card">
+            <p class="auto-name">Support IA</p>
+            <span class="auto-badge badge-actif">Actif</span>
+          </div>
+        ) : (
+          <a href="/client/customize" class="auto-card auto-card--link card">
+            <p class="auto-name">Support IA</p>
+            <span class="auto-badge badge-off">Non configuré →</span>
+          </a>
+        )}
+
+        {automations?.upsell ? (
+          <div class="auto-card card">
+            <p class="auto-name">Upsell J+30</p>
+            <span class="auto-badge badge-actif">Actif</span>
+          </div>
+        ) : (
+          <a href="/client/customize" class="auto-card auto-card--link card">
+            <p class="auto-name">Upsell J+30</p>
+            <span class="auto-badge badge-off">Non configuré →</span>
+          </a>
+        )}
+
       </div>
     </div>
 
@@ -152,35 +178,13 @@ function fmtDate(iso: string): string {
       )}
     </div>
 
-    <!-- SECTION 4 : Navigation -->
-    <div class="dash-block">
-      <h2 class="block-title">Accès rapide</h2>
-      <div class="nav-grid">
-        <a href="/client/history" class="nav-card card">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
-          <p class="nav-card-title">Historique complet</p>
-          <p class="nav-card-desc">Tous vos logs d'activité</p>
-        </a>
-        <a href="/client/customize" class="nav-card card">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          <p class="nav-card-title">Personnaliser les templates</p>
-          <p class="nav-card-desc">Emails d'onboarding, relances, upsell</p>
-        </a>
-        <a href="/client/settings" class="nav-card card">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <p class="nav-card-title">Paramètres du compte</p>
-          <p class="nav-card-desc">Mot de passe, email, déconnexion</p>
-        </a>
-      </div>
-    </div>
-
   </div>
 </section>
 
-</BaseLayout>
+</ClientLayout>
 
 <style>
-  .dash-section { padding-top: 7rem; }
+  .dash-section { padding-top: 0; }
   .dash-container { max-width: 960px; }
   .dash-header { margin-bottom: 2.5rem; }
   .dash-header p { max-width: none; margin: 0; font-size: 1rem; color: var(--gray-light); }
@@ -188,7 +192,6 @@ function fmtDate(iso: string): string {
   .dash-block { margin-bottom: 3rem; }
   .block-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--light); letter-spacing: -0.01em; }
 
-  /* Stats */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -198,13 +201,14 @@ function fmtDate(iso: string): string {
   .stat-label { font-size: 0.8125rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; max-width: none; }
   .stat-value { font-size: 2rem; font-weight: 700; color: var(--light); letter-spacing: -0.03em; }
 
-  /* Automations */
   .auto-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
   .auto-card { padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+  .auto-card--link { text-decoration: none; color: inherit; }
+  .auto-card--link:hover { border-color: var(--line-2); }
   .auto-name { font-size: 0.9375rem; color: var(--light); max-width: none; }
   .auto-badge {
     display: inline-block;
@@ -218,7 +222,6 @@ function fmtDate(iso: string): string {
   .badge-actif { background: var(--success-light); color: var(--success); }
   .badge-off { background: var(--dark-elevated); color: var(--gray); }
 
-  /* Activity */
   .activity-list { list-style: none; }
   .activity-item {
     display: flex;
@@ -233,28 +236,9 @@ function fmtDate(iso: string): string {
   .activity-action { font-size: 0.9375rem; color: var(--light); font-weight: 500; }
   .activity-details { font-size: 0.875rem; color: var(--gray-light); }
 
-  /* Nav cards */
-  .nav-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-  }
-  .nav-card {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    text-decoration: none;
-    color: inherit;
-  }
-  .nav-card svg { color: var(--primary); margin-bottom: 0.25rem; }
-  .nav-card-title { font-size: 1rem; font-weight: 600; color: var(--light); max-width: none; }
-  .nav-card-desc { font-size: 0.875rem; color: var(--gray-light); max-width: none; }
-
   @media (max-width: 768px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .auto-grid { grid-template-columns: 1fr; }
-    .nav-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 480px) {
     .stats-grid { grid-template-columns: 1fr; }
