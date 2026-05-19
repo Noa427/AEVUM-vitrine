@@ -88,6 +88,31 @@ const CONFIG_TYPES = [
   { key: 'template_onboarding_j7', label: "Email J+7 (7 jours après l'achat)",                        multiline: true,  defaultValue: '' },
   { key: 'template_failed_payment', label: 'Email de relance paiement échoué',                        multiline: true,  defaultValue: '' },
 ] as const;
+
+// Parse JSON {subject, body} depuis la valeur backend ; fallback plain-text
+function parseConfig(raw: string): { subject: string; body: string } {
+  try {
+    const p = JSON.parse(raw);
+    if (p && typeof p.subject === 'string' && typeof p.body === 'string') return p;
+  } catch {}
+  return { subject: '', body: raw };
+}
+
+const EMAIL_KEYS = [
+  'template_onboarding_j0',
+  'template_onboarding_j3',
+  'template_onboarding_j7',
+  'template_failed_payment',
+] as const;
+
+// true → aucun template n'a encore été personnalisé → afficher la bannière
+const allDefaultTemplates = EMAIL_KEYS.every((k) => !configs[k]);
+
+// Valeurs pré-parsées pour chaque template email
+const PARSED_CONFIGS: Record<string, { subject: string; body: string }> = {};
+for (const k of EMAIL_KEYS) {
+  PARSED_CONFIGS[k] = parseConfig(configs[k] ?? '');
+}
 ---
 
 <ClientLayout
