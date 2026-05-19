@@ -75,18 +75,18 @@ if (autoResult.status === 'fulfilled' && autoResult.value.ok) {
 }
 
 const VARIABLE_HINTS: Record<string, string[]> = {
-  template_onboarding_j0: ['{{nom_client}}', '{{lien_acces}}', '{{nom_formateur}}'],
-  template_onboarding_j3: ['{{nom_client}}', '{{lien_acces}}', '{{nom_formateur}}'],
-  template_onboarding_j7: ['{{nom_client}}', '{{lien_acces}}', '{{nom_formateur}}'],
-  template_failed_payment: ['{{nom_client}}', '{{montant}}', '{{lien_paiement}}'],
+  template_onboarding_j0: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}', '{{mot_de_passe}}'],
+  template_onboarding_j3: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}'],
+  template_onboarding_j7: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}'],
+  template_failed_payment: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
 };
 
 const CONFIG_TYPES = [
-  { key: 'sender_name', label: "Nom d'expéditeur", multiline: false, defaultValue: senderName },
-  { key: 'template_onboarding_j0', label: 'Email onboarding J0', multiline: true, defaultValue: '' },
-  { key: 'template_onboarding_j3', label: 'Email onboarding J3', multiline: true, defaultValue: '' },
-  { key: 'template_onboarding_j7', label: 'Email onboarding J7', multiline: true, defaultValue: '' },
-  { key: 'template_failed_payment', label: 'Email relance impayé', multiline: true, defaultValue: '' },
+  { key: 'sender_name',            label: "Nom affiché dans l'email (expéditeur)",                    multiline: false, defaultValue: senderName },
+  { key: 'template_onboarding_j0', label: "Email de bienvenue (envoyé immédiatement après l'achat)",  multiline: true,  defaultValue: '' },
+  { key: 'template_onboarding_j3', label: "Email J+3 (3 jours après l'achat)",                        multiline: true,  defaultValue: '' },
+  { key: 'template_onboarding_j7', label: "Email J+7 (7 jours après l'achat)",                        multiline: true,  defaultValue: '' },
+  { key: 'template_failed_payment', label: 'Email de relance paiement échoué',                        multiline: true,  defaultValue: '' },
 ] as const;
 ---
 
