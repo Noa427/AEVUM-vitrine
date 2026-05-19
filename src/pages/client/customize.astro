@@ -262,23 +262,100 @@ for (const k of EMAIL_KEYS) {
 </ClientLayout>
 
 <script>
-  function initHints() {
-    document.querySelectorAll<HTMLElement>('.cust-hint').forEach((hint) => {
-      hint.addEventListener('click', () => {
-        const variable = hint.dataset.var;
-        const card = hint.closest<HTMLElement>('.cust-card');
-        const textarea = card?.querySelector<HTMLTextAreaElement>('textarea');
-        if (!textarea || !variable) return;
-        const start = textarea.selectionStart ?? textarea.value.length;
-        const end = textarea.selectionEnd ?? textarea.value.length;
-        textarea.value = textarea.value.substring(0, start) + variable + textarea.value.substring(end);
-        textarea.selectionStart = textarea.selectionEnd = start + variable.length;
-        textarea.focus();
+  /* ── Banner dismiss ── */
+  function initBanner() {
+    const banner = document.getElementById('default-banner');
+    const btn    = document.getElementById('banner-close');
+    if (!banner || !btn) return;
+    if (sessionStorage.getItem('aevum_banner_dismissed')) {
+      banner.style.display = 'none';
+      return;
+    }
+    btn.addEventListener('click', () => {
+      banner.style.display = 'none';
+      sessionStorage.setItem('aevum_banner_dismissed', '1');
+    });
+  }
+
+  /* ── Editor interactions ── */
+  function initEditor() {
+    document.querySelectorAll<HTMLElement>('.cust-card').forEach((card) => {
+      const tabs   = card.querySelectorAll<HTMLButtonElement>('.editor-tab');
+      const panels = card.querySelectorAll<HTMLElement>('.tab-panel');
+
+      // 1. Tab switching
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          if ((tab as HTMLButtonElement).disabled) return;
+          tabs.forEach((t)   => t.classList.remove('active'));
+          panels.forEach((p) => p.classList.add('hidden'));
+          tab.classList.add('active');
+          card.querySelector<HTMLElement>(`[data-panel="${tab.dataset.tab}"]`)
+              ?.classList.remove('hidden');
+        });
+      });
+
+      // 2. Pre-fill manual mode fields from data-* attributes (email templates only)
+      const subjectInput = card.querySelector<HTMLInputElement>('.subject-input');
+      const bodyInput    = card.querySelector<HTMLTextAreaElement>('.body-input');
+      if (subjectInput && bodyInput) {
+        subjectInput.value = card.dataset.subject ?? '';
+        bodyInput.value    = card.dataset.body    ?? '';
+      }
+
+      // 3. Save interceptor — serialize {subject, body} into hidden-value before form POST
+      const form = card.querySelector<HTMLFormElement>('form.cust-form');
+      if (form) {
+        form.addEventListener('submit', () => {
+          const hiddenVal = form.querySelector<HTMLInputElement>('.hidden-value');
+          if (!hiddenVal) return; // sender_name — value field is direct, no interception needed
+          const subject = subjectInput?.value ?? '';
+          const body    = bodyInput?.value    ?? '';
+          hiddenVal.value = JSON.stringify({ subject, body });
+        });
+      }
+
+      // 4. Click-to-insert variables into the active panel's writable textarea
+      card.querySelectorAll<HTMLElement>('.cust-hint').forEach((hint) => {
+        hint.addEventListener('click', () => {
+          const activePanel = card.querySelector<HTMLElement>('.tab-panel:not(.hidden)');
+          const textarea    = activePanel?.querySelector<HTMLTextAreaElement>('textarea:not([readonly])');
+          if (!textarea || !hint.dataset.var) return;
+          const v = hint.dataset.var;
+          const s = textarea.selectionStart ?? textarea.value.length;
+          const e = textarea.selectionEnd   ?? textarea.value.length;
+          textarea.value = textarea.value.slice(0, s) + v + textarea.value.slice(e);
+          textarea.selectionStart = textarea.selectionEnd = s + v.length;
+          textarea.focus();
+        });
+      });
+
+      // 5. "Utiliser ce contenu" — copy generated result into manual mode and switch tab
+      card.querySelector<HTMLElement>('.btn-use-result')?.addEventListener('click', () => {
+        const subject = card.querySelector<HTMLInputElement>('.subject-preview')?.value ?? '';
+        const body    = card.querySelector<HTMLTextAreaElement>('.body-preview')?.value  ?? '';
+        if (subjectInput) subjectInput.value = subject;
+        if (bodyInput)    bodyInput.value    = body;
+        card.querySelector<HTMLButtonElement>('[data-tab="manual"]')?.click();
+      });
+
+      // 6. "Utiliser la version améliorée" — copy improved result into manual mode and switch tab
+      card.querySelector<HTMLElement>('.btn-use-improved')?.addEventListener('click', () => {
+        const subject = card.querySelector<HTMLInputElement>('.subject-improved')?.value ?? '';
+        const body    = card.querySelector<HTMLTextAreaElement>('.body-improved')?.value  ?? '';
+        if (subjectInput) subjectInput.value = subject;
+        if (bodyInput)    bodyInput.value    = body;
+        card.querySelector<HTMLButtonElement>('[data-tab="manual"]')?.click();
       });
     });
   }
-  initHints();
-  document.addEventListener('astro:page-load', initHints);
+
+  initBanner();
+  initEditor();
+  document.addEventListener('astro:page-load', () => {
+    initBanner();
+    initEditor();
+  });
 </script>
 
 <style>
