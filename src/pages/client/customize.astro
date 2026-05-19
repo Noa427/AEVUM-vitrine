@@ -48,29 +48,30 @@ let configs: Record<string, string> = {};
 let senderName = '';
 let fetchError = '';
 
-try {
-  const [configsRes, autoRes] = await Promise.all([
-    fetch(`${base}/client/configs`, { headers }),
-    fetch(`${base}/client/automations`, { headers }),
-  ]);
+const [configsResult, autoResult] = await Promise.allSettled([
+  fetch(`${base}/client/configs`, { headers }),
+  fetch(`${base}/client/automations`, { headers }),
+]);
 
-  if (configsRes.status === 401 || autoRes.status === 401) {
-    Astro.cookies.delete('aevum_token', { path: '/' });
-    return Astro.redirect('/login');
-  }
+const settled = [configsResult, autoResult];
+const fulfilled = settled.filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled');
+if (fulfilled.some((r) => r.value.status === 401)) {
+  Astro.cookies.delete('aevum_token', { path: '/' });
+  return Astro.redirect('/login');
+}
 
-  if (configsRes.ok) {
-    const arr: ConfigEntry[] = await configsRes.json();
-    if (Array.isArray(arr)) {
-      for (const c of arr) configs[c.config_type] = c.value;
-    }
+if (configsResult.status === 'fulfilled' && configsResult.value.ok) {
+  const arr: ConfigEntry[] = await configsResult.value.json().catch(() => []);
+  if (Array.isArray(arr)) {
+    for (const c of arr) configs[c.config_type] = c.value;
   }
-  if (autoRes.ok) {
-    const auto = await autoRes.json();
-    senderName = auto.sender_name ?? '';
-  }
-} catch {
+} else if (configsResult.status === 'rejected' || (configsResult.status === 'fulfilled' && !configsResult.value.ok)) {
   fetchError = 'Impossible de charger vos configurations. Réessayez.';
+}
+
+if (autoResult.status === 'fulfilled' && autoResult.value.ok) {
+  const auto = await autoResult.value.json().catch(() => ({}));
+  senderName = auto.sender_name ?? '';
 }
 
 const VARIABLE_HINTS: Record<string, string[]> = {
@@ -167,19 +168,23 @@ const CONFIG_TYPES = [
 </ClientLayout>
 
 <script>
-  document.querySelectorAll<HTMLElement>('.cust-hint').forEach((hint) => {
-    hint.addEventListener('click', () => {
-      const variable = hint.dataset.var;
-      const card = hint.closest<HTMLElement>('.cust-card');
-      const textarea = card?.querySelector<HTMLTextAreaElement>('textarea');
-      if (!textarea || !variable) return;
-      const start = textarea.selectionStart ?? textarea.value.length;
-      const end = textarea.selectionEnd ?? textarea.value.length;
-      textarea.value = textarea.value.substring(0, start) + variable + textarea.value.substring(end);
-      textarea.selectionStart = textarea.selectionEnd = start + variable.length;
-      textarea.focus();
+  function initHints() {
+    document.querySelectorAll<HTMLElement>('.cust-hint').forEach((hint) => {
+      hint.addEventListener('click', () => {
+        const variable = hint.dataset.var;
+        const card = hint.closest<HTMLElement>('.cust-card');
+        const textarea = card?.querySelector<HTMLTextAreaElement>('textarea');
+        if (!textarea || !variable) return;
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? textarea.value.length;
+        textarea.value = textarea.value.substring(0, start) + variable + textarea.value.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + variable.length;
+        textarea.focus();
+      });
     });
-  });
+  }
+  initHints();
+  document.addEventListener('astro:page-load', initHints);
 </script>
 
 <style>

@@ -1,4 +1,6 @@
 ---
+import { ClientRouter } from 'astro:transitions';
+
 export interface Props {
   title: string;
   description: string;
@@ -24,7 +26,14 @@ const p = Astro.url.pathname;
   <meta name="theme-color" content="#0a0a0f" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" rel="stylesheet" />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" /></noscript>
+  <ClientRouter />
+  <link rel="prefetch" href="/client/dashboard" />
+  <link rel="prefetch" href="/client/history" />
+  <link rel="prefetch" href="/client/customize" />
+  <link rel="prefetch" href="/client/settings" />
 </head>
 <body data-mode="dark">
 
@@ -110,6 +119,8 @@ const p = Astro.url.pathname;
         hamburger?.focus();
       }
     });
+    // Close mobile drawer on every page transition
+    document.addEventListener('astro:before-swap', () => toggleMenu(false));
   </script>
 
 </body>

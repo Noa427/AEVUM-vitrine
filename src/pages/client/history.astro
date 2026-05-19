@@ -90,42 +90,49 @@ function fmtDate(iso: string): string {
 </ClientLayout>
 
 <script>
-  const PAGE_SIZE = 50;
-  const table = document.getElementById('hist-table');
-  if (table) {
+  function initPagination() {
+    const PAGE_SIZE = 50;
+    const table = document.getElementById('hist-table');
+    if (!table) return;
+    // Remove existing pager if re-initialising after navigation
+    document.querySelector('.hist-pager')?.remove();
     const rows = Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr'));
-    if (rows.length > PAGE_SIZE) {
-      let currentPage = 0;
-      const totalPages = Math.ceil(rows.length / PAGE_SIZE);
+    // Reset visibility from a previous visit
+    rows.forEach((r) => (r.style.display = ''));
+    if (rows.length <= PAGE_SIZE) return;
 
-      const pager = document.createElement('div');
-      pager.className = 'hist-pager';
-      pager.innerHTML = `
-        <button class="btn btn-secondary hist-btn" id="hist-prev" disabled>← Précédent</button>
-        <span class="hist-page-info" id="hist-info"></span>
-        <button class="btn btn-secondary hist-btn" id="hist-next">Suivant →</button>
-      `;
-      table.closest('.hist-card')?.after(pager);
+    let currentPage = 0;
+    const totalPages = Math.ceil(rows.length / PAGE_SIZE);
 
-      const prevBtn = document.getElementById('hist-prev') as HTMLButtonElement;
-      const nextBtn = document.getElementById('hist-next') as HTMLButtonElement;
-      const infoEl  = document.getElementById('hist-info');
+    const pager = document.createElement('div');
+    pager.className = 'hist-pager';
+    pager.innerHTML = `
+      <button class="btn btn-secondary hist-btn" id="hist-prev" disabled>← Précédent</button>
+      <span class="hist-page-info" id="hist-info"></span>
+      <button class="btn btn-secondary hist-btn" id="hist-next">Suivant →</button>
+    `;
+    table.closest('.hist-card')?.after(pager);
 
-      function showPage(page: number) {
-        rows.forEach((row, i) => {
-          row.style.display = (i >= page * PAGE_SIZE && i < (page + 1) * PAGE_SIZE) ? '' : 'none';
-        });
-        currentPage = page;
-        if (infoEl) infoEl.textContent = `Page ${page + 1} / ${totalPages}`;
-        prevBtn.disabled = page === 0;
-        nextBtn.disabled = page === totalPages - 1;
-      }
+    const prevBtn = document.getElementById('hist-prev') as HTMLButtonElement;
+    const nextBtn = document.getElementById('hist-next') as HTMLButtonElement;
+    const infoEl  = document.getElementById('hist-info');
 
-      prevBtn.addEventListener('click', () => showPage(currentPage - 1));
-      nextBtn.addEventListener('click', () => showPage(currentPage + 1));
-      showPage(0);
+    function showPage(page: number) {
+      rows.forEach((row, i) => {
+        row.style.display = (i >= page * PAGE_SIZE && i < (page + 1) * PAGE_SIZE) ? '' : 'none';
+      });
+      currentPage = page;
+      if (infoEl) infoEl.textContent = `Page ${page + 1} / ${totalPages}`;
+      prevBtn.disabled = page === 0;
+      nextBtn.disabled = page === totalPages - 1;
     }
+
+    prevBtn.addEventListener('click', () => showPage(currentPage - 1));
+    nextBtn.addEventListener('click', () => showPage(currentPage + 1));
+    showPage(0);
   }
+  initPagination();
+  document.addEventListener('astro:page-load', initPagination);
 </script>
 
 <style>

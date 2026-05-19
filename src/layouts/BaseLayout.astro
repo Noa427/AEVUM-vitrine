@@ -38,7 +38,9 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" rel="stylesheet" />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" /></noscript>
 
   <ClientRouter />
   <link rel="prefetch" href="/features" />
@@ -110,8 +112,8 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
    ========================================================================= */
 
 :root {
-  --bg: #0a0a0a;
-  --bg-1: #111111;
+  --bg: #0a0a0f;
+  --bg-1: #12151f;
   --bg-2: #1a1a1a;
   --bg-3: #242424;
   --paper: #0f0f0f;
@@ -144,7 +146,7 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
   --section-y: clamp(80px, 9vw, 144px);
   --r-sm: 8px;
   --r-md: 14px;
-  --r-lg: 20px;
+  --r-lg: 16px;
   --r-xl: 28px;
   --ease: cubic-bezier(.22,.61,.36,1);
   --ease-out: cubic-bezier(.16,1,.3,1);
