@@ -1,0 +1,485 @@
+---
+export interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  email: string;
+}
+
+const { title, description, canonical, email } = Astro.props;
+const siteUrl = 'https://aevum.fr';
+const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url.pathname;
+const p = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={fullCanonical} />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" rel="stylesheet" />
+</head>
+<body data-mode="dark">
+
+  <!-- Mobile topbar -->
+  <div class="cl-topbar" aria-hidden="true">
+    <a href="/client/dashboard" class="cl-topbar__brand">AEVUM<span class="cl-brand__dot"></span></a>
+    <button class="cl-hamburger" id="cl-hamburger" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="cl-sidebar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Sidebar overlay (mobile) -->
+  <div class="cl-overlay" id="cl-overlay" aria-hidden="true"></div>
+
+  <div class="cl-shell">
+
+    <!-- Sidebar -->
+    <aside class="cl-sidebar" id="cl-sidebar" aria-label="Navigation portail client">
+
+      <a href="/client/dashboard" class="cl-brand" aria-label="AEVUM — Tableau de bord">
+        AEVUM<span class="cl-brand__dot"></span>
+      </a>
+
+      <nav class="cl-nav">
+        <a href="/client/dashboard" class:list={['cl-link', { 'cl-link--active': p === '/client/dashboard' || p === '/client' }]}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          Mon espace
+        </a>
+        <a href="/client/history" class:list={['cl-link', { 'cl-link--active': p.startsWith('/client/history') }]}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          Historique
+        </a>
+        <a href="/client/customize" class:list={['cl-link', { 'cl-link--active': p.startsWith('/client/customize') }]}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Personnaliser
+        </a>
+        <a href="/client/settings" class:list={['cl-link', { 'cl-link--active': p.startsWith('/client/settings') }]}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Paramètres
+        </a>
+      </nav>
+
+      <div class="cl-sidebar__footer">
+        <span class="cl-email" title={email}>{email}</span>
+        <a href="/client/settings?logout=1" class="cl-logout">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Se déconnecter
+        </a>
+      </div>
+
+    </aside>
+
+    <!-- Main -->
+    <main class="cl-main" id="main-content">
+      <slot />
+    </main>
+
+  </div>
+
+  <script>
+    const hamburger = document.getElementById('cl-hamburger') as HTMLButtonElement | null;
+    const sidebar   = document.getElementById('cl-sidebar');
+    const overlay   = document.getElementById('cl-overlay');
+    function toggleMenu(open: boolean) {
+      sidebar?.classList.toggle('cl-sidebar--open', open);
+      overlay?.classList.toggle('cl-overlay--visible', open);
+      hamburger?.setAttribute('aria-expanded', String(open));
+    }
+    hamburger?.addEventListener('click', () => {
+      const isOpen = hamburger.getAttribute('aria-expanded') === 'true';
+      toggleMenu(!isOpen);
+    });
+    overlay?.addEventListener('click', () => toggleMenu(false));
+  </script>
+
+</body>
+</html>
+
+<style is:global>
+/* =========================================================================
+   AEVUM v3 — Client portal global styles (self-contained copy of BaseLayout tokens)
+   ========================================================================= */
+
+:root {
+  --bg: #0a0a0f;
+  --bg-1: #12151f;
+  --bg-2: #1a1a1a;
+  --bg-3: #242424;
+  --paper: #0f0f0f;
+  --ink: #fafafa;
+  --fg: #fafafa;
+  --fg-2: #d8d8d8;
+  --fg-3: #b0b0b0;
+  --fg-muted: #888888;
+  --fg-soft: #666666;
+  --fg-faint: #404040;
+  --accent: #ffffff;
+  --accent-2: #f0f0f0;
+  --accent-3: #d8d8d8;
+  --accent-soft: rgba(255,255,255,0.08);
+  --accent-line: rgba(255,255,255,0.20);
+  --glow-1: rgba(143,168,255,0.45);
+  --line: rgba(255,255,255,0.07);
+  --line-2: rgba(255,255,255,0.14);
+  --line-3: rgba(255,255,255,0.28);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 8px 24px -8px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.04) inset;
+  --shadow-lg: 0 32px 64px -24px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.05) inset;
+  --sans: 'Inter', ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif;
+  --maxw: 1280px;
+  --pad-x: clamp(20px, 4vw, 56px);
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 16px;
+  --r-xl: 28px;
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  /* legacy aliases used by client pages */
+  --dark: var(--bg);
+  --dark-soft: var(--bg-1);
+  --dark-card: var(--bg-2);
+  --dark-elevated: var(--bg-3);
+  --light: var(--fg);
+  --gray: var(--fg-muted);
+  --gray-light: var(--fg-3);
+  --gray-border: var(--line);
+  --primary: var(--accent);
+  --primary-hover: var(--accent-2);
+  --primary-light: var(--accent-soft);
+  --radius: var(--r-md);
+  --radius-sm: var(--r-sm);
+  --radius-lg: var(--r-lg);
+  --transition: .25s var(--ease);
+  --shadow-card: var(--shadow-md);
+  --success: #10B981;
+  --success-light: rgba(16,185,129,0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 96px 96px;
+  background-position: -1px -1px;
+  mask-image: radial-gradient(ellipse 80% 60% at center 20%, black 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at center 20%, black 0%, transparent 75%);
+  opacity: 0.6;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+ul, ol { list-style: none; padding: 0; margin: 0; }
+img, svg { display: block; max-width: 100%; }
+::selection { background: var(--fg); color: var(--bg); }
+h1, h2, h3, h4 { margin: 0; font-weight: 400; color: var(--fg); }
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding-left: 0;
+  padding-right: 0;
+  position: relative;
+}
+
+.section {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+  position: relative;
+}
+
+.accent-line {
+  display: block;
+  width: 40px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: transform .3s var(--ease), background .25s, color .25s, border-color .25s, box-shadow .3s;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn-primary, .btn--primary {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: transparent;
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover, .btn--primary:hover { transform: translateY(-1px); box-shadow: 0 12px 28px -10px rgba(255,255,255,0.15); }
+.btn-secondary, .btn--ghost {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--line-2);
+}
+.btn-secondary:hover, .btn--ghost:hover { border-color: var(--ink); transform: translateY(-1px); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* Cards */
+.card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: clamp(20px, 2.5vw, 32px);
+  transition: transform .35s var(--ease), border-color .35s, box-shadow .35s;
+  position: relative;
+}
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-2);
+  box-shadow: var(--shadow-md);
+}
+
+/* Grids */
+.grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+
+/* Forms */
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--fg-muted); letter-spacing: -0.005em; }
+.form-input {
+  font-family: var(--sans);
+  font-size: 15px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 13px 16px;
+  color: var(--fg);
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+  width: 100%;
+}
+.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,255,255,0.08); }
+.form-input::placeholder { color: var(--fg-soft); }
+.form-input:disabled { opacity: 0.6; cursor: not-allowed; }
+textarea.form-input { resize: vertical; min-height: 120px; }
+
+/* Messages */
+.success-msg {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(16,185,129,0.08);
+  border: 1px solid rgba(16,185,129,0.25);
+  border-radius: var(--r-sm);
+  color: #34D399;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* ── Client Shell ── */
+.cl-shell {
+  min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.cl-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  background: var(--bg-1);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem 1.25rem;
+  z-index: 40;
+  overflow-y: auto;
+}
+
+.cl-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #fafafa;
+  margin-bottom: 2rem;
+  flex-shrink: 0;
+}
+.cl-brand__dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: inline-block;
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(140,170,255,0.7), 0 0 24px rgba(180,140,255,0.4);
+}
+
+.cl-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.cl-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  transition: color .2s, background .2s;
+  text-decoration: none;
+}
+.cl-link svg { flex-shrink: 0; }
+.cl-link:hover { color: var(--fg); background: var(--accent-soft); }
+.cl-link--active { color: var(--fg); background: rgba(255,255,255,0.08); }
+
+.cl-sidebar__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  margin-top: auto;
+}
+
+.cl-email {
+  font-size: 12px;
+  color: var(--fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cl-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  transition: color .2s, background .2s;
+}
+.cl-logout:hover { color: #EF4444; background: rgba(239,68,68,0.08); }
+
+/* ── Main ── */
+.cl-main {
+  margin-left: 220px;
+  padding: 2.5rem 2.5rem;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Mobile topbar (hidden on desktop) ── */
+.cl-topbar {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  background: rgba(10,10,15,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  z-index: 50;
+}
+.cl-topbar__brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fafafa;
+}
+.cl-hamburger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--fg-muted);
+  transition: background .2s, color .2s;
+}
+.cl-hamburger:hover { background: var(--accent-soft); color: var(--fg); }
+
+/* ── Overlay ── */
+.cl-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 35;
+}
+.cl-overlay--visible { display: block; }
+
+/* ── Mobile breakpoint ── */
+@media (max-width: 860px) {
+  .cl-topbar { display: flex; }
+  .cl-sidebar {
+    transform: translateX(-220px);
+    transition: transform .3s var(--ease);
+  }
+  .cl-sidebar--open { transform: translateX(0); }
+  .cl-main {
+    margin-left: 0;
+    padding-top: calc(56px + 1.5rem);
+  }
+}
+
+@media (max-width: 600px) {
+  .cl-main { padding: calc(56px + 1.25rem) 1.25rem 2rem; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .001ms !important; }
+}
+</style>
