@@ -100,10 +100,8 @@ if (configsResult.status === 'fulfilled' && configsResult.value.ok) {
   fetchError = 'Impossible de charger vos configurations. Réessayez.';
 }
 
-if (autoResult.status === 'fulfilled' && autoResult.value.ok) {
-  const auto = await autoResult.value.json().catch(() => ({}));
-  senderName = auto.sender_name ?? '';
-}
+// sender_name vient de /client/configs (auto.senderName est camelCase → source moins fiable)
+senderName = configs['sender_name'] ?? '';
 
 type CustomAutomation = {
   id: string;
@@ -129,15 +127,18 @@ const VARIABLE_HINTS: Record<string, string[]> = {
   template_failed_payment: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
 };
 
-const CONFIG_TYPES = [
-  { key: 'sender_name',            label: "Nom affiché dans l'email (expéditeur)",                    tabLabel: 'Expéditeur',       multiline: false, defaultValue: senderName },
-  { key: 'template_onboarding_j0', label: "Email de bienvenue (envoyé immédiatement après l'achat)",  tabLabel: 'Bienvenue',         multiline: true,  defaultValue: '' },
-  { key: 'template_onboarding_j3', label: "Email J+3 (3 jours après l'achat)",                        tabLabel: 'J+3',               multiline: true,  defaultValue: '' },
-  { key: 'template_onboarding_j7', label: "Email J+7 (7 jours après l'achat)",                        tabLabel: 'J+7',               multiline: true,  defaultValue: '' },
-  { key: 'template_failed_payment', label: 'Email de relance paiement échoué',                        tabLabel: 'Relance paiement',  multiline: true,  defaultValue: '' },
+const EMAIL_CONFIGS = [
+  { key: 'template_onboarding_j0', label: "Email de bienvenue (envoyé immédiatement après l'achat)", tabLabel: 'Bienvenue' },
+  { key: 'template_onboarding_j3', label: "Email J+3 (3 jours après l'achat)",                       tabLabel: 'J+3' },
+  { key: 'template_onboarding_j7', label: "Email J+7 (7 jours après l'achat)",                        tabLabel: 'J+7' },
+  { key: 'template_failed_payment', label: 'Email de relance paiement échoué',                        tabLabel: 'Relance paiement' },
 ] as const;
 
-const initialTab = successType || errorType || 'sender_name';
+// Seules les clés template valides peuvent activer un onglet spécifique
+const validTabKeys: string[] = EMAIL_CONFIGS.map((c) => c.key);
+const initialTab = validTabKeys.includes(successType) ? successType
+  : validTabKeys.includes(errorType)                  ? errorType
+  : EMAIL_CONFIGS[0].key;
 
 // Parse JSON {subject, body} depuis la valeur backend ; fallback plain-text
 function parseConfig(raw: string): { subject: string; body: string } {
@@ -212,8 +213,23 @@ for (const k of EMAIL_KEYS) {
       <div class="cust-error" role="alert">{fetchError}</div>
     )}
 
+    <!-- Expéditeur — section indépendante, hors des onglets email -->
+    <div class="card sender-card">
+      <h2 class="cust-card-title">Nom affiché dans l'email (expéditeur)</h2>
+      {successType === 'sender_name' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      {errorType   === 'sender_name' && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+      <form method="POST">
+        <input type="hidden" name="config_type" value="sender_name" />
+        <input type="text" name="value" class="form-input sender-input"
+               value={senderName} placeholder="Ex : Jean Dupont" />
+        <button type="submit" class="btn btn-primary"
+                style="margin-top:0.625rem;align-self:flex-start">Sauvegarder</button>
+      </form>
+    </div>
+
+    <!-- Onglets email templates -->
     <div class="config-tab-nav" role="tablist">
-      {CONFIG_TYPES.map(({ key, tabLabel }) => (
+      {EMAIL_CONFIGS.map(({ key, tabLabel }) => (
         <button class={`config-tab${key === initialTab ? ' active' : ''}`}
                 data-target={`panel-${key}`}
                 role="tab"
@@ -224,36 +240,12 @@ for (const k of EMAIL_KEYS) {
     </div>
 
     <div class="card config-panel-wrap">
-      {CONFIG_TYPES.map(({ key, label, multiline }) => {
+      {EMAIL_CONFIGS.map(({ key, label }) => {
         const isSuccess = successType === key;
         const isError   = errorType === key;
         const hints     = VARIABLE_HINTS[key];
         const isActive  = key === initialTab;
-
-        if (!multiline) {
-          return (
-            <div class="cust-card config-panel" id={`panel-${key}`} data-config={key}
-                 style={!isActive ? "display:none" : ""}>
-              <h2 class="cust-card-title">{label}</h2>
-              {isSuccess && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
-              {isError   && <div class="cust-field-error" role="alert">{errorMsg}</div>}
-              <div class="editor-tabs">
-                <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
-              </div>
-              <div class="tab-panel" data-panel="manual">
-                <form method="POST" class="cust-form">
-                  <input type="hidden" name="config_type" value={key} />
-                  <input type="text" name="value" class="form-input"
-                         value={senderName} placeholder="Ex : Jean Dupont" />
-                  <button type="submit" class="btn btn-primary cust-save-btn"
-                          style="align-self:flex-start;margin-top:0.5rem">Sauvegarder</button>
-                </form>
-              </div>
-            </div>
-          );
-        }
-
-        const parsed = PARSED_CONFIGS[key];
+        const parsed    = PARSED_CONFIGS[key];
         const hasCustom = !!configs[key];
         return (
           <div class="cust-card config-panel" id={`panel-${key}`} data-config={key}
@@ -823,6 +815,17 @@ for (const k of EMAIL_KEYS) {
     font-size: 0.875rem;
     margin-bottom: 1rem;
   }
+
+  /* ── Expéditeur (section indépendante) ── */
+  .sender-card {
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .sender-card .cust-card-title { margin-bottom: 0.25rem; }
+  .sender-input { max-width: 320px; }
 
   /* ── Tab navigation ── */
   .config-tab-nav {
