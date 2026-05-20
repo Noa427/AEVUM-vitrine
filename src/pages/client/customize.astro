@@ -28,7 +28,7 @@ if (Astro.request.method === 'POST') {
         const res = await fetch(`${base}/client/automations/custom`, {
           method: 'POST',
           headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, trigger_type: triggerType, trigger_days: triggerDays, trigger_date: triggerDate, subject, body }),
+          body: JSON.stringify({ name, trigger_type: triggerType, trigger_delay_days: triggerDays, trigger_date: triggerDate, subject, body }),
         });
         if (res.status === 401) {
           Astro.cookies.delete('aevum_token', { path: '/' });
@@ -108,8 +108,8 @@ if (autoResult.status === 'fulfilled' && autoResult.value.ok) {
 type CustomAutomation = {
   id: string;
   name: string;
-  trigger_type: 'days_after_purchase' | 'specific_date' | 'failed_payment';
-  trigger_days?: number | null;
+  trigger_type: 'delay_after_purchase' | 'specific_date' | 'payment_failed' | 'manual';
+  trigger_delay_days?: number | null;
   trigger_date?: string | null;
   subject: string;
   body: string;
@@ -350,9 +350,9 @@ for (const k of EMAIL_KEYS) {
             <input type="text" name="auto_name" class="form-input" placeholder="Ex : Upsell J+14" required />
             <label class="form-label">Déclencheur</label>
             <select name="trigger_type" id="modal-trigger-type" class="form-input">
-              <option value="days_after_purchase">X jours après l'achat</option>
+              <option value="delay_after_purchase">X jours après l'achat</option>
               <option value="specific_date">Date précise</option>
-              <option value="failed_payment">Après un paiement échoué</option>
+              <option value="payment_failed">Après un paiement échoué</option>
             </select>
             <div id="modal-days-field">
               <label class="form-label">Nombre de jours</label>
@@ -398,8 +398,8 @@ for (const k of EMAIL_KEYS) {
             <tbody>
               {customAutomations.map((auto) => {
                 const triggerLabel =
-                  auto.trigger_type === 'days_after_purchase' ? `J+${auto.trigger_days ?? '?'}` :
-                  auto.trigger_type === 'specific_date'       ? (auto.trigger_date ?? '—') :
+                  auto.trigger_type === 'delay_after_purchase' ? `J+${auto.trigger_delay_days ?? '?'}` :
+                  auto.trigger_type === 'specific_date'        ? (auto.trigger_date ?? '—') :
                   'Paiement échoué';
                 return (
                   <tr data-auto-id={auto.id}>
@@ -548,7 +548,7 @@ for (const k of EMAIL_KEYS) {
       const genError    = card.querySelector<HTMLElement>('.gen-error');
       if (btnGenerate) {
         btnGenerate.addEventListener('click', async () => {
-          const emailType     = card.dataset.config ?? '';
+          const emailType     = (card.dataset.config ?? '').replace(/^template_/, '');
           const formationName = card.querySelector<HTMLInputElement>('.gen-formation')?.value.trim() ?? '';
           const tone          = card.querySelector<HTMLSelectElement>('.gen-tone')?.value ?? 'chaleureux';
           const objective     = card.querySelector<HTMLInputElement>('.gen-objective')?.value.trim() ?? '';
@@ -590,7 +590,7 @@ for (const k of EMAIL_KEYS) {
       const improveError = card.querySelector<HTMLElement>('.improve-error');
       if (btnImprove) {
         btnImprove.addEventListener('click', async () => {
-          const emailType = card.dataset.config ?? '';
+          const emailType = (card.dataset.config ?? '').replace(/^template_/, '');
           const subject   = subjectInput?.value ?? '';
           const body      = bodyInput?.value    ?? '';
 
@@ -602,7 +602,7 @@ for (const k of EMAIL_KEYS) {
             const res  = await fetch('/api/ai-improve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ content: { subject, body }, emailType }),
+              body: JSON.stringify({ content: `Sujet : ${subject}\n\nCorps :\n${body}`, emailType }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data.subject) {
@@ -633,20 +633,35 @@ for (const k of EMAIL_KEYS) {
     if (modal.dataset.autoInit) return;
     modal.dataset.autoInit = 'true';
 
-    btnOpen.addEventListener('click', () => modal.classList.remove('hidden'));
-    btnClose?.addEventListener('click', () => modal.classList.add('hidden'));
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.classList.add('hidden');
-    });
-
     const triggerSelect = document.getElementById('modal-trigger-type') as HTMLSelectElement | null;
     const daysField     = document.getElementById('modal-days-field');
     const dateField     = document.getElementById('modal-date-field');
-    triggerSelect?.addEventListener('change', () => {
-      const v = triggerSelect.value;
-      daysField?.classList.toggle('hidden', v !== 'days_after_purchase');
+
+    function updateTriggerVisibility() {
+      const v = triggerSelect?.value ?? 'delay_after_purchase';
+      daysField?.classList.toggle('hidden', v !== 'delay_after_purchase');
       dateField?.classList.toggle('hidden', v !== 'specific_date');
+    }
+
+    function openModal() {
+      const form = modal?.querySelector<HTMLFormElement>('.auto-create-form');
+      form?.reset();
+      if (triggerSelect) triggerSelect.value = 'delay_after_purchase';
+      updateTriggerVisibility();
+      modal?.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      modal?.classList.add('hidden');
+    }
+
+    btnOpen.addEventListener('click', openModal);
+    btnClose?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
     });
+
+    triggerSelect?.addEventListener('change', updateTriggerVisibility);
 
     const modalTextarea = modal.querySelector<HTMLTextAreaElement>('.modal-body-textarea');
     modal.querySelectorAll<HTMLElement>('.modal-hint').forEach((hint) => {
