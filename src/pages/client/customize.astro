@@ -130,12 +130,14 @@ const VARIABLE_HINTS: Record<string, string[]> = {
 };
 
 const CONFIG_TYPES = [
-  { key: 'sender_name',            label: "Nom affiché dans l'email (expéditeur)",                    multiline: false, defaultValue: senderName },
-  { key: 'template_onboarding_j0', label: "Email de bienvenue (envoyé immédiatement après l'achat)",  multiline: true,  defaultValue: '' },
-  { key: 'template_onboarding_j3', label: "Email J+3 (3 jours après l'achat)",                        multiline: true,  defaultValue: '' },
-  { key: 'template_onboarding_j7', label: "Email J+7 (7 jours après l'achat)",                        multiline: true,  defaultValue: '' },
-  { key: 'template_failed_payment', label: 'Email de relance paiement échoué',                        multiline: true,  defaultValue: '' },
+  { key: 'sender_name',            label: "Nom affiché dans l'email (expéditeur)",                    tabLabel: 'Expéditeur',       multiline: false, defaultValue: senderName },
+  { key: 'template_onboarding_j0', label: "Email de bienvenue (envoyé immédiatement après l'achat)",  tabLabel: 'Bienvenue',         multiline: true,  defaultValue: '' },
+  { key: 'template_onboarding_j3', label: "Email J+3 (3 jours après l'achat)",                        tabLabel: 'J+3',               multiline: true,  defaultValue: '' },
+  { key: 'template_onboarding_j7', label: "Email J+7 (7 jours après l'achat)",                        tabLabel: 'J+7',               multiline: true,  defaultValue: '' },
+  { key: 'template_failed_payment', label: 'Email de relance paiement échoué',                        tabLabel: 'Relance paiement',  multiline: true,  defaultValue: '' },
 ] as const;
+
+const initialTab = successType || errorType || 'sender_name';
 
 // Parse JSON {subject, body} depuis la valeur backend ; fallback plain-text
 function parseConfig(raw: string): { subject: string; body: string } {
@@ -210,124 +212,145 @@ for (const k of EMAIL_KEYS) {
       <div class="cust-error" role="alert">{fetchError}</div>
     )}
 
-    {CONFIG_TYPES.map(({ key, label, multiline }) => {
-  const isSuccess = successType === key;
-  const isError   = errorType === key;
-  const hints     = VARIABLE_HINTS[key];
+    <div class="config-tab-nav" role="tablist">
+      {CONFIG_TYPES.map(({ key, tabLabel }) => (
+        <button class={`config-tab${key === initialTab ? ' active' : ''}`}
+                data-target={`panel-${key}`}
+                role="tab"
+                type="button">
+          {tabLabel}
+        </button>
+      ))}
+    </div>
 
-  if (!multiline) {
-    return (
-      <div class="card cust-card" data-config={key}>
-        <h2 class="cust-card-title">{label}</h2>
-        {isSuccess && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
-        {isError   && <div class="cust-field-error" role="alert">{errorMsg}</div>}
-        <div class="editor-tabs">
-          <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
-        </div>
-        <div class="tab-panel" data-panel="manual">
-          <form method="POST" class="cust-form">
-            <input type="hidden" name="config_type" value={key} />
-            <input type="text" name="value" class="form-input"
-                   value={senderName} placeholder="Ex : Jean Dupont" />
-            <button type="submit" class="btn btn-primary cust-save-btn"
-                    style="align-self:flex-start;margin-top:0.5rem">Sauvegarder</button>
-          </form>
-        </div>
-      </div>
-    );
-  }
+    <div class="card config-panel-wrap">
+      {CONFIG_TYPES.map(({ key, label, multiline }) => {
+        const isSuccess = successType === key;
+        const isError   = errorType === key;
+        const hints     = VARIABLE_HINTS[key];
+        const isActive  = key === initialTab;
 
-  const parsed = PARSED_CONFIGS[key];
-  return (
-    <div class="card cust-card" data-config={key}
-         data-subject={parsed.subject} data-body={parsed.body}>
-      <h2 class="cust-card-title">{label}</h2>
-      {DEFAULT_TEMPLATES[key] && (
-        <div class="default-tpl-wrap">
-          <button type="button" class="btn-default-toggle"
-                  data-key={key}>
-            Voir le template par défaut ▾
-          </button>
-          <div class="default-tpl-preview hidden" data-preview={key}>
-            <div class="default-tpl-row">
-              <span class="default-tpl-label">Sujet :</span>
-              <code class="default-tpl-value">{DEFAULT_TEMPLATES[key].subject}</code>
-            </div>
-            <div class="default-tpl-row" style="flex-direction:column;align-items:flex-start;gap:0.25rem">
-              <span class="default-tpl-label">Corps :</span>
-              <pre class="default-tpl-body">{DEFAULT_TEMPLATES[key].body}</pre>
-            </div>
-            <button type="button" class="btn btn-secondary btn-use-default"
-                    data-subject={DEFAULT_TEMPLATES[key].subject}
-                    data-body={JSON.stringify(DEFAULT_TEMPLATES[key].body)}>
-              Utiliser ce template
-            </button>
-          </div>
-        </div>
-      )}
-      {isSuccess && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
-      {isError   && <div class="cust-field-error" role="alert">{errorMsg}</div>}
-
-      <div class="editor-tabs">
-        <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
-        <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
-      </div>
-
-      <div class="tab-panel" data-panel="manual">
-        <form method="POST" class="cust-form">
-          <input type="hidden" name="config_type" value={key} />
-          <input type="hidden" name="value" class="hidden-value"
-                 value={JSON.stringify(parsed)} />
-          <label class="form-label">Sujet</label>
-          <input type="text" class="form-input subject-input"
-                 placeholder="Sujet de l'email..." />
-          <label class="form-label" style="margin-top:0.25rem">Corps</label>
-          <textarea class="form-input cust-textarea body-input" rows={7}
-                    placeholder="Contenu de l'email..."></textarea>
-          {hints && (
-            <div class="cust-hints">
-              <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
-              <div class="cust-hints-list">
-                {hints.map((v) => (
-                  <code class="cust-hint" data-var={v}>{v}</code>
-                ))}
+        if (!multiline) {
+          return (
+            <div class="cust-card config-panel" id={`panel-${key}`} data-config={key}
+                 style={!isActive ? "display:none" : ""}>
+              <h2 class="cust-card-title">{label}</h2>
+              {isSuccess && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+              {isError   && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+              <div class="editor-tabs">
+                <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+              </div>
+              <div class="tab-panel" data-panel="manual">
+                <form method="POST" class="cust-form">
+                  <input type="hidden" name="config_type" value={key} />
+                  <input type="text" name="value" class="form-input"
+                         value={senderName} placeholder="Ex : Jean Dupont" />
+                  <button type="submit" class="btn btn-primary cust-save-btn"
+                          style="align-self:flex-start;margin-top:0.5rem">Sauvegarder</button>
+                </form>
               </div>
             </div>
-          )}
-          <div class="manual-actions">
-            <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
-            <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+          );
+        }
+
+        const parsed = PARSED_CONFIGS[key];
+        const hasCustom = !!configs[key];
+        return (
+          <div class="cust-card config-panel" id={`panel-${key}`} data-config={key}
+               data-subject={parsed.subject} data-body={parsed.body}
+               style={!isActive ? "display:none" : ""}>
+            <div class="panel-header">
+              <h2 class="cust-card-title" style="margin-bottom:0">{label}</h2>
+              {hasCustom && (
+                <form method="POST" class="reset-form">
+                  <input type="hidden" name="config_type" value={key} />
+                  <input type="hidden" name="value" value="" />
+                  <button type="submit" class="btn-reset-tpl">Supprimer la personnalisation</button>
+                </form>
+              )}
+            </div>
+            {DEFAULT_TEMPLATES[key] && (
+              <div class="default-tpl-wrap">
+                <button type="button" class="btn-default-toggle" data-key={key}>
+                  Voir le template par défaut ▾
+                </button>
+                <div class="default-tpl-preview hidden" data-preview={key}>
+                  <div class="default-tpl-row">
+                    <span class="default-tpl-label">Sujet :</span>
+                    <code class="default-tpl-value">{DEFAULT_TEMPLATES[key].subject}</code>
+                  </div>
+                  <div class="default-tpl-row" style="flex-direction:column;align-items:flex-start;gap:0.25rem">
+                    <span class="default-tpl-label">Corps :</span>
+                    <pre class="default-tpl-body">{DEFAULT_TEMPLATES[key].body}</pre>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-use-default"
+                          data-subject={DEFAULT_TEMPLATES[key].subject}
+                          data-body={JSON.stringify(DEFAULT_TEMPLATES[key].body)}>
+                    Utiliser ce template
+                  </button>
+                </div>
+              </div>
+            )}
+            {isSuccess && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+            {isError   && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+            <div class="editor-tabs">
+              <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+              <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+            </div>
+            <div class="tab-panel" data-panel="manual">
+              <form method="POST" class="cust-form">
+                <input type="hidden" name="config_type" value={key} />
+                <input type="hidden" name="value" class="hidden-value"
+                       value={JSON.stringify(parsed)} />
+                <label class="form-label">Sujet</label>
+                <input type="text" class="form-input subject-input"
+                       placeholder="Sujet de l'email..." />
+                <label class="form-label" style="margin-top:0.25rem">Corps</label>
+                <textarea class="form-input cust-textarea body-input" rows={7}
+                          placeholder="Contenu de l'email..."></textarea>
+                {hints && (
+                  <div class="cust-hints">
+                    <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+                    <div class="cust-hints-list">
+                      {hints.map((v) => (
+                        <code class="cust-hint" data-var={v}>{v}</code>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div class="manual-actions">
+                  <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+                  <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+                </div>
+                <p class="ai-error improve-error"></p>
+              </form>
+            </div>
+            <div class="tab-panel hidden" data-panel="generate">
+              <input type="text" class="form-input gen-formation"
+                     placeholder="Nom de votre formation (ex: Maîtriser Instagram)" />
+              <select class="form-input gen-tone">
+                <option value="chaleureux">Chaleureux et bienveillant</option>
+                <option value="professionnel">Professionnel et direct</option>
+                <option value="motivant">Motivant et dynamique</option>
+              </select>
+              <input type="text" class="form-input gen-objective"
+                     placeholder="Objectif de cet email (ex: rassurer, engager, fidéliser)" />
+              <button class="btn btn-primary btn-generate"
+                      style="align-self:flex-start">✨ Générer l'email</button>
+              <p class="ai-error gen-error"></p>
+              <div class="generation-result hidden">
+                <input type="text" class="form-input subject-preview"
+                       readonly placeholder="Sujet généré" />
+                <textarea class="form-input body-preview" rows={6}
+                          readonly placeholder="Contenu généré"></textarea>
+                <button class="btn btn-secondary btn-use-result"
+                        style="align-self:flex-start">Utiliser ce contenu →</button>
+              </div>
+            </div>
           </div>
-          <p class="ai-error improve-error"></p>
-        </form>
-      </div>
-
-      <div class="tab-panel hidden" data-panel="generate">
-        <input type="text" class="form-input gen-formation"
-               placeholder="Nom de votre formation (ex: Maîtriser Instagram)" />
-        <select class="form-input gen-tone">
-          <option value="chaleureux">Chaleureux et bienveillant</option>
-          <option value="professionnel">Professionnel et direct</option>
-          <option value="motivant">Motivant et dynamique</option>
-        </select>
-        <input type="text" class="form-input gen-objective"
-               placeholder="Objectif de cet email (ex: rassurer, engager, fidéliser)" />
-        <button class="btn btn-primary btn-generate"
-                style="align-self:flex-start">✨ Générer l'email</button>
-        <p class="ai-error gen-error"></p>
-        <div class="generation-result hidden">
-          <input type="text" class="form-input subject-preview"
-                 readonly placeholder="Sujet généré" />
-          <textarea class="form-input body-preview" rows={6}
-                    readonly placeholder="Contenu généré"></textarea>
-          <button class="btn btn-secondary btn-use-result"
-                  style="align-self:flex-start">Utiliser ce contenu →</button>
-        </div>
-      </div>
-
+        );
+      })}
     </div>
-  );
-})}
 
     <div class="section-divider"></div>
 
@@ -714,13 +737,43 @@ for (const k of EMAIL_KEYS) {
     });
   }
 
+  function initConfigTabs() {
+    const nav = document.querySelector<HTMLElement>('.config-tab-nav');
+    if (!nav || nav.dataset.tabsInit) return;
+    nav.dataset.tabsInit = 'true';
+
+    function activateTab(targetId: string) {
+      nav.querySelectorAll<HTMLElement>('.config-tab').forEach((t) => {
+        t.classList.toggle('active', t.dataset.target === targetId);
+      });
+      document.querySelectorAll<HTMLElement>('.config-panel').forEach((p) => {
+        p.style.display = p.id === targetId ? '' : 'none';
+      });
+    }
+
+    nav.querySelectorAll<HTMLButtonElement>('.config-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        if (tab.dataset.target) activateTab(tab.dataset.target);
+      });
+    });
+
+    // Auto-activer le panneau qui contient un message de succès ou d'erreur
+    const feedbackEl = document.querySelector<HTMLElement>('.config-panel .success-msg, .config-panel .cust-field-error');
+    if (feedbackEl) {
+      const panel = feedbackEl.closest<HTMLElement>('.config-panel');
+      if (panel) activateTab(panel.id);
+    }
+  }
+
   initBanner();
   initEditor();
   initAutomations();
+  initConfigTabs();
   document.addEventListener('astro:page-load', () => {
     initBanner();
     initEditor();
     initAutomations();
+    initConfigTabs();
   });
 </script>
 
@@ -771,8 +824,65 @@ for (const k of EMAIL_KEYS) {
     margin-bottom: 1rem;
   }
 
-  .cust-card { padding: 1.75rem 2rem; margin-bottom: 1.5rem; }
+  /* ── Tab navigation ── */
+  .config-tab-nav {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--gray-border);
+    margin-bottom: 0;
+  }
+  .config-tab-nav::-webkit-scrollbar { display: none; }
+  .config-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray);
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+    white-space: nowrap;
+    margin-bottom: -1px;
+    flex-shrink: 0;
+  }
+  .config-tab:hover { color: var(--gray-light); }
+  .config-tab.active { color: var(--ink); border-bottom-color: #2E8BF0; }
+
+  .config-panel-wrap {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cust-card { padding: 0; margin-bottom: 0; }
   .cust-card-title { font-size: 1rem; font-weight: 600; color: var(--light); margin-bottom: 1rem; }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .btn-reset-tpl {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.75rem;
+    color: var(--gray);
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    transition: color .15s;
+    flex-shrink: 0;
+  }
+  .btn-reset-tpl:hover { color: #EF4444; }
   .cust-form { display: flex; flex-direction: column; }
   .cust-textarea { font-family: monospace; font-size: 0.875rem; resize: vertical; min-height: 130px; }
 
