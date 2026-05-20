@@ -248,8 +248,8 @@ for (const k of EMAIL_KEYS) {
           )}
           <div class="manual-actions">
             <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
-            <button type="button" class="btn btn-secondary btn-improve" disabled
-                    title="Fonctionnalité disponible prochainement">🔧 Améliorer avec l'IA</button>
+            <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+            <p class="ai-error improve-error"></p>
           </div>
         </form>
       </div>
@@ -265,8 +265,8 @@ for (const k of EMAIL_KEYS) {
         <input type="text" class="form-input gen-objective"
                placeholder="Objectif de cet email (ex: rassurer, engager, fidéliser)" />
         <button class="btn btn-primary btn-generate"
-                style="align-self:flex-start" disabled>✨ Générer l'email</button>
-        <p class="ai-coming-soon">✦ Fonctionnalité disponible prochainement</p>
+                style="align-self:flex-start">✨ Générer l'email</button>
+        <p class="ai-error gen-error"></p>
         <div class="generation-result hidden">
           <input type="text" class="form-input subject-preview"
                  readonly placeholder="Sujet généré" />
@@ -396,6 +396,85 @@ for (const k of EMAIL_KEYS) {
         });
       });
 
+      // 8. Bouton "Générer avec l'IA"
+      const btnGenerate = card.querySelector<HTMLButtonElement>('.btn-generate');
+      const genError    = card.querySelector<HTMLElement>('.gen-error');
+      if (btnGenerate) {
+        btnGenerate.addEventListener('click', async () => {
+          const emailType     = card.dataset.config ?? '';
+          const formationName = card.querySelector<HTMLInputElement>('.gen-formation')?.value.trim() ?? '';
+          const tone          = card.querySelector<HTMLSelectElement>('.gen-tone')?.value ?? 'chaleureux';
+          const objective     = card.querySelector<HTMLInputElement>('.gen-objective')?.value.trim() ?? '';
+
+          if (genError) { genError.textContent = ''; genError.classList.remove('visible'); }
+          btnGenerate.classList.add('loading');
+          btnGenerate.textContent = 'Génération en cours...';
+
+          try {
+            const res  = await fetch('/api/ai-generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ emailType, formationName, tone, objective }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.subject) {
+              throw new Error(data.error ?? 'Erreur de génération');
+            }
+            const result  = card.querySelector<HTMLElement>('.generation-result');
+            const subPrev = card.querySelector<HTMLInputElement>('.subject-preview');
+            const bodPrev = card.querySelector<HTMLTextAreaElement>('.body-preview');
+            if (subPrev) subPrev.value = data.subject;
+            if (bodPrev) bodPrev.value = data.body;
+            result?.classList.remove('hidden');
+          } catch (err: unknown) {
+            if (genError) {
+              genError.textContent = err instanceof Error ? err.message : 'Erreur inconnue';
+              genError.classList.add('visible');
+            }
+          } finally {
+            btnGenerate.classList.remove('loading');
+            btnGenerate.textContent = '✨ Générer l\'email';
+          }
+        });
+      }
+
+      // 9. Bouton "Améliorer avec l'IA"
+      const btnImprove   = card.querySelector<HTMLButtonElement>('.btn-improve');
+      const improveError = card.querySelector<HTMLElement>('.improve-error');
+      if (btnImprove) {
+        btnImprove.addEventListener('click', async () => {
+          const emailType = card.dataset.config ?? '';
+          const subject   = subjectInput?.value ?? '';
+          const body      = bodyInput?.value    ?? '';
+
+          if (improveError) { improveError.textContent = ''; improveError.classList.remove('visible'); }
+          btnImprove.classList.add('loading');
+          btnImprove.textContent = 'Amélioration en cours...';
+
+          try {
+            const res  = await fetch('/api/ai-improve', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content: { subject, body }, emailType }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.subject) {
+              throw new Error(data.error ?? 'Erreur d\'amélioration');
+            }
+            if (subjectInput) subjectInput.value = data.subject;
+            if (bodyInput)    bodyInput.value    = data.body;
+          } catch (err: unknown) {
+            if (improveError) {
+              improveError.textContent = err instanceof Error ? err.message : 'Erreur inconnue';
+              improveError.classList.add('visible');
+            }
+          } finally {
+            btnImprove.classList.remove('loading');
+            btnImprove.textContent = '🔧 Améliorer avec l\'IA';
+          }
+        });
+      }
+
     });
   }
 
@@ -502,12 +581,6 @@ for (const k of EMAIL_KEYS) {
 .tab-panel { display: flex; flex-direction: column; gap: 0.625rem; }
 .tab-panel.hidden { display: none; }
 
-.ai-coming-soon {
-  font-size: 0.8125rem;
-  color: var(--gray);
-  font-style: italic;
-  margin: 0;
-}
 
 .generation-result {
   display: flex;
@@ -525,7 +598,6 @@ for (const k of EMAIL_KEYS) {
   flex-wrap: wrap;
   margin-top: 0.75rem;
 }
-.btn-improve:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .default-tpl-wrap {
   margin-bottom: 1rem;
@@ -580,5 +652,17 @@ for (const k of EMAIL_KEYS) {
   margin: 0;
   line-height: 1.5;
   background: none;
+}
+.ai-error {
+  font-size: 0.8125rem;
+  color: #EF4444;
+  margin-top: 0.25rem;
+  display: none;
+}
+.ai-error.visible { display: block; }
+.btn-generate.loading,
+.btn-improve.loading {
+  opacity: 0.7;
+  pointer-events: none;
 }
 </style>
