@@ -358,7 +358,7 @@ for (const k of EMAIL_KEYS) {
               <label class="form-label">Nombre de jours</label>
               <input type="number" name="trigger_days" class="form-input" min="1" placeholder="Ex : 14" />
             </div>
-            <div id="modal-date-field" class="hidden">
+            <div id="modal-date-field" style="display:none">
               <label class="form-label">Date</label>
               <input type="date" name="trigger_date" class="form-input" />
             </div>
@@ -639,8 +639,8 @@ for (const k of EMAIL_KEYS) {
 
     function updateTriggerVisibility() {
       const v = triggerSelect?.value ?? 'delay_after_purchase';
-      daysField?.classList.toggle('hidden', v !== 'delay_after_purchase');
-      dateField?.classList.toggle('hidden', v !== 'specific_date');
+      if (daysField) daysField.style.display = v === 'delay_after_purchase' ? '' : 'none';
+      if (dateField) dateField.style.display = v === 'specific_date'        ? '' : 'none';
     }
 
     function openModal() {
