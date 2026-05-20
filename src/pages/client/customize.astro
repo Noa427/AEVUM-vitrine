@@ -368,6 +368,34 @@ for (const k of EMAIL_KEYS) {
         card.querySelector<HTMLButtonElement>('[data-tab="manual"]')?.click();
       });
 
+      // 6. Toggle "Voir le template par défaut"
+      card.querySelectorAll<HTMLButtonElement>('.btn-default-toggle').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const preview = card.querySelector<HTMLElement>('.default-tpl-preview');
+          if (!preview) return;
+          const isOpen = !preview.classList.contains('hidden');
+          preview.classList.toggle('hidden', isOpen);
+          btn.textContent = isOpen
+            ? 'Voir le template par défaut ▾'
+            : 'Masquer le template par défaut ▴';
+        });
+      });
+
+      // 7. "Utiliser ce template" → copie dans les champs Manuel + ferme le preview
+      card.querySelectorAll<HTMLButtonElement>('.btn-use-default').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (subjectInput) subjectInput.value = btn.dataset.subject ?? '';
+          if (bodyInput)    bodyInput.value    = JSON.parse(btn.dataset.body ?? '""');
+          // Basculer sur l'onglet Manuel
+          card.querySelector<HTMLButtonElement>('[data-tab="manual"]')?.click();
+          // Fermer le preview
+          const preview = card.querySelector<HTMLElement>('.default-tpl-preview');
+          const toggle  = card.querySelector<HTMLElement>('.btn-default-toggle');
+          if (preview) preview.classList.add('hidden');
+          if (toggle)  toggle.textContent = 'Voir le template par défaut ▾';
+        });
+      });
+
     });
   }
 
