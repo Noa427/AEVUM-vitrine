@@ -630,6 +630,8 @@ for (const k of EMAIL_KEYS) {
     const btnOpen  = document.getElementById('btn-open-auto-modal');
     const btnClose = document.getElementById('btn-close-auto-modal');
     if (!modal || !btnOpen) return;
+    if (modal.dataset.autoInit) return;
+    modal.dataset.autoInit = 'true';
 
     btnOpen.addEventListener('click', () => modal.classList.remove('hidden'));
     btnClose?.addEventListener('click', () => modal.classList.add('hidden'));
