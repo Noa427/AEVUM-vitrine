@@ -211,7 +211,7 @@ for (const k of EMAIL_KEYS) {
             </div>
             <button type="button" class="btn btn-secondary btn-use-default"
                     data-subject={DEFAULT_TEMPLATES[key].subject}
-                    data-body={DEFAULT_TEMPLATES[key].body}>
+                    data-body={JSON.stringify(DEFAULT_TEMPLATES[key].body)}>
               Utiliser ce template
             </button>
           </div>
