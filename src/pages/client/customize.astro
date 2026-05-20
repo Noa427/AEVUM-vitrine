@@ -253,13 +253,14 @@ for (const k of EMAIL_KEYS) {
                style={!isActive ? "display:none" : ""}>
             <div class="panel-header">
               <h2 class="cust-card-title" style="margin-bottom:0">{label}</h2>
-              {hasCustom && (
-                <form method="POST" class="reset-form">
-                  <input type="hidden" name="config_type" value={key} />
-                  <input type="hidden" name="value" value="" />
-                  <button type="submit" class="btn-reset-tpl">Supprimer la personnalisation</button>
-                </form>
-              )}
+              <form method="POST" class="reset-form">
+                <input type="hidden" name="config_type" value={key} />
+                <input type="hidden" name="value" value="" />
+                <button type="submit" class={`btn-reset-tpl${!hasCustom ? ' btn-reset-disabled' : ''}`}
+                        title={!hasCustom ? 'Template par défaut déjà utilisé' : 'Supprimer la personnalisation'}>
+                  Supprimer la personnalisation
+                </button>
+              </form>
             </div>
             {DEFAULT_TEMPLATES[key] && (
               <div class="default-tpl-wrap">
@@ -353,7 +354,9 @@ for (const k of EMAIL_KEYS) {
       </div>
 
       {errorType === 'create_automation' && (
-        <div class="cust-field-error" role="alert">{errorMsg}</div>
+        <div class="auto-create-error" id="auto-create-error" role="alert">
+          <strong>Erreur lors de la création :</strong> {errorMsg}
+        </div>
       )}
 
       <div class="modal-overlay hidden" id="auto-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -408,6 +411,7 @@ for (const k of EMAIL_KEYS) {
                 <th>Déclencheur</th>
                 <th>Statut</th>
                 <th>Actions</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -418,7 +422,7 @@ for (const k of EMAIL_KEYS) {
                   'Paiement échoué';
                 return (
                   <tr data-auto-id={auto.id}>
-                    <td>{auto.name}</td>
+                    <td class="auto-name-cell" data-name={auto.name}>{auto.name}</td>
                     <td>{triggerLabel}</td>
                     <td>
                       <button type="button" class="btn-auto-toggle"
@@ -433,6 +437,11 @@ for (const k of EMAIL_KEYS) {
                               style="font-size:0.75rem;padding:0.3rem 0.75rem">
                         Supprimer
                       </button>
+                    </td>
+                    <td>
+                      <button type="button" class="btn-auto-rename"
+                              data-id={auto.id}
+                              title="Renommer">✏️</button>
                     </td>
                   </tr>
                 );
@@ -648,14 +657,21 @@ for (const k of EMAIL_KEYS) {
     if (modal.dataset.autoInit) return;
     modal.dataset.autoInit = 'true';
 
+    // Scroll automatique vers l'erreur de création si présente
+    const errorEl = document.getElementById('auto-create-error');
+    if (errorEl) errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
     const triggerSelect = document.getElementById('modal-trigger-type') as HTMLSelectElement | null;
     const daysField     = document.getElementById('modal-days-field');
     const dateField     = document.getElementById('modal-date-field');
+    const daysInput     = daysField?.querySelector<HTMLInputElement>('input');
 
     function updateTriggerVisibility() {
       const v = triggerSelect?.value ?? 'delay_after_purchase';
       if (daysField) daysField.style.display = v === 'delay_after_purchase' ? '' : 'none';
       if (dateField) dateField.style.display = v === 'specific_date'        ? '' : 'none';
+      // required dynamique : seulement quand le champ est visible
+      if (daysInput) daysInput.required = v === 'delay_after_purchase';
     }
 
     function openModal() {
@@ -666,16 +682,11 @@ for (const k of EMAIL_KEYS) {
       modal?.classList.remove('hidden');
     }
 
-    function closeModal() {
-      modal?.classList.add('hidden');
-    }
+    function closeModal() { modal?.classList.add('hidden'); }
 
     btnOpen.addEventListener('click', openModal);
     btnClose?.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     triggerSelect?.addEventListener('change', updateTriggerVisibility);
 
     const modalTextarea = modal.querySelector<HTMLTextAreaElement>('.modal-body-textarea');
@@ -691,6 +702,7 @@ for (const k of EMAIL_KEYS) {
       });
     });
 
+    // ── Toggle actif/inactif ──
     document.querySelectorAll<HTMLButtonElement>('.btn-auto-toggle').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id     = btn.dataset.id ?? '';
@@ -704,12 +716,11 @@ for (const k of EMAIL_KEYS) {
           if (!res.ok) throw new Error();
           btn.dataset.active = active ? 'true' : 'false';
           btn.textContent    = active ? 'Actif' : 'Inactif';
-        } catch {
-          // état non changé, UI cohérente
-        }
+        } catch { /* état non changé */ }
       });
     });
 
+    // ── Supprimer ──
     document.querySelectorAll<HTMLButtonElement>('.btn-auto-delete').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('Supprimer cette automatisation ?')) return;
@@ -725,6 +736,73 @@ for (const k of EMAIL_KEYS) {
         } catch {
           btn.textContent = 'Erreur';
         }
+      });
+    });
+
+    // ── Renommer inline ──
+    document.querySelectorAll<HTMLButtonElement>('.btn-auto-rename').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const row      = btn.closest('tr');
+        const nameCell = row?.querySelector<HTMLTableCellElement>('.auto-name-cell');
+        if (!nameCell || nameCell.dataset.editing) return;
+        nameCell.dataset.editing = 'true';
+
+        const currentName = nameCell.dataset.name ?? nameCell.textContent ?? '';
+        const id          = btn.dataset.id ?? '';
+
+        const input  = document.createElement('input');
+        input.type   = 'text';
+        input.value  = currentName;
+        input.className = 'form-input auto-rename-input';
+
+        const saveBtn   = document.createElement('button');
+        saveBtn.textContent = '✓';
+        saveBtn.className   = 'btn-rename-save';
+        saveBtn.type        = 'button';
+
+        const cancelBtn   = document.createElement('button');
+        cancelBtn.textContent = '✕';
+        cancelBtn.className   = 'btn-rename-cancel';
+        cancelBtn.type        = 'button';
+
+        nameCell.innerHTML = '';
+        nameCell.append(input, saveBtn, cancelBtn);
+        input.focus();
+
+        function cancelEdit() {
+          nameCell.textContent = currentName;
+          delete nameCell.dataset.editing;
+        }
+
+        cancelBtn.addEventListener('click', cancelEdit);
+
+        async function doSave() {
+          const newName = input.value.trim();
+          if (!newName || newName === currentName) { cancelEdit(); return; }
+          saveBtn.textContent = '…';
+          saveBtn.disabled = true;
+          try {
+            const res = await fetch('/api/automation-update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id, name: newName }),
+            });
+            if (!res.ok) throw new Error();
+            nameCell.dataset.name = newName;
+            nameCell.textContent  = newName;
+            delete nameCell.dataset.editing;
+          } catch {
+            saveBtn.textContent = '✓';
+            saveBtn.disabled    = false;
+            input.style.borderColor = '#EF4444';
+          }
+        }
+
+        saveBtn.addEventListener('click', doSave);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter')  doSave();
+          if (e.key === 'Escape') cancelEdit();
+        });
       });
     });
   }
@@ -886,6 +964,47 @@ for (const k of EMAIL_KEYS) {
     flex-shrink: 0;
   }
   .btn-reset-tpl:hover { color: #EF4444; }
+  .btn-reset-disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+
+  .auto-create-error {
+    padding: 0.875rem 1.25rem;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid #EF4444;
+    border-radius: var(--radius-sm);
+    color: #EF4444;
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .auto-rename-input {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.875rem;
+    width: 140px;
+    display: inline-block;
+    margin-right: 0.25rem;
+  }
+  .btn-rename-save, .btn-rename-cancel {
+    background: none;
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-sm);
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--gray-light);
+    transition: background .15s;
+  }
+  .btn-rename-save:hover  { background: rgba(34,197,94,0.15); color: #22C55E; border-color: #22C55E; }
+  .btn-rename-cancel:hover { background: rgba(239,68,68,0.15); color: #EF4444; border-color: #EF4444; }
+  .btn-auto-rename {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 0.15rem 0.35rem;
+    opacity: 0.5;
+    transition: opacity .15s;
+  }
+  .btn-auto-rename:hover { opacity: 1; }
   .cust-form { display: flex; flex-direction: column; }
   .cust-textarea { font-family: monospace; font-size: 0.875rem; resize: vertical; min-height: 130px; }
 
