@@ -1,5 +1,12 @@
 import { jwtVerify } from 'jose';
 
+if (!import.meta.env.JWT_SECRET) {
+  throw new Error('[AEVUM] JWT_SECRET manquant — démarrage impossible');
+}
+if (!import.meta.env.AEVUM_URL) {
+  throw new Error('[AEVUM] AEVUM_URL manquant — démarrage impossible');
+}
+
 export interface AuthPayload {
   clientId: string;
   email: string;
@@ -16,7 +23,7 @@ export async function getClientFromCookie(request: Request): Promise<AuthPayload
   const token = extractToken(request);
   if (!token) return null;
 
-  const secret = process.env.JWT_SECRET;
+  const secret = import.meta.env.JWT_SECRET;
   if (!secret) return null;
 
   try {
