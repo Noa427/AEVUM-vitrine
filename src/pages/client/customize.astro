@@ -125,14 +125,18 @@ const VARIABLE_HINTS: Record<string, string[]> = {
   template_onboarding_j0: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}', '{{mot_de_passe}}'],
   template_onboarding_j3: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}'],
   template_onboarding_j7: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}'],
-  template_failed_payment: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
+  template_failed_payment_j1: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
+  template_failed_payment_j3: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
+  template_failed_payment_j7: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
 };
 
 const EMAIL_CONFIGS = [
-  { key: 'template_onboarding_j0', label: "Email de bienvenue (envoyé immédiatement après l'achat)", tabLabel: 'Bienvenue' },
-  { key: 'template_onboarding_j3', label: "Email J+3 (3 jours après l'achat)",                       tabLabel: 'J+3' },
-  { key: 'template_onboarding_j7', label: "Email J+7 (7 jours après l'achat)",                        tabLabel: 'J+7' },
-  { key: 'template_failed_payment', label: 'Email de relance paiement échoué',                        tabLabel: 'Relance paiement' },
+  { key: 'template_onboarding_j0',    label: "Email de bienvenue (envoyé immédiatement après l'achat)", tabLabel: 'Bienvenue' },
+  { key: 'template_onboarding_j3',    label: "Email J+3 (3 jours après l'achat)",                       tabLabel: 'J+3' },
+  { key: 'template_onboarding_j7',    label: "Email J+7 (7 jours après l'achat)",                       tabLabel: 'J+7' },
+  { key: 'template_failed_payment_j1', label: "Relance paiement J+1 (1 jour après l'échec)",            tabLabel: 'Relance J+1' },
+  { key: 'template_failed_payment_j3', label: "Relance paiement J+3 (3 jours après l'échec)",           tabLabel: 'Relance J+3' },
+  { key: 'template_failed_payment_j7', label: "Relance paiement J+7 (7 jours après l'échec)",           tabLabel: 'Relance J+7' },
 ] as const;
 
 const validTabKeys: string[] = EMAIL_CONFIGS.map((c) => c.key);
@@ -140,14 +144,14 @@ const initialTab = validTabKeys.includes(successType) ? successType
   : validTabKeys.includes(errorType)                  ? errorType
   : EMAIL_CONFIGS[0].key;
 
-function parseConfig(raw: string): { subject: string; body: string; label?: string } {
+function parseConfig(raw: string): { subject: string; body: string; label?: string; active: boolean } {
   try {
     const p = JSON.parse(raw);
     if (p && typeof p.subject === 'string' && typeof p.body === 'string') {
-      return { subject: p.subject, body: p.body, label: typeof p.label === 'string' && p.label ? p.label : undefined };
+      return { subject: p.subject, body: p.body, label: typeof p.label === 'string' && p.label ? p.label : undefined, active: p.active !== false };
     }
   } catch {}
-  return { subject: '', body: raw };
+  return { subject: '', body: raw, active: true };
 }
 
 const DEFAULT_TEMPLATES: Record<string, { subject: string; body: string }> = {
@@ -163,15 +167,23 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string; body: string }> = {
     subject: "{{nom}} — votre première semaine",
     body: "Bonjour {{nom}},\n\nUne semaine déjà ! Vous avez accès à l'intégralité de {{nom_formation}}.\n\nÀ bientôt,",
   },
-  template_failed_payment: {
+  template_failed_payment_j1: {
     subject: "Action requise — problème de paiement",
-    body: "Bonjour {{nom}},\n\nNous avons rencontré un problème avec votre paiement. Merci de mettre à jour vos informations pour conserver votre accès.\n\nÀ bientôt,",
+    body: "Bonjour {{nom}},\n\nNous avons rencontré un problème avec votre paiement de {{montant}}. Cela arrive — nous sommes là pour vous aider.\n\nMettez à jour vos informations de paiement pour conserver votre accès :\n{{lien_paiement}}\n\nÀ très vite,",
+  },
+  template_failed_payment_j3: {
+    subject: "{{nom}}, votre accès sera suspendu sans action de votre part",
+    body: "Bonjour {{nom}},\n\nNous n'avons toujours pas pu prélever {{montant}} sur votre moyen de paiement. Sans régularisation, votre accès sera suspendu dans les prochains jours.\n\nRéglez la situation ici :\n{{lien_paiement}}\n\nÀ bientôt,",
+  },
+  template_failed_payment_j7: {
+    subject: "Dernier avertissement — suspension de votre accès",
+    body: "Bonjour {{nom}},\n\nMalgré nos relances, le paiement de {{montant}} n'a pas pu être effectué. Votre accès va être suspendu sous 24h.\n\nPour éviter la suspension, réglez maintenant :\n{{lien_paiement}}\n\nCordialement,",
   },
 };
 
 const allDefaultTemplates = EMAIL_CONFIGS.every(({ key }) => !configs[key]);
 
-const PARSED_CONFIGS: Record<string, { subject: string; body: string; label?: string }> = {};
+const PARSED_CONFIGS: Record<string, { subject: string; body: string; label?: string; active: boolean }> = {};
 for (const { key } of EMAIL_CONFIGS) {
   PARSED_CONFIGS[key] = parseConfig(configs[key] ?? '');
 }
@@ -243,20 +255,27 @@ for (const { key } of EMAIL_CONFIGS) {
         return (
           <div class="cust-card config-panel" id={`panel-${key}`} data-config={key}
                data-subject={parsed.subject} data-body={parsed.body}
-               data-label={parsed.label ?? ''}
+               data-label={parsed.label ?? ''} data-panel-active={parsed.active ? 'true' : 'false'}
                style={!isActive ? "display:none" : ""}>
             <div class="panel-header">
               <div class="panel-title-group">
                 <h2 class="cust-card-title section-title" style="margin-bottom:0">{parsed.label ?? label}</h2>
                 <button type="button" class="btn-section-rename" title="Renommer cette section">✏️</button>
               </div>
-              <form method="POST" class="reset-form">
-                <input type="hidden" name="config_type" value={key} />
-                <input type="hidden" name="value" value="" />
-                <button type="submit" class="btn-reset-tpl" title="Supprimer la personnalisation">
-                  Supprimer la personnalisation
-                </button>
-              </form>
+              <div class="panel-right-actions">
+                <label class="toggle-switch" title="Activer/désactiver cet email">
+                  <input type="checkbox" class="toggle-input" checked={parsed.active} />
+                  <span class="toggle-track"></span>
+                  <span class="toggle-label">{parsed.active ? 'Actif' : 'Inactif'}</span>
+                </label>
+                <form method="POST" class="reset-form">
+                  <input type="hidden" name="config_type" value={key} />
+                  <input type="hidden" name="value" value="" />
+                  <button type="submit" class="btn-reset-tpl" title="Supprimer la personnalisation">
+                    Supprimer la personnalisation
+                  </button>
+                </form>
+              </div>
             </div>
             {DEFAULT_TEMPLATES[key] && (
               <div class="default-tpl-wrap">
@@ -420,24 +439,77 @@ for (const { key } of EMAIL_CONFIGS) {
               auto.trigger_type === 'specific_date'        ? (auto.trigger_date ?? '—') :
               'Paiement échoué';
             return (
-              <div class="auto-item" data-auto-id={auto.id}>
-                <div class="auto-item-info">
-                  <span class="auto-name-cell auto-item-name" data-name={auto.name}>{auto.name}</span>
-                  <span class="auto-item-trigger">{triggerLabel}</span>
+              <div class="auto-item" data-auto-id={auto.id}
+                   data-subject={auto.subject} data-body={auto.body}>
+                <div class="auto-item-header">
+                  <div class="auto-item-info">
+                    <span class="auto-name-cell auto-item-name" data-name={auto.name}>{auto.name}</span>
+                    <span class="auto-item-trigger">{triggerLabel}</span>
+                  </div>
+                  <div class="auto-item-right">
+                    <button type="button" class="btn-auto-toggle"
+                            data-id={auto.id}
+                            data-active={auto.active ? 'true' : 'false'}>
+                      {auto.active ? 'Actif' : 'Inactif'}
+                    </button>
+                    <div class="auto-item-btns">
+                      <button type="button" class="btn-auto-edit-content"
+                              title="Modifier le contenu de l'email">✏️ Contenu</button>
+                      <button type="button" class="btn-auto-rename"
+                              data-id={auto.id}
+                              title="Renommer">✏️</button>
+                      <button type="button" class="btn-auto-delete"
+                              data-id={auto.id}
+                              title="Supprimer">🗑</button>
+                    </div>
+                  </div>
                 </div>
-                <div class="auto-item-right">
-                  <button type="button" class="btn-auto-toggle"
-                          data-id={auto.id}
-                          data-active={auto.active ? 'true' : 'false'}>
-                    {auto.active ? 'Actif' : 'Inactif'}
-                  </button>
-                  <div class="auto-item-btns">
-                    <button type="button" class="btn-auto-rename"
-                            data-id={auto.id}
-                            title="Renommer">✏️</button>
-                    <button type="button" class="btn-auto-delete"
-                            data-id={auto.id}
-                            title="Supprimer">🗑</button>
+                <div class="auto-editor hidden">
+                  <div class="editor-tabs">
+                    <button class="editor-tab active" type="button" data-tab="manual">✏️ Rédiger moi-même</button>
+                    <button class="editor-tab" type="button" data-tab="generate">✨ Générer avec l'IA</button>
+                  </div>
+                  <div class="tab-panel" data-panel="manual">
+                    <label class="form-label">Sujet</label>
+                    <input type="text" class="form-input auto-subject-input" placeholder="Objet de l'email" />
+                    <label class="form-label" style="margin-top:0.25rem">Corps</label>
+                    <textarea class="form-input cust-textarea auto-body-input" rows={5}
+                              placeholder="Contenu de l'email..."></textarea>
+                    <div class="cust-hints">
+                      <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+                      <div class="cust-hints-list">
+                        {['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}'].map((v) => (
+                          <code class="cust-hint auto-hint" data-var={v}>{v}</code>
+                        ))}
+                      </div>
+                    </div>
+                    <div class="manual-actions">
+                      <button type="button" class="btn btn-primary auto-save-btn">Enregistrer</button>
+                      <button type="button" class="btn btn-secondary btn-auto-improve">🔧 Améliorer avec l'IA</button>
+                    </div>
+                    <p class="ai-error auto-improve-error"></p>
+                    <p class="auto-save-feedback"></p>
+                  </div>
+                  <div class="tab-panel hidden" data-panel="generate">
+                    <input type="text" class="form-input gen-formation"
+                           placeholder="Nom de votre formation (ex: Maîtriser Instagram)" />
+                    <select class="form-input gen-tone">
+                      <option value="chaleureux">Chaleureux et bienveillant</option>
+                      <option value="professionnel">Professionnel et direct</option>
+                      <option value="motivant">Motivant et dynamique</option>
+                    </select>
+                    <input type="text" class="form-input gen-objective"
+                           placeholder="Objectif de cet email (ex: rassurer, engager, fidéliser)" />
+                    <button class="btn btn-primary btn-auto-generate" type="button"
+                            style="align-self:flex-start">✨ Générer l'email</button>
+                    <p class="ai-error auto-gen-error"></p>
+                    <div class="generation-result hidden">
+                      <input type="text" class="form-input subject-preview" readonly placeholder="Sujet généré" />
+                      <textarea class="form-input body-preview" rows={4} readonly
+                                placeholder="Contenu généré"></textarea>
+                      <button class="btn btn-secondary btn-auto-use-result" type="button"
+                              style="align-self:flex-start">Utiliser ce contenu →</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -499,12 +571,40 @@ for (const { key } of EMAIL_CONFIGS) {
         form.addEventListener('submit', () => {
           const hiddenVal = form.querySelector<HTMLInputElement>('.hidden-value');
           if (!hiddenVal) return;
-          const subject   = subjectInput?.value ?? '';
-          const body      = bodyInput?.value    ?? '';
-          const customLabel = card.dataset.label ?? '';
-          const obj: Record<string, string> = { subject, body };
+          const subject     = subjectInput?.value ?? '';
+          const body        = bodyInput?.value    ?? '';
+          const customLabel = card.dataset.label  ?? '';
+          const isActive    = card.querySelector<HTMLInputElement>('.toggle-input')?.checked ?? true;
+          const obj: Record<string, string | boolean> = { subject, body, active: isActive };
           if (customLabel) obj.label = customLabel;
           hiddenVal.value = JSON.stringify(obj);
+        });
+      }
+
+      const toggleInput = card.querySelector<HTMLInputElement>('.toggle-input');
+      const toggleLabel = card.querySelector<HTMLElement>('.toggle-label');
+      if (toggleInput) {
+        toggleInput.addEventListener('change', async () => {
+          const isActive = toggleInput.checked;
+          if (toggleLabel) toggleLabel.textContent = isActive ? 'Actif' : 'Inactif';
+          card.dataset.panelActive = isActive ? 'true' : 'false';
+          const configKey = card.dataset.config ?? '';
+          const subject   = subjectInput?.value ?? card.dataset.subject ?? '';
+          const body      = bodyInput?.value    ?? card.dataset.body    ?? '';
+          const label     = card.dataset.label  ?? '';
+          const value     = JSON.stringify({ subject, body, active: isActive, ...(label ? { label } : {}) });
+          try {
+            const res = await fetch('/api/config-update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ config_type: configKey, value }),
+            });
+            if (!res.ok) throw new Error();
+          } catch {
+            toggleInput.checked = !isActive;
+            if (toggleLabel) toggleLabel.textContent = !isActive ? 'Actif' : 'Inactif';
+            card.dataset.panelActive = !isActive ? 'true' : 'false';
+          }
         });
       }
 
@@ -743,10 +843,18 @@ for (const { key } of EMAIL_CONFIGS) {
 
     function updateTriggerVisibility() {
       const v = triggerSelect?.value ?? 'delay_after_purchase';
-      if (daysField) daysField.style.display = v === 'delay_after_purchase' ? '' : 'none';
-      if (dateField) dateField.style.display = v === 'specific_date'        ? '' : 'none';
-      // required dynamique : seulement quand le champ est visible
-      if (daysInput) daysInput.required = v === 'delay_after_purchase';
+      const showDays = v === 'delay_after_purchase' || v === 'payment_failed';
+      if (daysField) {
+        daysField.style.display = showDays ? '' : 'none';
+        const label = daysField.querySelector<HTMLElement>('.form-label');
+        if (label) label.textContent = v === 'payment_failed' ? 'Délai en jours après l\'échec (optionnel)' : 'Nombre de jours';
+      }
+      if (dateField) dateField.style.display = v === 'specific_date' ? '' : 'none';
+      if (daysInput) {
+        daysInput.required = v === 'delay_after_purchase';
+        daysInput.min = '0';
+        daysInput.placeholder = v === 'payment_failed' ? 'Ex : 3 (0 = immédiat)' : 'Ex : 14';
+      }
     }
 
     function openModal() {
@@ -1026,15 +1134,160 @@ for (const { key } of EMAIL_CONFIGS) {
     }
   }
 
+  function initCustomEditor() {
+    document.querySelectorAll<HTMLElement>('.auto-item').forEach((item) => {
+      const subjectInput = item.querySelector<HTMLInputElement>('.auto-subject-input');
+      const bodyInput    = item.querySelector<HTMLTextAreaElement>('.auto-body-input');
+      if (subjectInput) subjectInput.value = item.dataset.subject ?? '';
+      if (bodyInput)    bodyInput.value    = item.dataset.body    ?? '';
+
+      if (item.dataset.editorInit) return;
+      item.dataset.editorInit = 'true';
+
+      const autoId   = item.dataset.autoId ?? '';
+      const editBtn  = item.querySelector<HTMLButtonElement>('.btn-auto-edit-content');
+      const editor   = item.querySelector<HTMLElement>('.auto-editor');
+
+      editBtn?.addEventListener('click', () => {
+        const wasHidden = editor?.classList.contains('hidden');
+        editor?.classList.toggle('hidden');
+        if (wasHidden) {
+          if (subjectInput) subjectInput.value = item.dataset.subject ?? '';
+          if (bodyInput)    bodyInput.value    = item.dataset.body    ?? '';
+        }
+      });
+
+      const tabs   = item.querySelectorAll<HTMLButtonElement>('.auto-editor .editor-tab');
+      const panels = item.querySelectorAll<HTMLElement>('.auto-editor .tab-panel');
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          tabs.forEach((t)   => t.classList.remove('active'));
+          panels.forEach((p) => p.classList.add('hidden'));
+          tab.classList.add('active');
+          item.querySelector<HTMLElement>(`.auto-editor [data-panel="${tab.dataset.tab}"]`)
+              ?.classList.remove('hidden');
+        });
+      });
+
+      item.querySelectorAll<HTMLElement>('.auto-hint').forEach((hint) => {
+        hint.addEventListener('click', () => {
+          if (!bodyInput || !hint.dataset.var) return;
+          const v = hint.dataset.var;
+          const s = bodyInput.selectionStart ?? bodyInput.value.length;
+          const e = bodyInput.selectionEnd   ?? bodyInput.value.length;
+          bodyInput.value = bodyInput.value.slice(0, s) + v + bodyInput.value.slice(e);
+          bodyInput.selectionStart = bodyInput.selectionEnd = s + v.length;
+          bodyInput.focus();
+        });
+      });
+
+      const saveBtn      = item.querySelector<HTMLButtonElement>('.auto-save-btn');
+      const saveFeedback = item.querySelector<HTMLElement>('.auto-save-feedback');
+      saveBtn?.addEventListener('click', async () => {
+        const subject = subjectInput?.value ?? '';
+        const body    = bodyInput?.value    ?? '';
+        if (saveBtn) { saveBtn.textContent = '…'; saveBtn.disabled = true; }
+        try {
+          const res = await fetch('/api/automation-update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: autoId, subject, body }),
+          });
+          if (!res.ok) throw new Error();
+          item.dataset.subject = subject;
+          item.dataset.body    = body;
+          if (saveFeedback) {
+            saveFeedback.textContent  = 'Enregistré ✓';
+            saveFeedback.style.color  = '#22C55E';
+            saveFeedback.style.display = 'block';
+            setTimeout(() => { saveFeedback.style.display = 'none'; }, 2000);
+          }
+        } catch {
+          if (saveFeedback) {
+            saveFeedback.textContent  = 'Erreur lors de la sauvegarde';
+            saveFeedback.style.color  = '#EF4444';
+            saveFeedback.style.display = 'block';
+            setTimeout(() => { saveFeedback.style.display = 'none'; saveFeedback.style.color = ''; }, 3000);
+          }
+        } finally {
+          if (saveBtn) { saveBtn.textContent = 'Enregistrer'; saveBtn.disabled = false; }
+        }
+      });
+
+      const improveBtn   = item.querySelector<HTMLButtonElement>('.btn-auto-improve');
+      const improveError = item.querySelector<HTMLElement>('.auto-improve-error');
+      improveBtn?.addEventListener('click', async () => {
+        const subject = subjectInput?.value ?? '';
+        const body    = bodyInput?.value    ?? '';
+        if (improveError) { improveError.textContent = ''; improveError.classList.remove('visible'); }
+        if (improveBtn)   { improveBtn.classList.add('loading'); improveBtn.textContent = 'Amélioration en cours...'; }
+        try {
+          const res  = await fetch('/api/ai-improve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: `Sujet : ${subject}\n\nCorps :\n${body}` }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.subject) throw new Error();
+          if (subjectInput) subjectInput.value = data.subject;
+          if (bodyInput)    bodyInput.value    = data.body;
+        } catch {
+          if (improveError) { improveError.textContent = "Erreur d'amélioration"; improveError.classList.add('visible'); }
+        } finally {
+          if (improveBtn) { improveBtn.classList.remove('loading'); improveBtn.textContent = '🔧 Améliorer avec l\'IA'; }
+        }
+      });
+
+      const generateBtn = item.querySelector<HTMLButtonElement>('.btn-auto-generate');
+      const genError    = item.querySelector<HTMLElement>('.auto-gen-error');
+      generateBtn?.addEventListener('click', async () => {
+        const formationName = item.querySelector<HTMLInputElement>('.gen-formation')?.value.trim() ?? '';
+        const tone          = item.querySelector<HTMLSelectElement>('.gen-tone')?.value ?? 'chaleureux';
+        const objective     = item.querySelector<HTMLInputElement>('.gen-objective')?.value.trim() ?? '';
+        if (genError) { genError.textContent = ''; genError.classList.remove('visible'); }
+        if (generateBtn) { generateBtn.classList.add('loading'); generateBtn.textContent = 'Génération en cours...'; }
+        try {
+          const res  = await fetch('/api/ai-generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emailType: 'custom_automation', formationName, tone, objective }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.subject) throw new Error();
+          const result  = item.querySelector<HTMLElement>('.generation-result');
+          const subPrev = item.querySelector<HTMLInputElement>('.subject-preview');
+          const bodPrev = item.querySelector<HTMLTextAreaElement>('.body-preview');
+          if (subPrev) subPrev.value = data.subject;
+          if (bodPrev) bodPrev.value = data.body;
+          result?.classList.remove('hidden');
+        } catch {
+          if (genError) { genError.textContent = 'Erreur de génération'; genError.classList.add('visible'); }
+        } finally {
+          if (generateBtn) { generateBtn.classList.remove('loading'); generateBtn.textContent = '✨ Générer l\'email'; }
+        }
+      });
+
+      item.querySelector<HTMLElement>('.btn-auto-use-result')?.addEventListener('click', () => {
+        const subject = item.querySelector<HTMLInputElement>('.subject-preview')?.value ?? '';
+        const body    = item.querySelector<HTMLTextAreaElement>('.body-preview')?.value  ?? '';
+        if (subjectInput) subjectInput.value = subject;
+        if (bodyInput)    bodyInput.value    = body;
+        item.querySelector<HTMLButtonElement>('.auto-editor [data-tab="manual"]')?.click();
+      });
+    });
+  }
+
   initBanner();
   initEditor();
   initAutomations();
   initConfigTabs();
+  initCustomEditor();
   document.addEventListener('astro:page-load', () => {
     initBanner();
     initEditor();
     initAutomations();
     initConfigTabs();
+    initCustomEditor();
   });
 </script>
 
@@ -1565,5 +1818,95 @@ for (const { key } of EMAIL_CONFIGS) {
 }
 .btn-auto-toggle[data-active="false"] {
   background: rgba(156,163,175,0.1);
+}
+
+/* ── Toggle switch actif/inactif pour templates standards ── */
+.panel-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.4375rem;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+.toggle-input { display: none; }
+.toggle-track {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  background: #444;
+  border-radius: 0.625rem;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-input:checked + .toggle-track { background: #059669; }
+.toggle-input:checked + .toggle-track::after { transform: translateX(1rem); }
+.toggle-label {
+  font-size: 0.75rem;
+  color: var(--gray-light);
+  min-width: 2.5rem;
+}
+.cust-card[data-panel-active="false"] .editor-tabs,
+.cust-card[data-panel-active="false"] .tab-panel,
+.cust-card[data-panel-active="false"] .default-tpl-wrap {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ── Éditeur contenu custom automations ── */
+.auto-item {
+  flex-direction: column;
+  align-items: stretch;
+}
+.auto-item-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.auto-editor {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+.auto-editor.hidden { display: none; }
+.auto-save-feedback {
+  font-size: 0.875rem;
+  display: none;
+}
+.btn-auto-edit-content {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--gray-border);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--gray-light);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.btn-auto-edit-content:hover {
+  background: rgba(46,139,240,0.1);
+  border-color: rgba(46,139,240,0.4);
+  color: #2E8BF0;
 }
 </style>
