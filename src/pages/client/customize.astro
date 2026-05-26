@@ -875,7 +875,7 @@ for (const { key } of EMAIL_CONFIGS) {
       const subject = modalSubjectInput?.value ?? '';
       const body    = modalTextarea?.value    ?? '';
       if (modalImproveError) { modalImproveError.textContent = ''; modalImproveError.classList.remove('visible'); }
-      if (modalImproveBtn)   { modalImproveBtn.disabled = true; modalImproveBtn.textContent = 'Amélioration en cours...'; }
+      if (modalImproveBtn)   { modalImproveBtn.classList.add('loading'); modalImproveBtn.disabled = true; modalImproveBtn.textContent = 'Amélioration en cours...'; }
       try {
         const res  = await fetch('/api/ai-improve', {
           method: 'POST',
@@ -883,13 +883,13 @@ for (const { key } of EMAIL_CONFIGS) {
           body: JSON.stringify({ content: `Sujet : ${subject}\n\nCorps :\n${body}`, emailType: 'custom_automation' }),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.subject) throw new Error();
+        if (!res.ok || !data.subject || data.body == null) throw new Error();
         if (modalSubjectInput) modalSubjectInput.value = data.subject;
         if (modalTextarea)     modalTextarea.value     = data.body;
       } catch {
         if (modalImproveError) { modalImproveError.textContent = "Erreur d'amélioration"; modalImproveError.classList.add('visible'); }
       } finally {
-        if (modalImproveBtn) { modalImproveBtn.textContent = '🔧 Améliorer avec l\'IA'; }
+        if (modalImproveBtn) { modalImproveBtn.classList.remove('loading'); modalImproveBtn.textContent = '🔧 Améliorer avec l\'IA'; }
         updateModalImproveState();
       }
     });
