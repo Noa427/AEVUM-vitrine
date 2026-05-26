@@ -22,18 +22,21 @@ type AutomationData = {
   upsell?: boolean;
 };
 type HistoryEntry = { date: string; action: string; details?: string };
+type ConfigEntry = { config_type: string; value: string };
 
 let stats: StatsData | null = null;
 let automations: AutomationData | null = null;
 let recentHistory: HistoryEntry[] = [];
+let configs: Record<string, { active: boolean }> = {};
 
-const [statsResult, autoResult, histResult] = await Promise.allSettled([
-  fetch(`${base}/client/stats`, { headers }),
-  fetch(`${base}/client/automations`, { headers }),
-  fetch(`${base}/client/history?limit=5`, { headers }),
+const [statsResult, autoResult, histResult, configsResult] = await Promise.allSettled([
+  fetch(`${base}/client/stats`, { headers, signal: AbortSignal.timeout(8000) }),
+  fetch(`${base}/client/automations`, { headers, signal: AbortSignal.timeout(8000) }),
+  fetch(`${base}/client/history?limit=5`, { headers, signal: AbortSignal.timeout(8000) }),
+  fetch(`${base}/client/configs`, { headers, signal: AbortSignal.timeout(8000) }),
 ]);
 
-const responses = [statsResult, autoResult, histResult];
+const responses = [statsResult, autoResult, histResult, configsResult];
 const fulfilled = responses.filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled');
 if (fulfilled.some((r) => r.value.status === 401)) {
   Astro.cookies.delete('aevum_token', { path: '/' });
@@ -50,6 +53,44 @@ if (histResult.status === 'fulfilled' && histResult.value.ok) {
   const data = await histResult.value.json();
   recentHistory = Array.isArray(data) ? data : [];
 }
+if (configsResult.status === 'fulfilled' && configsResult.value.ok) {
+  const arr: ConfigEntry[] = await configsResult.value.json().catch(() => []);
+  if (Array.isArray(arr)) {
+    for (const c of arr) {
+      try {
+        const parsed = JSON.parse(c.value);
+        configs[c.config_type] = { active: parsed.active !== false };
+      } catch {
+        configs[c.config_type] = { active: true };
+      }
+    }
+  }
+}
+
+function computeStatus(
+  backendActive: boolean | undefined,
+  keys: string[],
+  configs: Record<string, { active: boolean }>
+): 'actif' | 'partiel' | 'off' {
+  if (!backendActive) return 'off';
+  const hasConfigs = keys.some((k) => k in configs);
+  if (!hasConfigs) return 'actif';
+  const activeCount = keys.filter((k) => configs[k]?.active !== false).length;
+  if (activeCount === keys.length) return 'actif';
+  if (activeCount === 0) return 'off';
+  return 'partiel';
+}
+
+const onboardingStatus = computeStatus(
+  automations?.onboarding,
+  ['template_onboarding_j0', 'template_onboarding_j3', 'template_onboarding_j7'],
+  configs
+);
+const recouvrementStatus = computeStatus(
+  automations?.recouvrement,
+  ['template_failed_payment_j1', 'template_failed_payment_j3', 'template_failed_payment_j7'],
+  configs
+);
 
 function fmt(n: number | undefined): string {
   return n != null ? String(n) : '0';
@@ -107,10 +148,15 @@ function fmtDate(iso: string): string {
       <h2 class="block-title">Automatisations actives</h2>
       <div class="auto-grid">
 
-        {automations?.onboarding ? (
+        {onboardingStatus === 'actif' ? (
           <div class="auto-card card">
             <p class="auto-name">Onboarding J0 / J3 / J7</p>
             <span class="auto-badge badge-actif">Actif</span>
+          </div>
+        ) : onboardingStatus === 'partiel' ? (
+          <div class="auto-card card">
+            <p class="auto-name">Onboarding J0 / J3 / J7</p>
+            <span class="auto-badge badge-partiel">Partiellement actif</span>
           </div>
         ) : (
           <a href="/client/customize" class="auto-card auto-card--link card">
@@ -119,10 +165,15 @@ function fmtDate(iso: string): string {
           </a>
         )}
 
-        {automations?.recouvrement ? (
+        {recouvrementStatus === 'actif' ? (
           <div class="auto-card card">
             <p class="auto-name">Recouvrement impayés</p>
             <span class="auto-badge badge-actif">Actif</span>
+          </div>
+        ) : recouvrementStatus === 'partiel' ? (
+          <div class="auto-card card">
+            <p class="auto-name">Recouvrement impayés</p>
+            <span class="auto-badge badge-partiel">Partiellement actif</span>
           </div>
         ) : (
           <a href="/client/customize" class="auto-card auto-card--link card">
@@ -221,6 +272,7 @@ function fmtDate(iso: string): string {
   }
   .badge-actif { background: var(--success-light); color: var(--success); }
   .badge-off { background: var(--dark-elevated); color: var(--gray); }
+  .badge-partiel { background: rgba(245,158,11,0.15); color: #F59E0B; }
 
   .activity-list { list-style: none; }
   .activity-item {
