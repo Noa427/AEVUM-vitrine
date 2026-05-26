@@ -51,20 +51,22 @@ if (res.status === 401) {
 | `/client/ai/generate` | POST `{emailType, formationName, tone, objective}` → `{subject, body}` | IA génération |
 | `/client/ai/improve` | POST `{content, emailType}` → `{subject, body}` | IA amélioration |
 
-Config types : `sender_name`, `template_onboarding_j0`, `template_onboarding_j3`, `template_onboarding_j7`, `template_failed_payment`
+Config types : `sender_name`, `template_onboarding_j0`, `template_onboarding_j3`, `template_onboarding_j7`, `template_failed_payment_j1`, `template_failed_payment_j3`, `template_failed_payment_j7`
 
-**Templates par défaut (hardcodés dans `../AEVUM_LOGI_INFOPRENEUR/backend/src/utils/getEmailTemplate.ts`) :**
-- `template_onboarding_j0` : sujet "Bienvenue {{nom}}, voici vos accès", corps bienvenue + identifiants
+**Templates par défaut (définis dans `customize.astro` → `DEFAULT_TEMPLATES`) :**
+- `template_onboarding_j0` : sujet "Bienvenue {{nom}}, voici vos accès"
 - `template_onboarding_j3` : sujet "{{nom}}, comment se passe votre début ?"
 - `template_onboarding_j7` : sujet "{{nom}} — votre première semaine"
-- `template_failed_payment` : sujet "Action requise — problème de paiement"
+- `template_failed_payment_j1` : sujet "Action requise — problème de paiement" (ton empathique)
+- `template_failed_payment_j3` : sujet "{{nom}}, votre accès sera suspendu…" (ton direct)
+- `template_failed_payment_j7` : sujet "Dernier avertissement — suspension de votre accès" (ton ferme)
 
 ## Pages client (toutes SSR)
 | URL | Fichier | Description |
 |-----|---------|-------------|
 | `/login` | `src/pages/login.astro` | Page publique — `BaseLayout` |
 | `/client` | `src/pages/client/index.astro` | Redirect → `/client/dashboard` |
-| `/client/dashboard` | `src/pages/client/dashboard.astro` | Stats (`0` si null), automations (lien `/client/customize` si non configuré), 5 dernières activités |
+| `/client/dashboard` | `src/pages/client/dashboard.astro` | Stats (`0` si null), automations avec badges 3 états (Actif/Partiellement actif/Non configuré), 5 dernières activités |
 | `/client/history` | `src/pages/client/history.astro` | Tableau Date/Type/Détails, pagination JS 50/page si >50 entrées |
 | `/client/customize` | `src/pages/client/customize.astro` | Éditeur 3 modes (Manuel + Générer IA), bannière défaut, badges variables |
 | `/client/settings` | `src/pages/client/settings.astro` | Email actuel (readonly), changement mdp + email, logout danger |
@@ -85,32 +87,48 @@ Utilisé par toutes les pages `/client/*` sauf `/login`.
 
 Fournit : sidebar fixe 220px (logo, 4 liens nav, email + logout), topbar hamburger mobile (<860px), skip-link accessibilité, `<ClientRouter />`, prefetch des 4 pages client, `astro:before-swap` ferme le drawer mobile.
 
-## customize.astro — état actuel
-- 5 configs : `sender_name` (tab unique), 4 templates email (éditeur 3 modes)
-- **Éditeur** : onglet "✏️ Rédiger moi-même" (sujet + corps + variables + bouton Améliorer IA désactivé) + onglet "✨ Générer avec l'IA" (form + bouton désactivé)
-- **Sauvegarde** : form POST SSR → `value = JSON.stringify({subject, body})` (via `.hidden-value` pré-rempli, intercepté avant submit)
-- **Rétrocompat** : `parseConfig()` gère ancien format plain-text → `{subject:'', body: rawString}`
-- **Bannière** : visible si `allDefaultTemplates` (tous vides), dismissible via sessionStorage `aevum_banner_dismissed`
+## customize.astro — état actuel (shipped)
+- 7 configs : `sender_name` (section indépendante), 6 templates email (onglets horizontaux : Bienvenue, J+3, J+7, Relance J+1, Relance J+3, Relance J+7)
+- **Éditeur** : onglet "✏️ Rédiger moi-même" + onglet "✨ Générer avec l'IA" (branché sur `/api/ai-generate`, `/api/ai-improve`)
+- **Bouton "Améliorer avec l'IA"** : branché sur `/api/ai-improve` (présent dans chaque carte template ET dans le modal de création d'automatisation)
+- **Section "mail par défaut"** : collapsible "Voir le template par défaut ▾" + bouton "Utiliser ce template" dans chaque carte
+- **Sauvegarde** : form POST SSR → `value = JSON.stringify({subject, body, active, label?})` (via `.hidden-value` intercepté avant submit)
+- **Rétrocompat** : `parseConfig()` gère ancien format plain-text → `{subject:'', body: rawString, active: true}`
+- **Toggle actif/inactif** : par template, persisté via `/api/config-update` PUT avec `active` dans le JSON ; les panneaux inactifs sont désactivés visuellement (opacity 0.6)
+- **Rename** : double-clic sur onglet (contenteditable) OU bouton ✏️ dans la section (inline input), sauvegarde via `/api/config-update` PUT
+- **Bannière** : visible si `allDefaultTemplates` (les 6 templates tous vides), dismissible via sessionStorage `aevum_banner_dismissed`
 - **Variables** disponibles par template :
   - onboarding j0 : `{{nom}}` `{{prenom}}` `{{email}}` `{{nom_formation}}` `{{lien_acces}}` `{{mot_de_passe}}`
   - onboarding j3/j7 : idem sans `{{mot_de_passe}}`
-  - failed_payment : `{{nom}}` `{{prenom}}` `{{email}}` `{{montant}}` `{{lien_paiement}}`
-- **Boutons IA** : désactivés (`disabled`) — endpoints `/client/ai/generate` et `/client/ai/improve` déjà déployés côté backend, à brancher via une API route proxy Astro
+  - failed_payment_j1/j3/j7 : `{{nom}}` `{{prenom}}` `{{email}}` `{{montant}}` `{{lien_paiement}}`
+- **Automatisations personnalisées** : modal création (form POST SSR `action=create_automation`) avec bouton "Améliorer avec l'IA" (désactivé si corps vide), liste + toggle actif/inactif (`/api/automation-toggle` PUT), rename inline (`/api/automation-update` PUT), suppression avec modal confirm (`/api/automation-delete` DELETE)
+
+## API routes proxy (`src/pages/api/`)
+Toutes SSR (`prerender = false`). Pattern : auth via cookie → parse body → fetch backend avec Bearer token → forward réponse.
+Utilitaire partagé : `src/lib/api.ts` → `jsonRes(data, status)`.
+
+| Fichier | Méthode | Backend |
+|---------|---------|---------|
+| `ai-generate.ts` | POST | `/client/ai/generate` |
+| `ai-improve.ts` | POST | `/client/ai/improve` |
+| `config-update.ts` | PUT | `/client/configs` |
+| `automation-toggle.ts` | PUT | `/client/automations/custom/:id` (`{active}`) |
+| `automation-update.ts` | PUT | `/client/automations/custom/:id` (`{name}`) |
+| `automation-delete.ts` | DELETE | `/client/automations/custom/:id` |
+
+## dashboard.astro — état actuel (shipped)
+- `Promise.allSettled` sur 4 appels : stats, automations, history, **configs**
+- Badges onboarding/recouvrement à 3 états calculés via `computeStatus()` :
+  - `'actif'` : booléen backend true + tous les templates actifs (ou aucun sauvegardé → defaults)
+  - `'partiel'` : booléen backend true + certains templates désactivés
+  - `'off'` : booléen backend false
+- CSS `.badge-partiel` : fond ambre `rgba(245,158,11,0.15)`, couleur `#F59E0B`
+- Graceful degradation : si `/client/configs` échoue → `configs = {}` → comportement identique à avant
+- Support IA et Upsell : inchangés (pas de configs JSON associées)
 
 ## TODO — prochaine session
-1. **Section "mail par défaut"** dans `customize.astro` :
-   - Lien collapsible "Voir le template par défaut ▾" dans chaque carte template
-   - Affiche sujet + corps par défaut en lecture seule (valeurs hardcodées depuis `getEmailTemplate.ts`)
-   - Optionnel : bouton "Utiliser ce template" pour copier le défaut dans l'éditeur
-
-2. **Brancher les boutons IA** dans `customize.astro` :
-   - Créer `src/pages/api/ai-generate.ts` et `src/pages/api/ai-improve.ts` (SSR proxy — lit le cookie HttpOnly, appelle AEVUM_URL avec le Bearer token)
-   - Activer les boutons Générer + Améliorer avec fetch vers ces routes + états chargement + gestion d'erreur
-
-3. **Custom automations** (3 sous-projets séparés) :
-   - **A — Backend** : migration `009_custom_automations.sql`, routes GET/POST/PUT/DELETE `/client/automations/custom`, intégration cron
-   - **B — Vitrine** : section "Mes automatisations personnalisées" dans `customize.astro` (modal création + liste + toggle actif/inactif), dépend de A déployé
-   - Utiliser le pattern form POST SSR pour la création, fetch API route proxy pour le toggle (PUT)
+- Déploiement Vercel : vérifier variables d'env `AEVUM_URL` + `JWT_SECRET` en production
+- Tests E2E portail client (login → customize → save template → rename → delete automation)
 
 ## CSS
 `global.css` est intentionnellement vide — tous les styles sont injectés via `<style is:global>` dans les layouts (pattern Astro, bypasse les caches).
