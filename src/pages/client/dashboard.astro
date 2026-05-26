@@ -58,8 +58,9 @@ if (configsResult.status === 'fulfilled' && configsResult.value.ok) {
   if (Array.isArray(arr)) {
     for (const c of arr) {
       try {
-        const parsed = JSON.parse(c.value);
-        configs[c.config_type] = { active: parsed.active !== false };
+        const parsed: unknown = JSON.parse(c.value);
+        const isObj = typeof parsed === 'object' && parsed !== null;
+        configs[c.config_type] = { active: !isObj || (parsed as Record<string, unknown>).active !== false };
       } catch {
         configs[c.config_type] = { active: true };
       }
