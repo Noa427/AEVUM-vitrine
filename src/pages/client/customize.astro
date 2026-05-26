@@ -407,6 +407,8 @@ for (const { key } of EMAIL_CONFIGS) {
                 ))}
               </div>
             </div>
+            <button type="button" class="btn btn-secondary" id="modal-improve-btn" disabled>🔧 Améliorer avec l'IA</button>
+            <p class="ai-error" id="modal-improve-error"></p>
             <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
               <button type="submit" class="btn btn-primary">Créer</button>
               <button type="button" class="btn btn-secondary" id="btn-close-auto-modal">Annuler</button>
@@ -857,11 +859,47 @@ for (const { key } of EMAIL_CONFIGS) {
       }
     }
 
+    const modalTextarea    = modal.querySelector<HTMLTextAreaElement>('.modal-body-textarea');
+    const modalSubjectInput = modal.querySelector<HTMLInputElement>('input[name="auto_subject"]');
+    const modalImproveBtn   = document.getElementById('modal-improve-btn') as HTMLButtonElement | null;
+    const modalImproveError = document.getElementById('modal-improve-error');
+
+    function updateModalImproveState() {
+      if (modalImproveBtn) {
+        modalImproveBtn.disabled = !modalTextarea?.value.trim();
+      }
+    }
+    modalTextarea?.addEventListener('input', updateModalImproveState);
+
+    modalImproveBtn?.addEventListener('click', async () => {
+      const subject = modalSubjectInput?.value ?? '';
+      const body    = modalTextarea?.value    ?? '';
+      if (modalImproveError) { modalImproveError.textContent = ''; modalImproveError.classList.remove('visible'); }
+      if (modalImproveBtn)   { modalImproveBtn.disabled = true; modalImproveBtn.textContent = 'Amélioration en cours...'; }
+      try {
+        const res  = await fetch('/api/ai-improve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: `Sujet : ${subject}\n\nCorps :\n${body}`, emailType: 'custom_automation' }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.subject) throw new Error();
+        if (modalSubjectInput) modalSubjectInput.value = data.subject;
+        if (modalTextarea)     modalTextarea.value     = data.body;
+      } catch {
+        if (modalImproveError) { modalImproveError.textContent = "Erreur d'amélioration"; modalImproveError.classList.add('visible'); }
+      } finally {
+        if (modalImproveBtn) { modalImproveBtn.textContent = '🔧 Améliorer avec l\'IA'; }
+        updateModalImproveState();
+      }
+    });
+
     function openModal() {
       const form = modal?.querySelector<HTMLFormElement>('.auto-create-form');
       form?.reset();
       if (triggerSelect) triggerSelect.value = 'delay_after_purchase';
       updateTriggerVisibility();
+      updateModalImproveState();
       modal?.classList.remove('hidden');
     }
 
@@ -872,7 +910,6 @@ for (const { key } of EMAIL_CONFIGS) {
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     triggerSelect?.addEventListener('change', updateTriggerVisibility);
 
-    const modalTextarea = modal.querySelector<HTMLTextAreaElement>('.modal-body-textarea');
     modal.querySelectorAll<HTMLElement>('.modal-hint').forEach((hint) => {
       hint.addEventListener('click', () => {
         if (!modalTextarea || !hint.dataset.var) return;
