@@ -332,6 +332,14 @@ for (const { key } of EMAIL_CONFIGS) {
                 </div>
                 <p class="ai-error improve-error"></p>
               </form>
+              <div class="test-send-wrap">
+                <button type="button" class="btn btn-secondary btn-test-send"
+                        data-config-type={key}
+                        data-email={auth.email}>
+                  📧 M'envoyer un aperçu
+                </button>
+                <span class="test-send-feedback" aria-live="polite"></span>
+              </div>
             </div>
             <div class="tab-panel hidden" data-panel="generate">
               <input type="text" class="form-input gen-formation"
@@ -1325,6 +1333,42 @@ for (const { key } of EMAIL_CONFIGS) {
     initAutomations();
     initConfigTabs();
     initCustomEditor();
+
+  // F1 — test send buttons
+  document.querySelectorAll<HTMLButtonElement>('.btn-test-send').forEach((btn) => {
+    if (btn.dataset.initialized) return;
+    btn.dataset.initialized = 'true';
+    btn.addEventListener('click', async () => {
+      const configType = btn.dataset.configType!;
+      const email = btn.dataset.email!;
+      const feedback = btn.nextElementSibling as HTMLElement;
+      btn.disabled = true;
+      btn.textContent = 'Envoi en cours…';
+      feedback.className = 'test-send-feedback';
+      feedback.textContent = '';
+      try {
+        const res = await fetch('/api/test-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config_type: configType }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          feedback.className = 'test-send-feedback ok';
+          feedback.textContent = `Email de test envoyé à ${email}`;
+        } else {
+          feedback.className = 'test-send-feedback err';
+          feedback.textContent = (data as { error?: string }).error ?? 'Erreur lors de l\'envoi.';
+        }
+      } catch {
+        feedback.className = 'test-send-feedback err';
+        feedback.textContent = 'Erreur réseau. Réessayez.';
+      }
+      btn.disabled = false;
+      btn.textContent = '📧 M\'envoyer un aperçu';
+      setTimeout(() => { feedback.textContent = ''; feedback.className = 'test-send-feedback'; }, 3000);
+    });
+  });
   });
 </script>
 
@@ -1947,4 +1991,9 @@ for (const { key } of EMAIL_CONFIGS) {
   border-color: rgba(46,139,240,0.4);
   color: #2E8BF0;
 }
+
+  .test-send-wrap { display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap; }
+  .test-send-feedback { font-size: 0.875rem; }
+  .test-send-feedback.ok  { color: var(--success); }
+  .test-send-feedback.err { color: #EF4444; }
 </style>
