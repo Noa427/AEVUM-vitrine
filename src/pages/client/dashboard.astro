@@ -14,6 +14,8 @@ type StatsData = {
   total_emails?: number;
   recouvrement_envoyes?: number;
   upsells_envoyes?: number;
+  recouvrement_montant_recupere?: number;
+  recouvrement_taux?: number;
 };
 type AutomationData = {
   onboarding?: boolean;
@@ -156,7 +158,18 @@ function fmtDate(iso: string): string {
           <p class="stat-label">Upsells envoyés</p>
           <p class="stat-value">{fmt(stats?.upsells_envoyes)}</p>
         </div>
+        <div class="stat-card card">
+          <p class="stat-label">Récupéré ce mois</p>
+          <p class="stat-value">
+            {(stats?.recouvrement_montant_recupere ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €
+          </p>
+        </div>
+        <div class="stat-card card">
+          <p class="stat-label">Taux de récupération</p>
+          <p class="stat-value">{stats?.recouvrement_taux ?? 0} %</p>
+        </div>
       </div>
+      <p class="stats-context">Calculé sur les paiements récupérés après relance automatique.</p>
     </div>
 
     <!-- SECTION 2 : Automatisations -->
@@ -261,12 +274,13 @@ function fmtDate(iso: string): string {
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
   }
   .stat-card { padding: 1.5rem; }
   .stat-label { font-size: 0.8125rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; max-width: none; }
   .stat-value { font-size: 2rem; font-weight: 700; color: var(--light); letter-spacing: -0.03em; }
+  .stats-context { font-size: 0.75rem; color: var(--gray); margin-top: 0.5rem; }
 
   .auto-grid {
     display: grid;
