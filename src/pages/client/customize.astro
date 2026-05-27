@@ -132,6 +132,9 @@ const VARIABLE_HINTS: Record<string, string[]> = {
   template_failed_payment_j3: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
   template_failed_payment_j7: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
   template_checkout_abandon: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_checkout}}'],
+  testimonial_url: [],
+  template_testimonial_j30: ['{{nom}}', '{{prenom}}', '{{nom_formation}}', '{{lien_temoignage}}'],
+  template_testimonial_j60: ['{{nom}}', '{{prenom}}', '{{nom_formation}}', '{{lien_temoignage}}'],
 };
 
 const EMAIL_CONFIGS = [
@@ -194,6 +197,12 @@ for (const { key } of EMAIL_CONFIGS) {
 
 const checkoutAbandonRaw = configs['template_checkout_abandon'];
 const checkoutAbandonConfig = parseConfig(checkoutAbandonRaw ?? '');
+const testimonialUrlRaw = configs['testimonial_url'];
+const testimonialUrlConfig = parseConfig(testimonialUrlRaw ?? '');
+const testimonialJ30Raw = configs['template_testimonial_j30'];
+const testimonialJ30Config = parseConfig(testimonialJ30Raw ?? '');
+const testimonialJ60Raw = configs['template_testimonial_j60'];
+const testimonialJ60Config = parseConfig(testimonialJ60Raw ?? '');
 ---
 
 <ClientLayout
@@ -453,6 +462,189 @@ const checkoutAbandonConfig = parseConfig(checkoutAbandonRaw ?? '');
           <option value="motivant">Motivant et dynamique</option>
         </select>
         <input type="text" class="form-input gen-objective" placeholder="Objectif de cet email (ex: récupérer le paiement)" />
+        <button class="btn btn-primary btn-generate" style="align-self:flex-start">✨ Générer l'email</button>
+        <p class="ai-error gen-error"></p>
+        <div class="generation-result hidden">
+          <input type="text" class="form-input subject-preview" readonly placeholder="Sujet généré" />
+          <textarea class="form-input body-preview" rows={6} readonly placeholder="Contenu généré"></textarea>
+          <button class="btn btn-secondary btn-use-result" style="align-self:flex-start">Utiliser ce contenu →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- F12 — Témoignages -->
+    <div class="section-divider"><span>Demandes de témoignage</span></div>
+
+    <!-- URL du formulaire -->
+    <div class="card testimonial-url-card">
+      <h2 class="cust-card-title">URL de votre formulaire de collecte</h2>
+      <p class="card-note" style="margin:0.25rem 0 1rem;font-size:0.875rem;color:var(--fg-muted)">
+        Envoyé automatiquement 30 ou 60 jours après l'inscription d'un élève actif.
+      </p>
+      {successType === 'testimonial_url' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      <form method="POST" class="testimonial-url-form">
+        <input type="hidden" name="config_type" value="testimonial_url" />
+        <input type="hidden" name="value" class="hidden-value" value={JSON.stringify({ subject: '', body: testimonialUrlConfig.body, active: true })} />
+        <div class="form-group" style="max-width:480px">
+          <input type="url" name="url-display" class="form-input testimonial-url-input"
+                 placeholder="https://typeform.com/to/..."
+                 value={testimonialUrlConfig.body} />
+        </div>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-start">Sauvegarder</button>
+      </form>
+    </div>
+
+    <!-- Tabs J+30 / J+60 -->
+    <div class="testimonial-tabs-header">
+      <button class="testi-tab active" data-testi-tab="j30" type="button">À J+30</button>
+      <button class="testi-tab" data-testi-tab="j60" type="button">À J+60</button>
+    </div>
+
+    <!-- Panel J+30 -->
+    <div class="cust-card config-panel"
+         id="panel-template_testimonial_j30"
+         data-config="template_testimonial_j30"
+         data-subject={testimonialJ30Config.subject}
+         data-body={testimonialJ30Config.body}
+         data-label={testimonialJ30Config.label ?? 'Témoignage J+30'}
+         data-panel-active={testimonialJ30Config.active ? 'true' : 'false'}>
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <h2 class="cust-card-title section-title" style="margin-bottom:0">Email témoignage J+30</h2>
+        </div>
+        <div class="panel-right-actions">
+          <label class="toggle-switch" title="Activer/désactiver">
+            <input type="checkbox" class="toggle-input" checked={testimonialJ30Config.active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label">{testimonialJ30Config.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+        </div>
+      </div>
+      {successType === 'template_testimonial_j30' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      {errorType === 'template_testimonial_j30' && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+      <div class="editor-tabs-row">
+        <div class="editor-tabs">
+          <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+          <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+        </div>
+        <button type="button" class="btn btn-secondary btn-library" data-config-type="template_testimonial_j30">📚 Bibliothèque</button>
+      </div>
+      <div class="tab-panel" data-panel="manual">
+        <form method="POST" class="cust-form">
+          <input type="hidden" name="config_type" value="template_testimonial_j30" />
+          <input type="hidden" name="value" class="hidden-value" value={JSON.stringify(testimonialJ30Config)} />
+          <label class="form-label">Sujet</label>
+          <input type="text" class="form-input subject-input" placeholder="Sujet de l'email..." />
+          <label class="form-label" style="margin-top:0.25rem">Corps</label>
+          <textarea class="form-input cust-textarea body-input" rows={7} placeholder="Contenu de l'email..."></textarea>
+          <div class="cust-hints">
+            <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+            <div class="cust-hints-list">
+              {VARIABLE_HINTS['template_testimonial_j30']!.map((v) => (
+                <code class="cust-hint" data-var={v}>{v}</code>
+              ))}
+            </div>
+          </div>
+          <div class="manual-actions">
+            <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+            <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+          </div>
+          <p class="ai-error improve-error"></p>
+        </form>
+        <div class="test-send-wrap">
+          <button type="button" class="btn btn-secondary btn-test-send"
+                  data-config-type="template_testimonial_j30" data-email={auth.email}>
+            📧 M'envoyer un aperçu
+          </button>
+          <span class="test-send-feedback" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="tab-panel hidden" data-panel="generate">
+        <input type="text" class="form-input gen-formation" placeholder="Nom de votre formation" />
+        <select class="form-input gen-tone">
+          <option value="chaleureux">Chaleureux et bienveillant</option>
+          <option value="professionnel">Professionnel et direct</option>
+          <option value="motivant">Motivant et dynamique</option>
+        </select>
+        <input type="text" class="form-input gen-objective" placeholder="Objectif (ex: collecter un avis client)" />
+        <button class="btn btn-primary btn-generate" style="align-self:flex-start">✨ Générer l'email</button>
+        <p class="ai-error gen-error"></p>
+        <div class="generation-result hidden">
+          <input type="text" class="form-input subject-preview" readonly placeholder="Sujet généré" />
+          <textarea class="form-input body-preview" rows={6} readonly placeholder="Contenu généré"></textarea>
+          <button class="btn btn-secondary btn-use-result" style="align-self:flex-start">Utiliser ce contenu →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel J+60 (hidden initially) -->
+    <div class="cust-card config-panel"
+         id="panel-template_testimonial_j60"
+         data-config="template_testimonial_j60"
+         data-subject={testimonialJ60Config.subject}
+         data-body={testimonialJ60Config.body}
+         data-label={testimonialJ60Config.label ?? 'Témoignage J+60'}
+         data-panel-active={testimonialJ60Config.active ? 'true' : 'false'}
+         style="display:none">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <h2 class="cust-card-title section-title" style="margin-bottom:0">Email témoignage J+60</h2>
+        </div>
+        <div class="panel-right-actions">
+          <label class="toggle-switch" title="Activer/désactiver">
+            <input type="checkbox" class="toggle-input" checked={testimonialJ60Config.active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label">{testimonialJ60Config.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+        </div>
+      </div>
+      {successType === 'template_testimonial_j60' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      {errorType === 'template_testimonial_j60' && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+      <div class="editor-tabs-row">
+        <div class="editor-tabs">
+          <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+          <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+        </div>
+        <button type="button" class="btn btn-secondary btn-library" data-config-type="template_testimonial_j60">📚 Bibliothèque</button>
+      </div>
+      <div class="tab-panel" data-panel="manual">
+        <form method="POST" class="cust-form">
+          <input type="hidden" name="config_type" value="template_testimonial_j60" />
+          <input type="hidden" name="value" class="hidden-value" value={JSON.stringify(testimonialJ60Config)} />
+          <label class="form-label">Sujet</label>
+          <input type="text" class="form-input subject-input" placeholder="Sujet de l'email..." />
+          <label class="form-label" style="margin-top:0.25rem">Corps</label>
+          <textarea class="form-input cust-textarea body-input" rows={7} placeholder="Contenu de l'email..."></textarea>
+          <div class="cust-hints">
+            <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+            <div class="cust-hints-list">
+              {VARIABLE_HINTS['template_testimonial_j60']!.map((v) => (
+                <code class="cust-hint" data-var={v}>{v}</code>
+              ))}
+            </div>
+          </div>
+          <div class="manual-actions">
+            <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+            <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+          </div>
+          <p class="ai-error improve-error"></p>
+        </form>
+        <div class="test-send-wrap">
+          <button type="button" class="btn btn-secondary btn-test-send"
+                  data-config-type="template_testimonial_j60" data-email={auth.email}>
+            📧 M'envoyer un aperçu
+          </button>
+          <span class="test-send-feedback" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="tab-panel hidden" data-panel="generate">
+        <input type="text" class="form-input gen-formation" placeholder="Nom de votre formation" />
+        <select class="form-input gen-tone">
+          <option value="chaleureux">Chaleureux et bienveillant</option>
+          <option value="professionnel">Professionnel et direct</option>
+          <option value="motivant">Motivant et dynamique</option>
+        </select>
+        <input type="text" class="form-input gen-objective" placeholder="Objectif (ex: collecter un avis client)" />
         <button class="btn btn-primary btn-generate" style="align-self:flex-start">✨ Générer l'email</button>
         <p class="ai-error gen-error"></p>
         <div class="generation-result hidden">
@@ -1544,17 +1736,50 @@ const checkoutAbandonConfig = parseConfig(checkoutAbandonRaw ?? '');
     });
   }
 
+  function initTestimonialTabs() {
+    document.querySelectorAll<HTMLButtonElement>('.testi-tab').forEach((tab) => {
+      if (tab.dataset.initialized) return;
+      tab.dataset.initialized = 'true';
+      tab.addEventListener('click', () => {
+        const target = (tab as HTMLElement).dataset.testiTab!;
+        document.querySelectorAll('.testi-tab').forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        const j30 = document.querySelector<HTMLElement>('[data-config="template_testimonial_j30"]');
+        const j60 = document.querySelector<HTMLElement>('[data-config="template_testimonial_j60"]');
+        if (j30) j30.style.display = target === 'j30' ? '' : 'none';
+        if (j60) j60.style.display = target === 'j60' ? '' : 'none';
+      });
+    });
+  }
+
+  function initTestimonialUrlForm() {
+    const form = document.querySelector<HTMLFormElement>('.testimonial-url-form');
+    if (!form || form.dataset.initialized) return;
+    form.dataset.initialized = 'true';
+    form.addEventListener('submit', () => {
+      const hiddenVal = form.querySelector<HTMLInputElement>('.hidden-value');
+      const urlInput  = form.querySelector<HTMLInputElement>('.testimonial-url-input');
+      if (hiddenVal && urlInput) {
+        hiddenVal.value = JSON.stringify({ subject: '', body: urlInput.value, active: true });
+      }
+    });
+  }
+
   initBanner();
   initEditor();
   initAutomations();
   initConfigTabs();
   initCustomEditor();
+  initTestimonialTabs();
+  initTestimonialUrlForm();
   document.addEventListener('astro:page-load', () => {
     initBanner();
     initEditor();
     initAutomations();
     initConfigTabs();
     initCustomEditor();
+    initTestimonialTabs();
+    initTestimonialUrlForm();
 
   // F1 — test send buttons
   document.querySelectorAll<HTMLButtonElement>('.btn-test-send').forEach((btn) => {
@@ -2353,4 +2578,13 @@ const checkoutAbandonConfig = parseConfig(checkoutAbandonRaw ?? '');
   .lib-tpl-subject { font-size: 0.875rem; font-weight: 500; color: var(--fg); margin: 0; }
   .lib-tpl-body { font-size: 0.8125rem; color: var(--fg-muted); margin: 0; }
   .lib-use-btn { align-self: flex-start; padding: 8px 16px; font-size: 0.875rem; }
+
+  .testimonial-tabs-header { display: flex; gap: 0.5rem; margin: 1rem 0 0; }
+  .testi-tab {
+    padding: 8px 20px; border-radius: 8px 8px 0 0; border: 1px solid var(--line-2);
+    background: transparent; color: var(--fg-muted); font-family: var(--sans);
+    font-size: 0.875rem; font-weight: 500; cursor: pointer; border-bottom: none;
+  }
+  .testi-tab.active { background: var(--bg-1); color: var(--fg); border-color: var(--line); }
+  .testimonial-url-card { padding: 1.5rem 2rem; margin-bottom: 0; }
 </style>
