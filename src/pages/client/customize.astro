@@ -301,9 +301,12 @@ for (const { key } of EMAIL_CONFIGS) {
             )}
             {isSuccess && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
             {isError   && <div class="cust-field-error" role="alert">{errorMsg}</div>}
-            <div class="editor-tabs">
-              <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
-              <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+            <div class="editor-tabs-row">
+              <div class="editor-tabs">
+                <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+                <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+              </div>
+              <button type="button" class="btn btn-secondary btn-library" data-config-type={key}>📚 Bibliothèque</button>
             </div>
             <div class="tab-panel" data-panel="manual">
               <form method="POST" class="cust-form">
@@ -532,9 +535,136 @@ for (const { key } of EMAIL_CONFIGS) {
   </div>
 </section>
 
+<!-- F3 — Template library panel -->
+<div class="lib-overlay hidden" id="lib-overlay" role="dialog" aria-modal="true" aria-label="Bibliothèque de templates">
+  <div class="lib-panel">
+    <div class="lib-panel-header">
+      <span class="lib-panel-title">📚 Bibliothèque de templates</span>
+      <button type="button" class="lib-close" id="lib-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="lib-panel-body" id="lib-panel-body">
+      <!-- Filled dynamically by JS -->
+    </div>
+  </div>
+</div>
+
 </ClientLayout>
 
 <script>
+  const TEMPLATE_LIBRARY: Record<string, Record<string, { subject: string; body: string }>> = {
+    video: {
+      template_onboarding_j0: {
+        subject: "Bienvenue {{nom}} — vos accès à {{nom_formation}} sont prêts !",
+        body: "Bonjour {{nom}},\n\nNous sommes ravis de vous accueillir dans {{nom_formation}}.\n\nVos accès personnels sont disponibles dès maintenant :\n\n🔗 Accédez à la formation : {{lien_acces}}\n🔑 Mot de passe : {{mot_de_passe}}\n\nPrenez votre temps pour parcourir les premiers modules. En cas de question, notre équipe est disponible pour vous accompagner.\n\nBonne formation,\nL'équipe {{nom_formation}}",
+      },
+      template_onboarding_j3: {
+        subject: "{{nom}}, comment se passe votre début dans {{nom_formation}} ?",
+        body: "Bonjour {{nom}},\n\nCela fait 3 jours que vous avez rejoint {{nom_formation}} — comment ça se passe ?\n\nNous espérons que vous avez pu vous plonger dans les premiers contenus. Si vous avez des questions, des blocages ou simplement envie de partager vos premières impressions, n'hésitez pas à nous répondre directement à cet email.\n\nOn est là pour vous,\nL'équipe {{nom_formation}}",
+      },
+      template_onboarding_j7: {
+        subject: "{{nom}} — retour sur votre première semaine dans {{nom_formation}}",
+        body: "Bonjour {{nom}},\n\nUne semaine déjà dans {{nom_formation}} — bravo pour votre engagement !\n\nOn espère que vous progressez bien. Si certains modules vous ont particulièrement marqué, ou si quelque chose mérite qu'on l'améliore, votre retour nous est précieux.\n\nContinuez sur cette lancée,\nL'équipe {{nom_formation}}",
+      },
+      template_failed_payment_j1: {
+        subject: "Action requise — un problème avec votre paiement de {{montant}} €",
+        body: "Bonjour {{nom}},\n\nNous avons constaté un problème avec votre dernier paiement de {{montant}} €.\n\nCela arrive parfois — carte expirée, plafond atteint, ou simple erreur technique. Aucun souci, il est facile de régulariser la situation :\n\n👉 Mettre à jour mon paiement : {{lien_paiement}}\n\nVotre accès à la formation est maintenu pendant que nous résolvons cela ensemble.\n\nÀ bientôt,\nL'équipe {{nom_formation}}",
+      },
+      template_failed_payment_j3: {
+        subject: "{{nom}}, votre accès sera suspendu dans 4 jours",
+        body: "Bonjour {{nom}},\n\nNous n'avons toujours pas reçu votre règlement de {{montant}} €.\n\nSans action de votre part, votre accès à la formation sera suspendu dans 4 jours. Pour éviter toute interruption :\n\n👉 Régulariser maintenant : {{lien_paiement}}\n\nSi vous traversez une situation particulière, contactez-nous — nous trouverons une solution ensemble.\n\nCordialement,\nL'équipe {{nom_formation}}",
+      },
+      template_failed_payment_j7: {
+        subject: "Dernier avertissement — suspension de votre accès {{nom_formation}}",
+        body: "Bonjour {{nom}},\n\nMalgré nos précédents messages, le paiement de {{montant}} € reste en attente.\n\nVotre accès à {{nom_formation}} sera suspendu aujourd'hui si la situation n'est pas régularisée.\n\n👉 Effectuer le règlement : {{lien_paiement}}\n\nNous espérons pouvoir résoudre cela rapidement.\n\nCordialement,\nL'équipe {{nom_formation}}",
+      },
+    },
+    coaching_1to1: {
+      template_onboarding_j0: {
+        subject: "Bienvenue {{nom}} — votre parcours de coaching commence !",
+        body: "Bonjour {{nom}},\n\nC'est avec plaisir que nous démarrons ensemble votre parcours {{nom_formation}}.\n\nVoici vos informations de connexion pour accéder à votre espace personnalisé :\n\n🔗 Votre espace : {{lien_acces}}\n🔑 Mot de passe : {{mot_de_passe}}\n\nAvant notre première session, prenez le temps de parcourir les ressources disponibles. Je serai là pour répondre à toutes vos questions.\n\nÀ très bientôt,\n{{nom_formation}}",
+      },
+      template_onboarding_j3: {
+        subject: "{{nom}}, avez-vous eu le temps de vous installer ?",
+        body: "Bonjour {{nom}},\n\nJ'espère que vous avez pu explorer votre espace {{nom_formation}} depuis votre inscription.\n\nAvez-vous des questions avant notre prochaine session ? N'hésitez pas à me répondre directement — je lis tous mes emails.\n\nÀ bientôt,\n{{nom_formation}}",
+      },
+      template_onboarding_j7: {
+        subject: "{{nom}} — première semaine de coaching : comment vous sentez-vous ?",
+        body: "Bonjour {{nom}},\n\nUne semaine s'est écoulée depuis le début de votre accompagnement {{nom_formation}}.\n\nComment vous sentez-vous ? Les échanges que nous avons eus vous ont-ils apporté de la clarté ? Je suis curieux de savoir où vous en êtes.\n\nN'hésitez pas à me partager vos réflexions — elles me permettent d'adapter nos prochaines sessions à vos besoins réels.\n\nÀ très bientôt,\n{{nom_formation}}",
+      },
+      template_failed_payment_j1: {
+        subject: "Un problème de paiement à régler — {{montant}} €",
+        body: "Bonjour {{nom}},\n\nUn problème technique a empêché le prélèvement de {{montant}} € pour votre coaching {{nom_formation}}.\n\nPour que nous puissions continuer à travailler ensemble sans interruption :\n\n👉 Régulariser le paiement : {{lien_paiement}}\n\nSi vous avez des questions, je suis disponible.\n\nCordialement,\n{{nom_formation}}",
+      },
+      template_failed_payment_j3: {
+        subject: "{{nom}}, votre accès coaching est en attente",
+        body: "Bonjour {{nom}},\n\nLe paiement de {{montant}} € pour votre coaching est toujours en attente.\n\nAfin de ne pas interrompre notre travail ensemble, merci de régulariser dès que possible :\n\n👉 Mettre à jour le paiement : {{lien_paiement}}\n\nEn cas de difficulté, contactez-moi — nous pouvons en discuter.\n\nCordialement,\n{{nom_formation}}",
+      },
+      template_failed_payment_j7: {
+        subject: "Dernière chance — votre coaching {{nom_formation}} sera suspendu",
+        body: "Bonjour {{nom}},\n\nLe paiement de {{montant}} € pour {{nom_formation}} est toujours impayé.\n\nJe suis dans l'obligation de suspendre l'accès à votre espace coaching si la situation n'est pas régularisée aujourd'hui.\n\n👉 Effectuer le paiement : {{lien_paiement}}\n\nJ'espère que nous pourrons continuer à collaborer.\n\nCordialement,\n{{nom_formation}}",
+      },
+    },
+    groupe_prive: {
+      template_onboarding_j0: {
+        subject: "{{nom}}, bienvenue dans {{nom_formation}} — voici vos accès",
+        body: "Bonjour {{nom}},\n\nBienvenue dans {{nom_formation}} !\n\nVous rejoignez un groupe de personnes partageant les mêmes ambitions que vous. C'est une belle étape.\n\n🔗 Accéder au groupe : {{lien_acces}}\n🔑 Mot de passe : {{mot_de_passe}}\n\nPrenez le temps de vous présenter aux autres membres dès que vous êtes connecté — c'est souvent le meilleur point de départ.\n\nÀ bientôt dans le groupe,\nL'équipe {{nom_formation}}",
+      },
+      template_onboarding_j3: {
+        subject: "{{nom}}, avez-vous rencontré les autres membres ?",
+        body: "Bonjour {{nom}},\n\nTrois jours dans {{nom_formation}} — j'espère que vous commencez à vous sentir à l'aise dans le groupe.\n\nAvez-vous eu l'occasion d'échanger avec d'autres membres ? Ces connexions sont souvent la plus grande valeur d'un mastermind.\n\nSi vous avez des questions ou si quelque chose vous freine, répondez à cet email.\n\nÀ bientôt,\nL'équipe {{nom_formation}}",
+      },
+      template_onboarding_j7: {
+        subject: "Une semaine dans {{nom_formation}} — vos premières impressions ?",
+        body: "Bonjour {{nom}},\n\nUne semaine dans {{nom_formation}} — bravo pour votre investissement !\n\nComment se passe votre intégration dans le groupe ? Est-ce que les échanges et les ressources répondent à vos attentes ?\n\nVos retours nous aident à améliorer continuellement l'expérience pour tout le groupe.\n\nCordialement,\nL'équipe {{nom_formation}}",
+      },
+      template_failed_payment_j1: {
+        subject: "Paiement en attente — votre place dans {{nom_formation}}",
+        body: "Bonjour {{nom}},\n\nNous avons rencontré un problème lors du prélèvement de {{montant}} € pour {{nom_formation}}.\n\nVotre place dans le groupe est réservée. Pour la conserver :\n\n👉 Régulariser le paiement : {{lien_paiement}}\n\nN'hésitez pas à nous contacter si besoin.\n\nCordialement,\nL'équipe {{nom_formation}}",
+      },
+      template_failed_payment_j3: {
+        subject: "{{nom}}, votre accès au groupe sera suspendu bientôt",
+        body: "Bonjour {{nom}},\n\nLe paiement de {{montant}} € pour {{nom_formation}} est toujours impayé.\n\nSans régularisation, votre accès au groupe privé sera suspendu dans 4 jours :\n\n👉 Mettre à jour mon paiement : {{lien_paiement}}\n\nVotre place compte pour le groupe — nous espérons vous garder parmi nous.\n\nCordialement,\nL'équipe {{nom_formation}}",
+      },
+      template_failed_payment_j7: {
+        subject: "Accès suspendu — {{nom_formation}}",
+        body: "Bonjour {{nom}},\n\nMalgré nos précédents rappels, le paiement de {{montant}} € pour {{nom_formation}} n'a pas été effectué.\n\nVotre accès au groupe est suspendu à compter d'aujourd'hui.\n\n👉 Pour réactiver votre accès : {{lien_paiement}}\n\nNous espérons vous retrouver très bientôt dans le groupe.\n\nCordialement,\nL'équipe {{nom_formation}}",
+      },
+    },
+    bootcamp: {
+      template_onboarding_j0: {
+        subject: "C'est parti {{nom}} — votre bootcamp {{nom_formation}} commence !",
+        body: "Bonjour {{nom}},\n\nVotre inscription au bootcamp {{nom_formation}} est confirmée — les prochaines semaines vont être intenses et transformatrices.\n\nAccédez à votre espace dès maintenant pour préparer le démarrage :\n\n🔗 Mon espace bootcamp : {{lien_acces}}\n🔑 Mot de passe : {{mot_de_passe}}\n\nConseil : parcourez les ressources d'introduction avant le premier module en direct. Vous serez mieux préparé et tirerez davantage de chaque session.\n\nPrêt à démarrer ?\nL'équipe {{nom_formation}}",
+      },
+      template_onboarding_j3: {
+        subject: "{{nom}}, 3 jours dans le bootcamp — comment ça se passe ?",
+        body: "Bonjour {{nom}},\n\nTrois jours dans {{nom_formation}} — on espère que le rythme vous convient !\n\nLes bootcamps sont intenses par nature, mais c'est précisément ce qui rend les résultats au rendez-vous. Si quelque chose vous bloque ou si le rythme est difficile à tenir, signalez-le nous dès maintenant — on peut adapter.\n\nTenez bon,\nL'équipe {{nom_formation}}",
+      },
+      template_onboarding_j7: {
+        subject: "Mi-parcours {{nom}} — vous avancez bien !",
+        body: "Bonjour {{nom}},\n\nUne semaine de bootcamp {{nom_formation}} derrière vous — c'est déjà énorme !\n\nOn espère que les acquis de cette première semaine sont concrets et applicables. Quel est le point qui vous a le plus marqué jusqu'ici ?\n\nOn est là si vous avez besoin d'un coup de pouce.\n\nÀ fond,\nL'équipe {{nom_formation}}",
+      },
+      template_failed_payment_j1: {
+        subject: "Problème de paiement — votre place au bootcamp {{nom_formation}}",
+        body: "Bonjour {{nom}},\n\nNous n'avons pas pu encaisser votre paiement de {{montant}} € pour le bootcamp {{nom_formation}}.\n\nVotre place est maintenue pour l'instant. Régularisez rapidement pour ne pas manquer les prochains modules :\n\n👉 Régulariser le paiement : {{lien_paiement}}\n\nEn cas de problème, contactez-nous immédiatement.\n\nCordialement,\nL'équipe {{nom_formation}}",
+      },
+      template_failed_payment_j3: {
+        subject: "{{nom}} — votre place au bootcamp est en danger",
+        body: "Bonjour {{nom}},\n\nLe paiement de {{montant}} € pour {{nom_formation}} n'a toujours pas été effectué.\n\nVotre accès au bootcamp sera suspendu dans 4 jours. Ne manquez pas les modules à venir :\n\n👉 Régulariser maintenant : {{lien_paiement}}\n\nOn espère vous garder dans l'aventure.\n\nCordialement,\nL'équipe {{nom_formation}}",
+      },
+      template_failed_payment_j7: {
+        subject: "Dernier avertissement — suspension de votre accès {{nom_formation}}",
+        body: "Bonjour {{nom}},\n\nLe paiement de {{montant}} € pour le bootcamp {{nom_formation}} est toujours en attente.\n\nVotre accès est suspendu à partir d'aujourd'hui.\n\n👉 Réactiver mon accès : {{lien_paiement}}\n\nNous espérons vous retrouver très vite.\n\nCordialement,\nL'équipe {{nom_formation}}",
+      },
+    },
+  };
+
+  const LIBRARY_TYPE_LABELS: Record<string, string> = {
+    video: 'Formation vidéo en ligne',
+    coaching_1to1: 'Coaching individuel (1-to-1)',
+    groupe_prive: 'Groupe privé / mastermind',
+    bootcamp: 'Bootcamp intensif',
+  };
+
   function initBanner() {
     const banner = document.getElementById('default-banner');
     const btn    = document.getElementById('banner-close');
@@ -1369,6 +1499,82 @@ for (const { key } of EMAIL_CONFIGS) {
       setTimeout(() => { feedback.textContent = ''; feedback.className = 'test-send-feedback'; }, 3000);
     });
   });
+
+  // F3 — template library
+  const libOverlay = document.getElementById('lib-overlay');
+  const libClose   = document.getElementById('lib-close');
+  const libBody    = document.getElementById('lib-panel-body');
+  let currentLibConfigType = '';
+
+  function openLibrary(configType: string) {
+    if (!libOverlay || !libBody) return;
+    currentLibConfigType = configType;
+    libBody.innerHTML = '';
+    for (const [typeKey, typeLabel] of Object.entries(LIBRARY_TYPE_LABELS)) {
+      const tpl = TEMPLATE_LIBRARY[typeKey]?.[configType];
+      if (!tpl) continue;
+      const details = document.createElement('details');
+      details.className = 'lib-group';
+      const summary = document.createElement('summary');
+      summary.className = 'lib-group-summary';
+      summary.textContent = typeLabel;
+      details.appendChild(summary);
+      const preview = document.createElement('div');
+      preview.className = 'lib-tpl-preview';
+      const subjectEl = document.createElement('p');
+      subjectEl.className = 'lib-tpl-subject';
+      subjectEl.textContent = `Sujet : ${tpl.subject}`;
+      const bodyEl = document.createElement('p');
+      bodyEl.className = 'lib-tpl-body';
+      bodyEl.textContent = tpl.body.split('\n').slice(0, 3).join(' ').slice(0, 120) + '…';
+      const useBtn = document.createElement('button');
+      useBtn.type = 'button';
+      useBtn.className = 'btn btn-secondary lib-use-btn';
+      useBtn.textContent = 'Utiliser ce template';
+      useBtn.dataset.typeKey = typeKey;
+      preview.appendChild(subjectEl);
+      preview.appendChild(bodyEl);
+      preview.appendChild(useBtn);
+      details.appendChild(preview);
+      libBody.appendChild(details);
+    }
+    libOverlay.classList.remove('hidden');
+  }
+
+  function closeLibrary() {
+    libOverlay?.classList.add('hidden');
+  }
+
+  libClose?.addEventListener('click', closeLibrary);
+  libOverlay?.addEventListener('click', (e) => { if (e.target === libOverlay) closeLibrary(); });
+
+  libBody?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.lib-use-btn');
+    if (!btn) return;
+    const typeKey = btn.dataset.typeKey!;
+    const tpl = TEMPLATE_LIBRARY[typeKey]?.[currentLibConfigType];
+    if (!tpl) return;
+    // Find active panel
+    const panel = document.querySelector<HTMLElement>(`.config-panel[data-config="${currentLibConfigType}"]`);
+    if (!panel) return;
+    const subjectInput = panel.querySelector<HTMLInputElement>('.subject-input');
+    const bodyInput    = panel.querySelector<HTMLTextAreaElement>('.body-input');
+    if (!subjectInput || !bodyInput) return;
+    const hasContent = subjectInput.value.trim() || bodyInput.value.trim();
+    if (hasContent && !confirm('Écraser le contenu actuel ?')) return;
+    subjectInput.value = tpl.subject;
+    bodyInput.value    = tpl.body;
+    // Switch to manual tab if in generate mode
+    const manualTab = panel.querySelector<HTMLButtonElement>('.editor-tab[data-tab="manual"]');
+    if (manualTab && !manualTab.classList.contains('active')) manualTab.click();
+    closeLibrary();
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.btn-library').forEach((btn) => {
+    if (btn.dataset.initialized) return;
+    btn.dataset.initialized = 'true';
+    btn.addEventListener('click', () => openLibrary(btn.dataset.configType!));
+  });
   });
 </script>
 
@@ -1996,4 +2202,45 @@ for (const { key } of EMAIL_CONFIGS) {
   .test-send-feedback { font-size: 0.875rem; }
   .test-send-feedback.ok  { color: var(--success); }
   .test-send-feedback.err { color: #EF4444; }
+
+  .editor-tabs-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .editor-tabs-row .editor-tabs { margin-bottom: 0; }
+
+  .lib-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: stretch; justify-content: flex-end;
+  }
+  .lib-overlay.hidden { display: none; }
+  .lib-panel {
+    width: 400px; max-width: 90vw;
+    background: var(--bg-1); border-left: 1px solid var(--line);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .lib-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .lib-panel-title { font-weight: 600; font-size: 1rem; }
+  .lib-close {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid var(--line-2); background: transparent;
+    color: var(--fg-muted); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lib-close:hover { background: var(--accent-soft); color: var(--fg); }
+  .lib-panel-body { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .lib-group { border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; }
+  .lib-group-summary {
+    padding: 0.75rem 1rem; cursor: pointer; font-weight: 600;
+    font-size: 0.9375rem; list-style: none;
+    background: var(--bg-2); user-select: none;
+  }
+  .lib-group-summary:hover { background: var(--bg-3); }
+  .lib-tpl-preview { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .lib-tpl-subject { font-size: 0.875rem; font-weight: 500; color: var(--fg); margin: 0; }
+  .lib-tpl-body { font-size: 0.8125rem; color: var(--fg-muted); margin: 0; }
+  .lib-use-btn { align-self: flex-start; padding: 8px 16px; font-size: 0.875rem; }
 </style>
