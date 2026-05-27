@@ -6,8 +6,11 @@ import { getClientFromCookie } from '../../lib/auth';
 const auth = await getClientFromCookie(Astro.request);
 if (!auth) return Astro.redirect('/login');
 
+const formationId = Astro.cookies.get('aevum_formation_id')?.value ?? null;
+const formationHeaders = formationId ? { 'X-Formation-Id': formationId } : {};
+
 const base = import.meta.env.AEVUM_URL;
-const headers = { Authorization: `Bearer ${auth.token}` };
+const headers = { Authorization: `Bearer ${auth.token}`, ...formationHeaders };
 
 type Student = {
   id: string;

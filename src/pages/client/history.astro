@@ -6,6 +6,9 @@ import { getClientFromCookie } from '../../lib/auth';
 const auth = await getClientFromCookie(Astro.request);
 if (!auth) return Astro.redirect('/login');
 
+const formationId = Astro.cookies.get('aevum_formation_id')?.value ?? null;
+const formationHeaders = formationId ? { 'X-Formation-Id': formationId } : {};
+
 type HistoryEntry = { date: string; action: string; details?: string };
 
 let history: HistoryEntry[] = [];
@@ -13,7 +16,8 @@ let fetchError = '';
 
 try {
   const res = await fetch(`${import.meta.env.AEVUM_URL}/client/history?limit=100`, {
-    headers: { Authorization: `Bearer ${auth.token}` },
+    headers: { Authorization: `Bearer ${auth.token}`, ...formationHeaders },
+    signal: AbortSignal.timeout(8000),
   });
   if (res.status === 401) {
     Astro.cookies.delete('aevum_token', { path: '/' });
