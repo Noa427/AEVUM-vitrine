@@ -131,6 +131,7 @@ const VARIABLE_HINTS: Record<string, string[]> = {
   template_failed_payment_j1: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
   template_failed_payment_j3: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
   template_failed_payment_j7: ['{{nom}}', '{{prenom}}', '{{email}}', '{{montant}}', '{{lien_paiement}}'],
+  template_checkout_abandon: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_checkout}}'],
 };
 
 const EMAIL_CONFIGS = [
@@ -190,6 +191,9 @@ const PARSED_CONFIGS: Record<string, { subject: string; body: string; label?: st
 for (const { key } of EMAIL_CONFIGS) {
   PARSED_CONFIGS[key] = parseConfig(configs[key] ?? '');
 }
+
+const checkoutAbandonRaw = configs['template_checkout_abandon'];
+const checkoutAbandonConfig = parseConfig(checkoutAbandonRaw ?? '');
 ---
 
 <ClientLayout
@@ -372,6 +376,90 @@ for (const { key } of EMAIL_CONFIGS) {
           </div>
         );
       })}
+    </div>
+
+    <!-- F11 — Checkout abandon -->
+    <div class="section-divider"><span>Récupération paniers abandonnés</span></div>
+
+    <div class="cust-card card checkout-abandon-card"
+         data-config="template_checkout_abandon"
+         data-subject={checkoutAbandonConfig.subject}
+         data-body={checkoutAbandonConfig.body}
+         data-label={checkoutAbandonConfig.label ?? 'Panier abandonné'}
+         data-panel-active={checkoutAbandonConfig.active ? 'true' : 'false'}>
+
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <h2 class="cust-card-title section-title" style="margin-bottom:0">Email de récupération</h2>
+        </div>
+        <div class="panel-right-actions">
+          <label class="toggle-switch" title="Activer/désactiver">
+            <input type="checkbox" class="toggle-input" checked={checkoutAbandonConfig.active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label">{checkoutAbandonConfig.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+        </div>
+      </div>
+      <p class="card-note" style="margin:0 0 1rem;font-size:0.875rem;color:var(--fg-muted)">
+        Envoyé 30 min après qu'un prospect quitte le paiement sans finaliser son achat.
+      </p>
+      {successType === 'template_checkout_abandon' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      {errorType === 'template_checkout_abandon' && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+      <div class="editor-tabs-row">
+        <div class="editor-tabs">
+          <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+          <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+        </div>
+        <button type="button" class="btn btn-secondary btn-library" data-config-type="template_checkout_abandon">📚 Bibliothèque</button>
+      </div>
+      <div class="tab-panel" data-panel="manual">
+        <form method="POST" class="cust-form">
+          <input type="hidden" name="config_type" value="template_checkout_abandon" />
+          <input type="hidden" name="value" class="hidden-value"
+                 value={JSON.stringify(checkoutAbandonConfig)} />
+          <label class="form-label">Sujet</label>
+          <input type="text" class="form-input subject-input" placeholder="Sujet de l'email..." />
+          <label class="form-label" style="margin-top:0.25rem">Corps</label>
+          <textarea class="form-input cust-textarea body-input" rows={7} placeholder="Contenu de l'email..."></textarea>
+          <div class="cust-hints">
+            <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+            <div class="cust-hints-list">
+              {VARIABLE_HINTS['template_checkout_abandon']!.map((v) => (
+                <code class="cust-hint" data-var={v}>{v}</code>
+              ))}
+            </div>
+          </div>
+          <div class="manual-actions">
+            <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+            <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+          </div>
+          <p class="ai-error improve-error"></p>
+        </form>
+        <div class="test-send-wrap">
+          <button type="button" class="btn btn-secondary btn-test-send"
+                  data-config-type="template_checkout_abandon"
+                  data-email={auth.email}>
+            📧 M'envoyer un aperçu
+          </button>
+          <span class="test-send-feedback" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="tab-panel hidden" data-panel="generate">
+        <input type="text" class="form-input gen-formation" placeholder="Nom de votre formation (ex: Maîtriser Instagram)" />
+        <select class="form-input gen-tone">
+          <option value="chaleureux">Chaleureux et bienveillant</option>
+          <option value="professionnel">Professionnel et direct</option>
+          <option value="motivant">Motivant et dynamique</option>
+        </select>
+        <input type="text" class="form-input gen-objective" placeholder="Objectif de cet email (ex: récupérer le paiement)" />
+        <button class="btn btn-primary btn-generate" style="align-self:flex-start">✨ Générer l'email</button>
+        <p class="ai-error gen-error"></p>
+        <div class="generation-result hidden">
+          <input type="text" class="form-input subject-preview" readonly placeholder="Sujet généré" />
+          <textarea class="form-input body-preview" rows={6} readonly placeholder="Contenu généré"></textarea>
+          <button class="btn btn-secondary btn-use-result" style="align-self:flex-start">Utiliser ce contenu →</button>
+        </div>
+      </div>
     </div>
 
     <div class="section-divider"></div>
@@ -1965,9 +2053,26 @@ for (const { key } of EMAIL_CONFIGS) {
   pointer-events: none;
 }
 .section-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2.5rem 0;
+}
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
   height: 1px;
   background: var(--gray-border);
-  margin: 2.5rem 0;
+}
+.section-divider:empty::after { display: none; }
+.section-divider span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  white-space: nowrap;
 }
 .auto-section { margin-bottom: 3rem; }
 .auto-section-header {
