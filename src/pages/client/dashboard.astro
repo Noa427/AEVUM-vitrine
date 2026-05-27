@@ -16,6 +16,8 @@ type StatsData = {
   upsells_envoyes?: number;
   recouvrement_montant_recupere?: number;
   recouvrement_taux?: number;
+  open_rate_this_month?: number;
+  click_rate_this_month?: number;
 };
 type AutomationData = {
   onboarding?: boolean;
@@ -168,6 +170,16 @@ function fmtDate(iso: string): string {
           <p class="stat-label">Taux de récupération</p>
           <p class="stat-value">{stats?.recouvrement_taux ?? 0} %</p>
         </div>
+        <div class="stat-card card">
+          <p class="stat-label">Taux d'ouverture</p>
+          <p class="stat-value">{stats?.open_rate_this_month ?? 0} %</p>
+          <p class="stat-period">30 derniers jours</p>
+        </div>
+        <div class="stat-card card">
+          <p class="stat-label">Taux de clic</p>
+          <p class="stat-value">{stats?.click_rate_this_month ?? 0} %</p>
+          <p class="stat-period">30 derniers jours</p>
+        </div>
       </div>
       <p class="stats-context">Calculé sur les paiements récupérés après relance automatique.</p>
     </div>
@@ -279,6 +291,7 @@ function fmtDate(iso: string): string {
   }
   .stat-card { padding: 1.5rem; }
   .stat-label { font-size: 0.8125rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; max-width: none; }
+  .stat-period { font-size: 0.6875rem; color: var(--gray); margin-top: 0.25rem; text-transform: none; letter-spacing: 0; }
   .stat-value { font-size: 2rem; font-weight: 700; color: var(--light); letter-spacing: -0.03em; }
   .stats-context { font-size: 0.75rem; color: var(--gray); margin-top: 0.5rem; }
 
