@@ -1,0 +1,294 @@
+---
+export const prerender = false;
+import ClientLayout from '../../layouts/ClientLayout.astro';
+import { getClientFromCookie } from '../../lib/auth';
+
+const auth = await getClientFromCookie(Astro.request);
+if (!auth) return Astro.redirect('/login');
+
+const base = import.meta.env.AEVUM_URL;
+const hdrs = { Authorization: `Bearer ${auth.token}` };
+
+type MeData = { dkim_public_key?: string | null };
+type ConfigEntry = { config_type: string; value: string };
+
+let dkimKey: string | null = null;
+let senderName = '';
+
+const [meResult, configsResult] = await Promise.allSettled([
+  fetch(`${base}/client/me`, { headers: hdrs, signal: AbortSignal.timeout(8000) }),
+  fetch(`${base}/client/configs`, { headers: hdrs, signal: AbortSignal.timeout(8000) }),
+]);
+
+const fulfilled = [meResult, configsResult].filter(
+  (r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled'
+);
+if (fulfilled.some((r) => r.value.status === 401)) {
+  Astro.cookies.delete('aevum_token', { path: '/' });
+  return Astro.redirect('/login');
+}
+
+if (meResult.status === 'fulfilled' && meResult.value.ok) {
+  const me: MeData = await meResult.value.json().catch(() => ({}));
+  dkimKey = me.dkim_public_key ?? null;
+}
+
+if (configsResult.status === 'fulfilled' && configsResult.value.ok) {
+  const arr: ConfigEntry[] = await configsResult.value.json().catch(() => []);
+  const senderRaw = Array.isArray(arr) ? arr.find((c) => c.config_type === 'sender_name') : undefined;
+  if (senderRaw) {
+    try {
+      const p = JSON.parse(senderRaw.value);
+      senderName = typeof p === 'object' && p?.body ? p.body : senderRaw.value;
+    } catch {
+      senderName = senderRaw.value;
+    }
+  }
+}
+
+const SPF_VALUE = 'v=spf1 include:spf.aevum.io ~all';
+const DMARC_VALUE = 'v=DMARC1; p=quarantine; rua=mailto:dmarc@votre-domaine.com';
+---
+
+<ClientLayout
+  title="Guide Deliverability — AEVUM"
+  description="Configurez SPF, DKIM et DMARC pour maximiser la deliverability de vos emails."
+  canonical="/client/deliverability"
+  email={auth.email}
+>
+
+<section class="section del-section">
+  <div class="container del-container">
+
+    <div style="margin-bottom:2.5rem">
+      <span class="accent-line" style="margin:0 0 1rem"></span>
+      <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Guide Deliverability</h1>
+      <p style="color:var(--fg-muted);margin-top:0.5rem">Suivez ces 5 étapes pour maximiser la livraison de vos emails.</p>
+    </div>
+
+    <div class="del-stepper">
+
+      <!-- Étape 1 -->
+      <div class="del-step" data-step="1">
+        <div class="del-step-indicator"><span class="del-step-num">1</span></div>
+        <div class="del-step-content">
+          <h2 class="del-step-title">Votre configuration actuelle</h2>
+          <div class="del-step-body">
+            {senderName ? (
+              <p>Votre expéditeur actuel : <strong>{senderName}</strong></p>
+            ) : (
+              <p style="color:var(--fg-muted)">Aucun nom d'expéditeur configuré. <a href="/client/customize" style="color:var(--accent)">Configurer →</a></p>
+            )}
+            <p style="margin-top:0.75rem">Un domaine personnalisé améliore significativement votre deliverability. Les filtres anti-spam font confiance aux domaines établis, les clients reconnaissent votre marque, et votre réputation d'envoi vous appartient.</p>
+            <button type="button" class="btn btn-secondary del-complete-btn" data-step="1" style="margin-top:1rem">Étape suivante →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 2 -->
+      <div class="del-step" data-step="2">
+        <div class="del-step-indicator"><span class="del-step-num">2</span></div>
+        <div class="del-step-content">
+          <h2 class="del-step-title">Record SPF</h2>
+          <div class="del-step-body">
+            <p>Le SPF autorise AEVUM à envoyer des emails depuis votre domaine. Ajoutez ce record TXT à votre DNS :</p>
+            <div class="del-code-wrap">
+              <code class="del-code" id="spf-value">{SPF_VALUE}</code>
+              <button type="button" class="btn btn-secondary del-copy-btn" data-target="spf-value">Copier</button>
+            </div>
+            <p class="del-dns-info"><strong>Type :</strong> TXT — <strong>Nom :</strong> @ (ou votre domaine) — <strong>Valeur :</strong> ci-dessus</p>
+            <div class="del-accordion-group">
+              <details class="del-accordion"><summary>OVH</summary><div class="del-accordion-body">Dans l'espace client OVH → Zone DNS → Ajouter une entrée → TXT → Sous-domaine vide → coller la valeur.</div></details>
+              <details class="del-accordion"><summary>Ionos</summary><div class="del-accordion-body">Connexion Ionos → Domaines & SSL → DNS → Ajouter un enregistrement → TXT → Hôte "@" → coller la valeur.</div></details>
+              <details class="del-accordion"><summary>Gandi</summary><div class="del-accordion-body">Gandi → Nom de domaine → DNS → Ajouter un enregistrement → Type TXT → Nom "@" → coller la valeur.</div></details>
+              <details class="del-accordion"><summary>Cloudflare</summary><div class="del-accordion-body">Cloudflare → sélectionner le domaine → DNS → Ajouter un enregistrement → Type TXT → Nom "@" → Contenu = valeur ci-dessus → Proxy désactivé.</div></details>
+            </div>
+            <button type="button" class="btn btn-secondary del-complete-btn" data-step="2" style="margin-top:1rem">Étape suivante →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 3 -->
+      <div class="del-step" data-step="3">
+        <div class="del-step-indicator"><span class="del-step-num">3</span></div>
+        <div class="del-step-content">
+          <h2 class="del-step-title">Record DKIM</h2>
+          <div class="del-step-body">
+            <p>Le DKIM signe cryptographiquement vos emails pour prouver leur authenticité.</p>
+            {dkimKey ? (
+              <div class="del-code-wrap">
+                <pre class="del-pre" id="dkim-value">{dkimKey}</pre>
+                <button type="button" class="btn btn-secondary del-copy-btn" data-target="dkim-value">Copier</button>
+              </div>
+            ) : (
+              <div class="del-info-box">Contactez le support pour obtenir votre clé DKIM personnalisée.</div>
+            )}
+            <div class="del-accordion-group" style="margin-top:1rem">
+              <details class="del-accordion"><summary>OVH</summary><div class="del-accordion-body">Zone DNS → Ajouter → TXT → Sous-domaine : <code>aevum._domainkey</code> → Valeur : votre clé DKIM.</div></details>
+              <details class="del-accordion"><summary>Ionos</summary><div class="del-accordion-body">DNS → Ajouter TXT → Hôte : <code>aevum._domainkey</code> → Valeur : votre clé DKIM.</div></details>
+              <details class="del-accordion"><summary>Gandi</summary><div class="del-accordion-body">DNS → TXT → Nom : <code>aevum._domainkey</code> → Valeur : votre clé DKIM.</div></details>
+              <details class="del-accordion"><summary>Cloudflare</summary><div class="del-accordion-body">DNS → TXT → Nom : <code>aevum._domainkey</code> → Contenu : votre clé DKIM → Proxy désactivé.</div></details>
+            </div>
+            <button type="button" class="btn btn-secondary del-complete-btn" data-step="3" style="margin-top:1rem">Étape suivante →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 4 -->
+      <div class="del-step" data-step="4">
+        <div class="del-step-indicator"><span class="del-step-num">4</span></div>
+        <div class="del-step-content">
+          <h2 class="del-step-title">Record DMARC</h2>
+          <div class="del-step-body">
+            <p>Le DMARC indique aux serveurs mail quoi faire des emails non authentifiés. Valeur recommandée :</p>
+            <div class="del-code-wrap">
+              <code class="del-code" id="dmarc-value">{DMARC_VALUE}</code>
+              <button type="button" class="btn btn-secondary del-copy-btn" data-target="dmarc-value">Copier</button>
+            </div>
+            <p class="del-dns-info"><strong>Type :</strong> TXT — <strong>Nom :</strong> _dmarc</p>
+            <table class="del-table">
+              <thead><tr><th>Mode</th><th>Comportement</th><th>Recommandé</th></tr></thead>
+              <tbody>
+                <tr><td><code>p=none</code></td><td>Surveillance uniquement, aucun filtrage</td><td>Démarrage</td></tr>
+                <tr class="del-table__highlight"><td><code>p=quarantine</code></td><td>Emails suspects en spam</td><td>✓ Recommandé</td></tr>
+                <tr><td><code>p=reject</code></td><td>Emails non authentifiés rejetés</td><td>Avancé</td></tr>
+              </tbody>
+            </table>
+            <button type="button" class="btn btn-secondary del-complete-btn" data-step="4" style="margin-top:1rem">Étape suivante →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 5 -->
+      <div class="del-step" data-step="5">
+        <div class="del-step-indicator"><span class="del-step-num">5</span></div>
+        <div class="del-step-content">
+          <h2 class="del-step-title">Tester votre deliverability</h2>
+          <div class="del-step-body">
+            <p>Utilisez mail-tester.com pour vérifier votre configuration :</p>
+            <ol class="del-steps-list">
+              <li>Rendez-vous sur <a href="https://www.mail-tester.com/" target="_blank" rel="noopener" class="del-link">mail-tester.com →</a></li>
+              <li>Copiez l'adresse email unique générée</li>
+              <li>Depuis votre interface AEVUM, envoyez un email test à cette adresse</li>
+              <li>Cliquez "Vérifier mon score"</li>
+            </ol>
+            <div class="del-score-grid">
+              <div class="del-score-item del-score--good"><span class="del-score-label">&gt; 9/10</span><span class="del-score-desc">Excellent ✓</span></div>
+              <div class="del-score-item del-score--warn"><span class="del-score-label">7–9/10</span><span class="del-score-desc">Correct ⚠</span></div>
+              <div class="del-score-item del-score--bad"><span class="del-score-label">&lt; 7/10</span><span class="del-score-desc">Problème ✗</span></div>
+            </div>
+            <button type="button" class="btn btn-secondary del-complete-btn" data-step="5" style="margin-top:1rem">Terminer ✓</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+  function initDeliverability() {
+    const STORAGE_KEY = 'aevum_deliverability_steps';
+    let done: number[] = [];
+    try { done = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]'); } catch {}
+
+    done.forEach((n) => {
+      document.querySelector(`.del-step[data-step="${n}"]`)?.classList.add('step--done');
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('.del-complete-btn').forEach((btn) => {
+      if (btn.dataset.initialized) return;
+      btn.dataset.initialized = 'true';
+      btn.addEventListener('click', () => {
+        const step = parseInt(btn.dataset.step!);
+        if (!done.includes(step)) done.push(step);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
+        btn.closest('.del-step')?.classList.add('step--done');
+      });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('.del-copy-btn').forEach((btn) => {
+      if (btn.dataset.initialized) return;
+      btn.dataset.initialized = 'true';
+      btn.addEventListener('click', async () => {
+        const targetId = btn.dataset.target!;
+        const el = document.getElementById(targetId);
+        if (!el) return;
+        const text = el.textContent ?? '';
+        try {
+          await navigator.clipboard.writeText(text);
+          const orig = btn.textContent;
+          btn.textContent = 'Copié !';
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        } catch { /* ignore */ }
+      });
+    });
+  }
+  initDeliverability();
+  document.addEventListener('astro:page-load', initDeliverability);
+</script>
+
+<style>
+.del-section { padding: 3rem 0 4rem; }
+.del-container { max-width: 760px; }
+
+.del-stepper { display: flex; flex-direction: column; }
+.del-step {
+  display: flex; gap: 1.25rem;
+  padding: 1.75rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.del-step:last-child { border-bottom: none; }
+
+.del-step-indicator {
+  flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid var(--line-2);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+.del-step-num { font-size: 0.875rem; font-weight: 600; color: var(--fg-muted); }
+.del-step.step--done .del-step-indicator { background: #10B981; border-color: #10B981; }
+.del-step.step--done .del-step-num { color: #fff; }
+
+.del-step-title { font-size: 1.125rem; font-weight: 600; margin: 0 0 0.75rem; color: var(--fg); }
+.del-step-content { flex: 1; min-width: 0; }
+.del-step-body { font-size: 0.9375rem; color: var(--fg-2); line-height: 1.6; }
+.del-step-body p { margin: 0 0 0.5rem; }
+
+.del-code-wrap { display: flex; gap: 0.75rem; align-items: flex-start; background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 8px; padding: 0.875rem 1rem; margin: 0.75rem 0; }
+.del-code { font-size: 0.8125rem; font-family: 'Courier New', monospace; color: var(--fg); flex: 1; word-break: break-all; }
+.del-pre { font-size: 0.75rem; font-family: 'Courier New', monospace; color: var(--fg); flex: 1; overflow-x: auto; margin: 0; white-space: pre-wrap; word-break: break-all; max-height: 160px; }
+.del-dns-info { font-size: 0.8125rem; color: var(--fg-muted); margin: 0.25rem 0 0.75rem !important; }
+
+.del-info-box { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25); border-radius: 8px; padding: 0.875rem 1rem; font-size: 0.9375rem; color: var(--fg-2); margin: 0.75rem 0; }
+
+.del-accordion-group { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
+.del-accordion { border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; }
+.del-accordion summary { padding: 0.625rem 1rem; font-size: 0.9375rem; cursor: pointer; user-select: none; color: var(--fg-2); font-weight: 500; }
+.del-accordion summary:hover { background: var(--bg-2); }
+.del-accordion-body { padding: 0.75rem 1rem; font-size: 0.875rem; color: var(--fg-muted); border-top: 1px solid var(--line); }
+
+.del-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 0.75rem 0; }
+.del-table th { padding: 0.5rem 0.75rem; text-align: left; color: var(--fg-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--line); }
+.del-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); color: var(--fg-2); }
+.del-table__highlight td { color: var(--fg); font-weight: 500; }
+.del-table code { font-family: 'Courier New', monospace; font-size: 0.8125rem; background: var(--bg-2); padding: 1px 4px; border-radius: 3px; }
+
+.del-steps-list { margin: 0.5rem 0 1rem 1.25rem; color: var(--fg-2); font-size: 0.9375rem; line-height: 1.8; }
+.del-link { color: var(--accent); text-decoration: none; }
+.del-link:hover { text-decoration: underline; }
+
+.del-score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 0.75rem; }
+.del-score-item { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.875rem; border-radius: 8px; text-align: center; }
+.del-score-label { font-weight: 700; font-size: 1rem; }
+.del-score-desc { font-size: 0.8125rem; color: var(--fg-muted); }
+.del-score--good { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); }
+.del-score--good .del-score-label { color: #10B981; }
+.del-score--warn { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); }
+.del-score--warn .del-score-label { color: #F59E0B; }
+.del-score--bad { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
+.del-score--bad .del-score-label { color: #EF4444; }
+</style>
+
+</ClientLayout>
