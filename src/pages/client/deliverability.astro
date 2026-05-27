@@ -7,7 +7,9 @@ const auth = await getClientFromCookie(Astro.request);
 if (!auth) return Astro.redirect('/login');
 
 const base = import.meta.env.AEVUM_URL;
-const hdrs = { Authorization: `Bearer ${auth.token}` };
+const formationId = Astro.cookies.get('aevum_formation_id')?.value ?? null;
+const formationHeaders = formationId ? { 'X-Formation-Id': formationId } : {};
+const hdrs = { Authorization: `Bearer ${auth.token}`, ...formationHeaders };
 
 type MeData = { dkim_public_key?: string | null };
 type ConfigEntry = { config_type: string; value: string };
