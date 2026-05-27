@@ -1,0 +1,276 @@
+---
+export const prerender = false;
+import ClientLayout from '../../layouts/ClientLayout.astro';
+import { getClientFromCookie } from '../../lib/auth';
+
+const auth = await getClientFromCookie(Astro.request);
+if (!auth) return Astro.redirect('/login');
+
+const base = import.meta.env.AEVUM_URL;
+const headers = { Authorization: `Bearer ${auth.token}` };
+
+type BlacklistEntry = { email: string; reason?: string; created_at: string };
+
+let blacklist: BlacklistEntry[] = [];
+let addSuccess = '';
+let addError = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const email  = (form.get('email')  as string ?? '').trim();
+  const reason = (form.get('reason') as string ?? '').trim();
+  if (email) {
+    try {
+      const res = await fetch(`${base}/client/blacklist`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, reason: reason || undefined }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.status === 401) {
+        Astro.cookies.delete('aevum_token', { path: '/' });
+        return Astro.redirect('/login');
+      }
+      if (res.ok) {
+        addSuccess = `${email} ajouté à la blacklist.`;
+      } else {
+        const d = await res.json().catch(() => ({}));
+        addError = (d as { error?: string; message?: string }).error ?? (d as { error?: string; message?: string }).message ?? "Erreur lors de l'ajout.";
+      }
+    } catch {
+      addError = 'Erreur réseau. Réessayez.';
+    }
+  }
+}
+
+try {
+  const res = await fetch(`${base}/client/blacklist`, {
+    headers,
+    signal: AbortSignal.timeout(8000),
+  });
+  if (res.status === 401) {
+    Astro.cookies.delete('aevum_token', { path: '/' });
+    return Astro.redirect('/login');
+  }
+  if (res.ok) {
+    const data = await res.json().catch(() => []);
+    blacklist = Array.isArray(data) ? data : [];
+  }
+} catch { /* non-fatal */ }
+
+function fmtDate(iso: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('fr-FR', { dateStyle: 'short' });
+}
+---
+
+<ClientLayout
+  title="Blacklist — AEVUM"
+  description="Gérez les adresses email blacklistées."
+  canonical="/client/blacklist"
+  email={auth.email}
+>
+
+<section class="section bl-section">
+  <div class="container bl-container">
+
+    <div style="margin-bottom:2rem">
+      <span class="accent-line" style="margin:0 0 1rem"></span>
+      <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Blacklist</h1>
+      <p style="margin-top:0.5rem;color:var(--gray-light)">
+        Les emails blacklistés ne recevront plus aucune automatisation.
+      </p>
+    </div>
+
+    <!-- Formulaire d'ajout -->
+    <div class="card bl-add-card">
+      <h2 class="bl-card-title">Ajouter une adresse</h2>
+      {addSuccess && <div class="success-msg" role="alert"><span>{addSuccess}</span></div>}
+      {addError   && <div class="bl-error" role="alert">{addError}</div>}
+      <form method="POST" style="display:flex;flex-direction:column;gap:1rem;max-width:480px">
+        <div class="form-group">
+          <label for="bl-email" class="form-label">Adresse email *</label>
+          <input type="email" id="bl-email" name="email" class="form-input"
+                 placeholder="adresse@exemple.fr" required />
+        </div>
+        <div class="form-group">
+          <label for="bl-reason" class="form-label">Raison (optionnel)</label>
+          <input type="text" id="bl-reason" name="reason" class="form-input"
+                 placeholder="Ex : demande de désabonnement" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-start">Ajouter</button>
+      </form>
+    </div>
+
+    <!-- Tableau -->
+    <div class="card bl-table-card">
+      <h2 class="bl-card-title" style="margin-bottom:1.25rem">
+        Adresses blacklistées
+        <span class="bl-count">({blacklist.length})</span>
+      </h2>
+      {blacklist.length === 0 ? (
+        <p style="color:var(--gray);font-size:0.9375rem">Aucune adresse blacklistée.</p>
+      ) : (
+        <div>
+          <div class="bl-table-wrap">
+            <table class="bl-table" id="bl-table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Raison</th>
+                  <th>Date d'ajout</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {blacklist.map((entry, i) => (
+                  <tr class="bl-row" data-page-index={i} data-email={entry.email}>
+                    <td class="bl-td-email">{entry.email}</td>
+                    <td class="bl-td-reason">{entry.reason || '—'}</td>
+                    <td class="bl-td-date">{fmtDate(entry.created_at)}</td>
+                    <td class="bl-td-action">
+                      <div class="bl-action-wrap">
+                        <button type="button" class="btn btn-secondary btn-bl-remove">Retirer</button>
+                        <span class="bl-confirm hidden">
+                          Confirmer ?
+                          <button type="button" class="btn-inline btn-bl-yes">Oui</button>
+                          <button type="button" class="btn-inline btn-bl-no">Non</button>
+                        </span>
+                        <span class="bl-removing hidden">Suppression…</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {blacklist.length > 50 && (
+            <div class="bl-pagination" id="bl-pagination">
+              <button class="btn btn-secondary" id="bl-prev" disabled>← Précédent</button>
+              <span id="bl-page-info"></span>
+              <button class="btn btn-secondary" id="bl-next">Suivant →</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+
+  </div>
+</section>
+
+</ClientLayout>
+
+<script>
+  function initBlacklist() {
+    const PAGE_SIZE = 50;
+    let currentPage = 0;
+
+    const rows = Array.from(document.querySelectorAll<HTMLTableRowElement>('.bl-row'));
+    const prevBtn   = document.getElementById('bl-prev') as HTMLButtonElement | null;
+    const nextBtn   = document.getElementById('bl-next') as HTMLButtonElement | null;
+    const pageInfo  = document.getElementById('bl-page-info');
+
+    function showPage(page: number) {
+      rows.forEach((row, i) => {
+        row.style.display = (i >= page * PAGE_SIZE && i < (page + 1) * PAGE_SIZE) ? '' : 'none';
+      });
+      if (prevBtn) prevBtn.disabled = page === 0;
+      if (nextBtn) nextBtn.disabled = (page + 1) * PAGE_SIZE >= rows.length;
+      if (pageInfo) pageInfo.textContent = `Page ${page + 1} / ${Math.ceil(rows.length / PAGE_SIZE)}`;
+    }
+
+    if (rows.length > PAGE_SIZE) {
+      showPage(0);
+      prevBtn?.addEventListener('click', () => { currentPage--; showPage(currentPage); });
+      nextBtn?.addEventListener('click', () => { currentPage++; showPage(currentPage); });
+    }
+
+    rows.forEach((row) => {
+      if (row.dataset.initialized) return;
+      row.dataset.initialized = 'true';
+      const removeBtn  = row.querySelector<HTMLButtonElement>('.btn-bl-remove');
+      const confirmEl  = row.querySelector<HTMLElement>('.bl-confirm');
+      const removingEl = row.querySelector<HTMLElement>('.bl-removing');
+      const yesBtn     = row.querySelector<HTMLButtonElement>('.btn-bl-yes');
+      const noBtn      = row.querySelector<HTMLButtonElement>('.btn-bl-no');
+      const email      = row.dataset.email!;
+
+      removeBtn?.addEventListener('click', () => {
+        removeBtn.classList.add('hidden');
+        confirmEl?.classList.remove('hidden');
+      });
+
+      noBtn?.addEventListener('click', () => {
+        confirmEl?.classList.add('hidden');
+        removeBtn?.classList.remove('hidden');
+      });
+
+      yesBtn?.addEventListener('click', async () => {
+        confirmEl?.classList.add('hidden');
+        if (removingEl) removingEl.classList.remove('hidden');
+        try {
+          const res = await fetch('/api/blacklist-remove', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+          if (res.ok) {
+            row.remove();
+          } else {
+            if (removingEl) removingEl.classList.add('hidden');
+            removeBtn?.classList.remove('hidden');
+            alert('Erreur lors de la suppression. Réessayez.');
+          }
+        } catch {
+          if (removingEl) removingEl.classList.add('hidden');
+          removeBtn?.classList.remove('hidden');
+          alert('Erreur réseau. Réessayez.');
+        }
+      });
+    });
+  }
+
+  initBlacklist();
+  document.addEventListener('astro:page-load', initBlacklist);
+</script>
+
+<style>
+  .bl-section { padding-top: 0; }
+  .bl-container { max-width: 960px; }
+  .bl-add-card { padding: 2rem; margin-bottom: 1.5rem; }
+  .bl-table-card { padding: 2rem; }
+  .bl-card-title { font-size: 1.0625rem; font-weight: 600; color: var(--light); margin-bottom: 1.25rem; }
+  .bl-count { font-size: 0.875rem; font-weight: 400; color: var(--gray); }
+
+  .bl-table-wrap { overflow-x: auto; }
+  .bl-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+  .bl-table th {
+    text-align: left; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--gray); padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .bl-table td { padding: 0.875rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .bl-row:last-child td { border-bottom: none; }
+  .bl-td-email { font-weight: 500; }
+  .bl-td-reason { color: var(--fg-muted); }
+  .bl-td-date { color: var(--fg-muted); white-space: nowrap; }
+  .bl-td-action { white-space: nowrap; }
+
+  .bl-action-wrap { display: flex; align-items: center; gap: 0.5rem; }
+  .bl-confirm { display: flex; align-items: center; gap: 0.375rem; font-size: 0.875rem; color: var(--fg-muted); }
+  .bl-removing { font-size: 0.875rem; color: var(--fg-muted); }
+  .btn-inline {
+    background: transparent; border: 1px solid var(--line-2); border-radius: 4px;
+    padding: 2px 8px; font-size: 0.8125rem; font-family: var(--sans); cursor: pointer;
+    color: var(--fg); transition: background .15s;
+  }
+  .btn-inline:hover { background: var(--accent-soft); }
+
+  .bl-pagination { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; justify-content: center; }
+  .bl-error {
+    padding: 0.875rem 1.25rem; background: rgba(239,68,68,0.1); border: 1px solid #EF4444;
+    border-radius: var(--radius-sm); color: #EF4444; font-size: 0.9375rem; margin-bottom: 1rem;
+  }
+  .hidden { display: none !important; }
+</style>
