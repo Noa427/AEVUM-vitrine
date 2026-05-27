@@ -381,7 +381,8 @@ const checkoutAbandonConfig = parseConfig(checkoutAbandonRaw ?? '');
     <!-- F11 — Checkout abandon -->
     <div class="section-divider"><span>Récupération paniers abandonnés</span></div>
 
-    <div class="cust-card card checkout-abandon-card"
+    <div class="cust-card config-panel checkout-abandon-card"
+         id="panel-template_checkout_abandon"
          data-config="template_checkout_abandon"
          data-subject={checkoutAbandonConfig.subject}
          data-body={checkoutAbandonConfig.body}
@@ -2065,6 +2066,7 @@ const checkoutAbandonConfig = parseConfig(checkoutAbandonRaw ?? '');
   height: 1px;
   background: var(--gray-border);
 }
+.section-divider:empty::before,
 .section-divider:empty::after { display: none; }
 .section-divider span {
   font-size: 0.75rem;
