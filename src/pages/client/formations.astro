@@ -1,0 +1,303 @@
+---
+export const prerender = false;
+import ClientLayout from '../../layouts/ClientLayout.astro';
+import { getClientFromCookie } from '../../lib/auth';
+
+const auth = await getClientFromCookie(Astro.request);
+if (!auth) return Astro.redirect('/login');
+
+const base = import.meta.env.AEVUM_URL;
+const hdrs = { Authorization: `Bearer ${auth.token}`, 'Content-Type': 'application/json' };
+
+type Formation = { id: string; name: string; stripe_product_id?: string; created_at: string };
+
+let formations: Formation[] = [];
+let successMsg = '';
+let errorMsg = '';
+
+function fmtDate(iso: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('fr-FR', { dateStyle: 'short' });
+}
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = form.get('action') as string;
+
+  if (action === 'create_formation') {
+    const name = (form.get('name') as string)?.trim();
+    const stripe_product_id = (form.get('stripe_product_id') as string)?.trim() || undefined;
+    if (name) {
+      try {
+        const res = await fetch(`${base}/client/formations`, {
+          method: 'POST',
+          headers: hdrs,
+          body: JSON.stringify({ name, stripe_product_id }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (res.status === 401) { Astro.cookies.delete('aevum_token', { path: '/' }); return Astro.redirect('/login'); }
+        if (res.ok) successMsg = 'Formation créée.';
+        else { const d = await res.json().catch(() => ({})); errorMsg = (d as Record<string,string>).message ?? (d as Record<string,string>).error ?? 'Erreur création.'; }
+      } catch { errorMsg = 'Erreur réseau.'; }
+    } else {
+      errorMsg = 'Le nom est requis.';
+    }
+  }
+
+  if (action === 'rename_formation') {
+    const id = form.get('id') as string;
+    const name = (form.get('new_name') as string)?.trim();
+    if (id && name) {
+      try {
+        const res = await fetch(`${base}/client/formations/${id}`, {
+          method: 'PUT',
+          headers: hdrs,
+          body: JSON.stringify({ name }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (res.status === 401) { Astro.cookies.delete('aevum_token', { path: '/' }); return Astro.redirect('/login'); }
+        if (res.ok) successMsg = 'Formation renommée.';
+        else { const d = await res.json().catch(() => ({})); errorMsg = (d as Record<string,string>).message ?? (d as Record<string,string>).error ?? 'Erreur renommage.'; }
+      } catch { errorMsg = 'Erreur réseau.'; }
+    }
+  }
+
+  if (action === 'delete_formation') {
+    const id = form.get('id') as string;
+    if (id) {
+      try {
+        const res = await fetch(`${base}/client/formations/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${auth.token}` },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (res.status === 401) { Astro.cookies.delete('aevum_token', { path: '/' }); return Astro.redirect('/login'); }
+        if (res.ok) successMsg = 'Formation supprimée.';
+        else { const d = await res.json().catch(() => ({})); errorMsg = (d as Record<string,string>).message ?? (d as Record<string,string>).error ?? 'Erreur suppression.'; }
+      } catch { errorMsg = 'Erreur réseau.'; }
+    }
+  }
+}
+
+// Fetch formations list after any POST
+try {
+  const res = await fetch(`${base}/client/formations`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (res.status === 401) { Astro.cookies.delete('aevum_token', { path: '/' }); return Astro.redirect('/login'); }
+  if (res.ok) {
+    const data = await res.json().catch(() => []);
+    formations = Array.isArray(data) ? data : [];
+  }
+} catch { /* non-fatal */ }
+---
+
+<ClientLayout
+  title="Mes formations — AEVUM"
+  description="Gérez vos formations sur AEVUM."
+  canonical="/client/formations"
+  email={auth.email}
+>
+
+<section class="section form-section">
+  <div class="container form-container">
+
+    <div style="margin-bottom:2.5rem">
+      <span class="accent-line" style="margin:0 0 1rem"></span>
+      <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Mes formations</h1>
+    </div>
+
+    {successMsg && <div class="success-msg" role="alert" style="margin-bottom:1rem"><span>{successMsg}</span></div>}
+    {errorMsg   && <div class="cust-field-error" role="alert" style="margin-bottom:1rem">{errorMsg}</div>}
+
+    <!-- Formulaire de création -->
+    <div class="card formations-create-card">
+      <h2 class="settings-card-title" style="margin-bottom:1.25rem">Nouvelle formation</h2>
+      <form method="POST" class="formations-create-form">
+        <input type="hidden" name="action" value="create_formation" />
+        <div class="form-group">
+          <label class="form-label" for="f-name">Nom de la formation <span style="color:var(--error)">*</span></label>
+          <input type="text" id="f-name" name="name" class="form-input" required placeholder="ex: Maîtriser Instagram" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-stripe">ID Produit Stripe <span style="color:var(--gray);">(optionnel)</span></label>
+          <input type="text" id="f-stripe" name="stripe_product_id" class="form-input" placeholder="prod_..." />
+        </div>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-start">Créer</button>
+      </form>
+    </div>
+
+    <!-- Liste des formations -->
+    {formations.length > 0 && (
+      <div class="card formations-list-card">
+        <h2 class="settings-card-title" style="margin-bottom:1.25rem">Formations existantes</h2>
+        <div class="formations-table">
+          <div class="ft-header">
+            <span>Nom</span>
+            <span>ID Produit Stripe</span>
+            <span>Créée le</span>
+            <span>Actions</span>
+          </div>
+          {formations.map((f) => (
+            <div class="ft-row" id={`row-${f.id}`}>
+              <span class="ft-name">{f.name}</span>
+              <span class="ft-stripe">{f.stripe_product_id ?? '—'}</span>
+              <span class="ft-date">{fmtDate(f.created_at)}</span>
+              <span class="ft-actions">
+                <button type="button" class="btn-inline-rename" data-id={f.id} data-name={f.name} title="Renommer">✏️</button>
+                <button type="button" class="btn btn-danger-sm btn-confirm-delete" data-id={f.id} data-name={f.name}>Supprimer</button>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+    {formations.length === 0 && !errorMsg && (
+      <div class="card" style="padding:2rem;text-align:center;color:var(--fg-muted)">
+        Aucune formation pour l'instant.
+      </div>
+    )}
+
+  </div>
+</section>
+
+<!-- Modal de renommage inline (hidden) -->
+<div class="formations-rename-modal" id="rename-modal" aria-hidden="true" style="display:none">
+  <div class="formations-rename-modal__inner">
+    <h3 style="margin:0 0 1rem;font-size:1.125rem">Renommer la formation</h3>
+    <form method="POST" id="rename-form">
+      <input type="hidden" name="action" value="rename_formation" />
+      <input type="hidden" name="id" id="rename-id" />
+      <input type="text" name="new_name" id="rename-input" class="form-input" required style="margin-bottom:1rem" />
+      <div style="display:flex;gap:0.75rem">
+        <button type="submit" class="btn btn-primary">Sauvegarder</button>
+        <button type="button" class="btn btn-secondary" id="rename-cancel">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de confirmation suppression (hidden) -->
+<div class="formations-delete-modal" id="delete-modal" aria-hidden="true" style="display:none">
+  <div class="formations-delete-modal__inner">
+    <h3 style="margin:0 0 0.75rem;font-size:1.125rem">Supprimer la formation ?</h3>
+    <p class="delete-modal-name" style="color:var(--fg-muted);margin:0 0 1.25rem;font-size:0.9375rem"></p>
+    <p style="color:var(--fg-muted);font-size:0.875rem;margin:0 0 1.5rem">Cette action est irréversible.</p>
+    <form method="POST" id="delete-form">
+      <input type="hidden" name="action" value="delete_formation" />
+      <input type="hidden" name="id" id="delete-id" />
+      <div style="display:flex;gap:0.75rem">
+        <button type="submit" class="btn btn-primary" style="background:var(--error)">Supprimer</button>
+        <button type="button" class="btn btn-secondary" id="delete-cancel">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="formations-modal-overlay" id="formations-overlay" style="display:none"></div>
+
+<script>
+  function initFormations() {
+    // Rename modal
+    document.querySelectorAll<HTMLButtonElement>('.btn-inline-rename').forEach((btn) => {
+      if (btn.dataset.initialized) return;
+      btn.dataset.initialized = 'true';
+      btn.addEventListener('click', () => {
+        const modal   = document.getElementById('rename-modal')!;
+        const overlay = document.getElementById('formations-overlay')!;
+        const idInput = document.getElementById('rename-id') as HTMLInputElement;
+        const nameInput = document.getElementById('rename-input') as HTMLInputElement;
+        idInput.value   = btn.dataset.id!;
+        nameInput.value = btn.dataset.name!;
+        modal.style.display   = '';
+        overlay.style.display = '';
+        nameInput.focus();
+      });
+    });
+
+    document.getElementById('rename-cancel')?.addEventListener('click', () => {
+      document.getElementById('rename-modal')!.style.display   = 'none';
+      document.getElementById('formations-overlay')!.style.display = 'none';
+    });
+
+    // Delete modal
+    document.querySelectorAll<HTMLButtonElement>('.btn-confirm-delete').forEach((btn) => {
+      if (btn.dataset.initialized) return;
+      btn.dataset.initialized = 'true';
+      btn.addEventListener('click', () => {
+        const modal   = document.getElementById('delete-modal')!;
+        const overlay = document.getElementById('formations-overlay')!;
+        const idInput = document.getElementById('delete-id') as HTMLInputElement;
+        const nameEl  = modal.querySelector('.delete-modal-name')!;
+        idInput.value      = btn.dataset.id!;
+        nameEl.textContent = btn.dataset.name!;
+        modal.style.display   = '';
+        overlay.style.display = '';
+      });
+    });
+
+    document.getElementById('delete-cancel')?.addEventListener('click', () => {
+      document.getElementById('delete-modal')!.style.display   = 'none';
+      document.getElementById('formations-overlay')!.style.display = 'none';
+    });
+
+    document.getElementById('formations-overlay')?.addEventListener('click', () => {
+      document.getElementById('rename-modal')!.style.display   = 'none';
+      document.getElementById('delete-modal')!.style.display   = 'none';
+      document.getElementById('formations-overlay')!.style.display = 'none';
+    });
+  }
+  initFormations();
+  document.addEventListener('astro:page-load', initFormations);
+</script>
+
+<style>
+.form-section { padding: 3rem 0 4rem; }
+.form-container { max-width: 860px; }
+
+.formations-create-card { padding: 2rem; margin-bottom: 2rem; }
+.formations-create-form { display: flex; flex-direction: column; gap: 1rem; max-width: 480px; }
+
+.formations-list-card { padding: 2rem; }
+
+.formations-table { display: flex; flex-direction: column; gap: 0; }
+.ft-header, .ft-row {
+  display: grid;
+  grid-template-columns: 1fr 160px 100px 160px;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9375rem;
+}
+.ft-header { font-size: 0.75rem; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.ft-actions { display: flex; gap: 0.5rem; align-items: center; }
+.btn-inline-rename { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 2px 6px; border-radius: 4px; color: var(--fg-muted); }
+.btn-inline-rename:hover { background: var(--bg-2); }
+.btn-danger-sm { padding: 4px 10px; font-size: 0.8125rem; border-radius: 6px; background: transparent; border: 1px solid rgba(239,68,68,0.4); color: #EF4444; cursor: pointer; font-family: var(--sans); }
+.btn-danger-sm:hover { background: rgba(239,68,68,0.1); }
+
+.formations-rename-modal,
+.formations-delete-modal {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.formations-rename-modal__inner,
+.formations-delete-modal__inner {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 2rem;
+  width: min(90vw, 420px);
+  position: relative; z-index: 201;
+}
+.formations-modal-overlay {
+  position: fixed; inset: 0; z-index: 199;
+  background: rgba(0,0,0,0.6);
+}
+
+.cust-field-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 0.75rem 1rem; color: #EF4444; font-size: 0.9375rem; margin-bottom: 1rem; }
+</style>
+
+</ClientLayout>
