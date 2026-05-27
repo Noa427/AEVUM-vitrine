@@ -60,6 +60,8 @@ if (Astro.request.method === 'POST') {
         if (res.ok) successMsg = 'Formation renommée.';
         else { const d = await res.json().catch(() => ({})); errorMsg = (d as Record<string,string>).message ?? (d as Record<string,string>).error ?? 'Erreur renommage.'; }
       } catch { errorMsg = 'Erreur réseau.'; }
+    } else {
+      errorMsg = 'ID ou nom manquant.';
     }
   }
 
@@ -76,6 +78,8 @@ if (Astro.request.method === 'POST') {
         if (res.ok) successMsg = 'Formation supprimée.';
         else { const d = await res.json().catch(() => ({})); errorMsg = (d as Record<string,string>).message ?? (d as Record<string,string>).error ?? 'Erreur suppression.'; }
       } catch { errorMsg = 'Erreur réseau.'; }
+    } else {
+      errorMsg = 'ID manquant.';
     }
   }
 }
