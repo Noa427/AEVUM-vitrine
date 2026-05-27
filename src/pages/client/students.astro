@@ -260,6 +260,10 @@ function fmtDate(iso: string): string {
                       <span class="dh-date">${h.date ? new Date(h.date).toLocaleDateString('fr-FR', { dateStyle: 'short' }) : '—'}</span>
                       <span class="dh-type">${h.type || '—'}</span>
                       <span class="dh-subject">${h.subject || '—'}</span>
+                      <span class="dh-engagement">
+                        ${h.opened_at ? `<span class="dh-opened" title="Ouvert le ${new Date(h.opened_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}">✓</span>` : ''}
+                        ${h.clicked_at ? `<span class="dh-clicked" title="Cliqué le ${new Date(h.clicked_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}">🔗</span>` : ''}
+                      </span>
                     </li>`).join('')}</ul>`
               }
             </div>
@@ -433,10 +437,13 @@ function fmtDate(iso: string): string {
   .drawer-empty   { font-size: 0.875rem; color: var(--fg-muted); margin: 0; }
 
   .drawer-history { display: flex; flex-direction: column; gap: 0.5rem; }
-  .drawer-history-item { display: grid; grid-template-columns: 64px 100px 1fr; gap: 0.5rem; font-size: 0.8125rem; align-items: start; }
+  .drawer-history-item { display: grid; grid-template-columns: 64px 100px 1fr auto; gap: 0.5rem; font-size: 0.8125rem; align-items: start; }
   .dh-date  { color: var(--fg-muted); }
   .dh-type  { color: var(--fg-muted); font-style: italic; }
   .dh-subject { color: var(--fg); }
+  .dh-engagement { display: flex; gap: 4px; align-items: center; }
+  .dh-opened { color: #10B981; font-size: 0.8125rem; cursor: help; }
+  .dh-clicked { font-size: 0.8125rem; cursor: help; }
 
   .drawer-confirm { padding: 0.875rem; background: var(--bg-2); border-radius: var(--r-sm); }
   .drawer-confirm-text { font-size: 0.875rem; color: var(--fg); margin: 0; }
