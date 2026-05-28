@@ -227,7 +227,7 @@ const showFormationsLink = formations.length > 1;
       if (!sel || sel.dataset.initialized) return;
       sel.dataset.initialized = 'true';
       sel.addEventListener('change', () => {
-        document.cookie = `aevum_formation_id=${sel.value}; path=/; SameSite=Strict; Max-Age=86400`;
+        document.cookie = `aevum_formation_id=${sel.value}; path=/; SameSite=Strict; Secure; Max-Age=86400`;
         window.location.reload();
       });
     }
