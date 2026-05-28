@@ -1,43 +1,66 @@
-# Astro Starter Kit: Minimal
+# AEVUM — Vitrine
 
-```sh
-npm create astro@latest -- --template minimal
+Site marketing + portail client. Astro 6, SSR hybride, déploiement Vercel.
+
+## Setup local
+
+```bash
+npm install
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Créer un fichier `.env` à la racine :
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```
+PUBLIC_CONTACT_FORM_URL=   # URL Formspree (form contact)
+AEVUM_URL=                 # URL backend Render (ex: https://api.aevum.fr)
+JWT_SECRET=                # Même secret que le backend
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Commandes
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```bash
+npm run dev       # Dev server → localhost:4321
+npm run build     # Build production (TypeScript check inclus)
+npm run preview   # Preview du build local
+npm test          # Tests unitaires (vitest) — src/lib/auth.test.ts
+```
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Structure
 
-## 🧞 Commands
+```
+src/
+├── layouts/
+│   ├── BaseLayout.astro     # Pages marketing (header/footer)
+│   └── ClientLayout.astro   # Portail client (sidebar, sélecteur formation)
+├── pages/
+│   ├── index.astro / features.astro / pricing.astro / ...  # Marketing
+│   ├── login.astro
+│   ├── client/
+│   │   ├── forgot-password.astro
+│   │   ├── reset-password.astro
+│   │   ├── dashboard.astro
+│   │   ├── customize.astro
+│   │   ├── history.astro
+│   │   ├── students.astro
+│   │   ├── blacklist.astro
+│   │   ├── deliverability.astro
+│   │   ├── formations.astro
+│   │   └── settings.astro
+│   └── api/                 # Proxies SSR → backend (auth cookie)
+│       ├── ai-generate.ts / ai-improve.ts
+│       ├── config-update.ts
+│       ├── automation-toggle.ts / automation-update.ts / automation-delete.ts
+│       ├── blacklist-add.ts / blacklist-remove.ts
+│       ├── formation-create.ts / formation-update.ts / formation-delete.ts
+│       ├── pause-enable.ts / pause-disable.ts
+│       ├── send-manual.ts / student-detail.ts / test-send.ts
+└── lib/
+    ├── auth.ts              # getClientFromCookie (JWT via cookie)
+    └── api.ts               # jsonRes(), UUID_V4
+```
 
-All commands are run from the root of the project, from a terminal:
+## Déploiement
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+Vercel (adapter `@astrojs/vercel`). Variables d'env à configurer dans le dashboard Vercel : `AEVUM_URL`, `JWT_SECRET`.
 
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Le fichier `.env` ne doit jamais être commité.
