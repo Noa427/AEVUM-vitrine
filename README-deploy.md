@@ -1,83 +1,35 @@
-# AEVUM Vitrine — Guide de déploiement
+# AEVUM Vitrine — Déploiement
 
-## Stack technique
-- **Framework** : Astro 5 (SSG — HTML statique pur)
-- **CSS** : Vanilla CSS (pas de framework CSS)
-- **JS client** : < 3 KB (Intersection Observer + FAQ + formulaires)
-- **Hébergement recommandé** : Cloudflare Pages
+## Stack
+- **Framework** : Astro 6 (SSR hybride — pages marketing statiques, portail client SSR)
+- **Adapter** : `@astrojs/vercel`
+- **Hébergement** : Vercel
 
----
+## Variables d'environnement (Vercel dashboard)
 
-## Déploiement sur Cloudflare Pages
+| Variable | Description |
+|----------|-------------|
+| `AEVUM_URL` | URL du backend Render (ex: `https://api.aevum.fr`) |
+| `JWT_SECRET` | Secret JWT — doit correspondre exactement au backend |
+| `PUBLIC_CONTACT_FORM_URL` | URL Formspree pour le formulaire de contact |
 
-### 1. Connecter le dépôt
-1. Aller sur [Cloudflare Pages](https://pages.cloudflare.com)
-2. Créer un nouveau projet
-3. Connecter le dépôt GitHub
-4. Sélectionner la branche `claude`
+## Déploiement
 
-### 2. Configuration du build
-| Paramètre | Valeur |
-|---|---|
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Node.js version | `20` |
-
-### 3. Domaine personnalisé
-1. Ajouter `aevum.fr` dans les paramètres du projet
-2. Configurer les DNS chez votre registrar
-3. HTTPS automatique via Cloudflare
-
----
-
-## Déploiement sur Vercel (alternative)
+Connecter le dépôt GitHub sur [vercel.com](https://vercel.com) et configurer les variables ci-dessus.
 
 ```bash
-npm i -g vercel
-vercel
-```
-
-Ou connecter le dépôt sur [vercel.com](https://vercel.com).
-
----
-
-## Déploiement sur Netlify (alternative)
-
-```bash
-npm i -g netlify-cli
-netlify deploy --prod --dir=dist
-```
-
-Ou connecter le dépôt sur [app.netlify.com](https://app.netlify.com).
-
----
-
-## Commandes utiles
-
-```bash
-# Développement
-npm run dev
-
-# Build production
+# Build command
 npm run build
 
-# Preview du build
-npm run preview
+# Output directory
+.vercel/output  # géré automatiquement par l'adapter
 ```
 
----
+## Commandes locales
 
-## Performance attendue
-
-| Métrique | Score |
-|---|---|
-| Lighthouse Performance | 100/100 |
-| Lighthouse Accessibility | 100/100 |
-| Lighthouse Best Practices | 100/100 |
-| Lighthouse SEO | 100/100 |
-| FCP | < 0.5s |
-| LCP | < 0.8s |
-| TBT | 0ms |
-| CLS | 0 |
-| Bundle JS (gzippé) | < 3 KB |
-| CSS (gzippé) | < 12 KB |
+```bash
+npm run dev       # Dev server → localhost:4321
+npm run build     # Build production
+npm run preview   # Preview du build
+npm test          # Tests unitaires
+```
