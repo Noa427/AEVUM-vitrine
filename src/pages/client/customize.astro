@@ -433,6 +433,330 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
       })}
     </div>
 
+    <!-- F14 — Pré-dunning -->
+    <div class="section-divider"><span>Pré-dunning (CB expirant bientôt)</span></div>
+
+    <div class="cust-card config-panel"
+         id="panel-template_predunning"
+         data-config="template_predunning"
+         data-subject={predunningConfig.subject}
+         data-body={predunningConfig.body}
+         data-panel-active={predunningConfig.active ? 'true' : 'false'}
+         data-whatsapp-active={predunningConfig.whatsapp_active ? 'true' : 'false'}
+         data-sms-active={predunningConfig.sms_active ? 'true' : 'false'}
+         data-sms-body={predunningConfig.sms_body ?? ''}>
+
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <h2 class="cust-card-title section-title" style="margin-bottom:0">Email pré-dunning</h2>
+        </div>
+        <div class="panel-right-actions">
+          <label class="toggle-switch" title="Activer/désactiver">
+            <input type="checkbox" class="toggle-input" checked={predunningConfig.active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label">{predunningConfig.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+          {whatsappConnected && (
+            <label class="toggle-switch toggle-wa" title="Envoyer aussi par WhatsApp">
+              <input type="checkbox" class="toggle-wa-input" checked={predunningConfig.whatsapp_active} />
+              <span class="toggle-track"></span>
+              <span class="toggle-label-wa">WhatsApp</span>
+            </label>
+          )}
+          <label class="toggle-switch toggle-sms" title="Envoyer aussi par SMS">
+            <input type="checkbox" class="toggle-sms-input" checked={predunningConfig.sms_active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label-sms">SMS</span>
+          </label>
+        </div>
+      </div>
+
+      <p class="card-note" style="margin:0 0 1rem;font-size:0.875rem;color:var(--fg-muted)">
+        Envoyé automatiquement quand une carte bancaire expire dans moins de 14 jours.
+      </p>
+
+      {successType === 'template_predunning' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      {errorType === 'template_predunning' && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+
+      <div class="editor-tabs-row">
+        <div class="editor-tabs">
+          <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+          <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="manual">
+        <form method="POST" class="cust-form">
+          <input type="hidden" name="config_type" value="template_predunning" />
+          <input type="hidden" name="value" class="hidden-value" value={JSON.stringify(predunningConfig)} />
+          <label class="form-label">Sujet</label>
+          <input type="text" class="form-input subject-input" placeholder="Sujet de l'email..." />
+          <label class="form-label" style="margin-top:0.25rem">Corps</label>
+          <textarea class="form-input cust-textarea body-input" rows={7} placeholder="Contenu de l'email..."></textarea>
+          <div class="cust-hints">
+            <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+            <div class="cust-hints-list">
+              {VARIABLE_HINTS['template_predunning']!.map((v) => (
+                <code class="cust-hint" data-var={v}>{v}</code>
+              ))}
+            </div>
+          </div>
+          <div class="sms-editor" style="display:none">
+            <label class="form-label" style="margin-top:0.75rem">Corps du SMS</label>
+            <textarea class="form-input sms-body-input" rows={3} maxlength={160} disabled
+                      placeholder="Ex : Bonjour {{nom}}, votre CB expire bientôt. Mettez à jour vos infos : {{lien_paiement}}"></textarea>
+            <div class="sms-counter"><span class="sms-char-count">0</span>/160</div>
+            <p class="sms-note">160 caractères max. Les variables sont remplacées par les vraies données.</p>
+          </div>
+          <div class="manual-actions">
+            <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+            <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+          </div>
+          <p class="ai-error improve-error"></p>
+        </form>
+        <div class="test-send-wrap">
+          <button type="button" class="btn btn-secondary btn-test-send"
+                  data-config-type="template_predunning" data-email={auth.email}>
+            📧 M'envoyer un aperçu
+          </button>
+          <span class="test-send-feedback" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="tab-panel hidden" data-panel="generate">
+        <input type="text" class="form-input gen-formation" placeholder="Nom de votre formation" />
+        <select class="form-input gen-tone">
+          <option value="chaleureux">Chaleureux et bienveillant</option>
+          <option value="professionnel">Professionnel et direct</option>
+          <option value="motivant">Motivant et dynamique</option>
+        </select>
+        <input type="text" class="form-input gen-objective" placeholder="Objectif (ex : alerter avant expiration CB)" />
+        <button class="btn btn-primary btn-generate" style="align-self:flex-start">✨ Générer l'email</button>
+        <p class="ai-error gen-error"></p>
+        <div class="generation-result hidden">
+          <input type="text" class="form-input subject-preview" readonly placeholder="Sujet généré" />
+          <textarea class="form-input body-preview" rows={6} readonly placeholder="Contenu généré"></textarea>
+          <button class="btn btn-secondary btn-use-result" style="align-self:flex-start">Utiliser ce contenu →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- F15 — Re-engagement churn -->
+    <div class="section-divider"><span>Re-engagement (élèves inactifs)</span></div>
+
+    <div class="cust-card config-panel"
+         id="panel-template_churn_reengagement"
+         data-config="template_churn_reengagement"
+         data-subject={churnConfig.subject}
+         data-body={churnConfig.body}
+         data-panel-active={churnConfig.active ? 'true' : 'false'}
+         data-whatsapp-active={churnConfig.whatsapp_active ? 'true' : 'false'}
+         data-sms-active={churnConfig.sms_active ? 'true' : 'false'}
+         data-sms-body={churnConfig.sms_body ?? ''}>
+
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <h2 class="cust-card-title section-title" style="margin-bottom:0">Email re-engagement</h2>
+        </div>
+        <div class="panel-right-actions">
+          <label class="toggle-switch" title="Activer/désactiver">
+            <input type="checkbox" class="toggle-input" checked={churnConfig.active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label">{churnConfig.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+          {whatsappConnected && (
+            <label class="toggle-switch toggle-wa" title="Envoyer aussi par WhatsApp">
+              <input type="checkbox" class="toggle-wa-input" checked={churnConfig.whatsapp_active} />
+              <span class="toggle-track"></span>
+              <span class="toggle-label-wa">WhatsApp</span>
+            </label>
+          )}
+          <label class="toggle-switch toggle-sms" title="Envoyer aussi par SMS">
+            <input type="checkbox" class="toggle-sms-input" checked={churnConfig.sms_active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label-sms">SMS</span>
+          </label>
+        </div>
+      </div>
+
+      <p class="card-note" style="margin:0 0 1rem;font-size:0.875rem;color:var(--fg-muted)">
+        Envoyé aux élèves n'ayant ouvert aucun email depuis 21 jours. Déclenché une seule fois par tranche de 30 jours.
+      </p>
+
+      {successType === 'template_churn_reengagement' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      {errorType === 'template_churn_reengagement' && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+
+      <div class="editor-tabs-row">
+        <div class="editor-tabs">
+          <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+          <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="manual">
+        <form method="POST" class="cust-form">
+          <input type="hidden" name="config_type" value="template_churn_reengagement" />
+          <input type="hidden" name="value" class="hidden-value" value={JSON.stringify(churnConfig)} />
+          <label class="form-label">Sujet</label>
+          <input type="text" class="form-input subject-input" placeholder="Sujet de l'email..." />
+          <label class="form-label" style="margin-top:0.25rem">Corps</label>
+          <textarea class="form-input cust-textarea body-input" rows={7} placeholder="Contenu de l'email..."></textarea>
+          <div class="cust-hints">
+            <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+            <div class="cust-hints-list">
+              {VARIABLE_HINTS['template_churn_reengagement']!.map((v) => (
+                <code class="cust-hint" data-var={v}>{v}</code>
+              ))}
+            </div>
+          </div>
+          <div class="sms-editor" style="display:none">
+            <label class="form-label" style="margin-top:0.75rem">Corps du SMS</label>
+            <textarea class="form-input sms-body-input" rows={3} maxlength={160} disabled
+                      placeholder="Ex : Bonjour {{nom}}, vous nous manquez dans {{nom_formation}}. Reprenez ici : {{lien_acces}}"></textarea>
+            <div class="sms-counter"><span class="sms-char-count">0</span>/160</div>
+            <p class="sms-note">160 caractères max. Les variables sont remplacées par les vraies données.</p>
+          </div>
+          <div class="manual-actions">
+            <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+            <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+          </div>
+          <p class="ai-error improve-error"></p>
+        </form>
+        <div class="test-send-wrap">
+          <button type="button" class="btn btn-secondary btn-test-send"
+                  data-config-type="template_churn_reengagement" data-email={auth.email}>
+            📧 M'envoyer un aperçu
+          </button>
+          <span class="test-send-feedback" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="tab-panel hidden" data-panel="generate">
+        <input type="text" class="form-input gen-formation" placeholder="Nom de votre formation" />
+        <select class="form-input gen-tone">
+          <option value="chaleureux">Chaleureux et bienveillant</option>
+          <option value="professionnel">Professionnel et direct</option>
+          <option value="motivant">Motivant et dynamique</option>
+        </select>
+        <input type="text" class="form-input gen-objective" placeholder="Objectif (ex : réactiver des élèves inactifs)" />
+        <button class="btn btn-primary btn-generate" style="align-self:flex-start">✨ Générer l'email</button>
+        <p class="ai-error gen-error"></p>
+        <div class="generation-result hidden">
+          <input type="text" class="form-input subject-preview" readonly placeholder="Sujet généré" />
+          <textarea class="form-input body-preview" rows={6} readonly placeholder="Contenu généré"></textarea>
+          <button class="btn btn-secondary btn-use-result" style="align-self:flex-start">Utiliser ce contenu →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- F19 — Coaching élèves inactifs -->
+    <div class="section-divider"><span>Coaching élèves inactifs</span></div>
+
+    <div class="cust-card config-panel"
+         id="panel-template_coaching_j14"
+         data-config="template_coaching_j14"
+         data-subject={coachingConfig.subject}
+         data-body={coachingConfig.body}
+         data-panel-active={coachingConfig.active ? 'true' : 'false'}
+         data-whatsapp-active={coachingConfig.whatsapp_active ? 'true' : 'false'}
+         data-sms-active={coachingConfig.sms_active ? 'true' : 'false'}
+         data-sms-body={coachingConfig.sms_body ?? ''}>
+
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <h2 class="cust-card-title section-title" style="margin-bottom:0">Email coaching</h2>
+        </div>
+        <div class="panel-right-actions">
+          <label class="toggle-switch" title="Activer/désactiver">
+            <input type="checkbox" class="toggle-input" checked={coachingConfig.active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label">{coachingConfig.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+          {whatsappConnected && (
+            <label class="toggle-switch toggle-wa" title="Envoyer aussi par WhatsApp">
+              <input type="checkbox" class="toggle-wa-input" checked={coachingConfig.whatsapp_active} />
+              <span class="toggle-track"></span>
+              <span class="toggle-label-wa">WhatsApp</span>
+            </label>
+          )}
+          <label class="toggle-switch toggle-sms" title="Envoyer aussi par SMS">
+            <input type="checkbox" class="toggle-sms-input" checked={coachingConfig.sms_active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label-sms">SMS</span>
+          </label>
+        </div>
+      </div>
+
+      <p class="card-note" style="margin:0 0 1rem;font-size:0.875rem;color:var(--fg-muted)">
+        Envoyé aux élèves n'ayant pas consulté leurs emails depuis 14 jours. Différent du re-engagement : cible les élèves qui n'ont pas encore commencé.
+      </p>
+
+      {successType === 'template_coaching_j14' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      {errorType === 'template_coaching_j14' && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+
+      <div class="editor-tabs-row">
+        <div class="editor-tabs">
+          <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+          <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="manual">
+        <form method="POST" class="cust-form">
+          <input type="hidden" name="config_type" value="template_coaching_j14" />
+          <input type="hidden" name="value" class="hidden-value" value={JSON.stringify(coachingConfig)} />
+          <label class="form-label">Sujet</label>
+          <input type="text" class="form-input subject-input" placeholder="Sujet de l'email..." />
+          <label class="form-label" style="margin-top:0.25rem">Corps</label>
+          <textarea class="form-input cust-textarea body-input" rows={7} placeholder="Contenu de l'email..."></textarea>
+          <div class="cust-hints">
+            <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+            <div class="cust-hints-list">
+              {VARIABLE_HINTS['template_coaching_j14']!.map((v) => (
+                <code class="cust-hint" data-var={v}>{v}</code>
+              ))}
+            </div>
+          </div>
+          <div class="sms-editor" style="display:none">
+            <label class="form-label" style="margin-top:0.75rem">Corps du SMS</label>
+            <textarea class="form-input sms-body-input" rows={3} maxlength={160} disabled
+                      placeholder="Ex : Bonjour {{nom}}, votre formation {{nom_formation}} vous attend. Commencez ici : {{lien_acces}}"></textarea>
+            <div class="sms-counter"><span class="sms-char-count">0</span>/160</div>
+            <p class="sms-note">160 caractères max. Les variables sont remplacées par les vraies données.</p>
+          </div>
+          <div class="manual-actions">
+            <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+            <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+          </div>
+          <p class="ai-error improve-error"></p>
+        </form>
+        <div class="test-send-wrap">
+          <button type="button" class="btn btn-secondary btn-test-send"
+                  data-config-type="template_coaching_j14" data-email={auth.email}>
+            📧 M'envoyer un aperçu
+          </button>
+          <span class="test-send-feedback" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="tab-panel hidden" data-panel="generate">
+        <input type="text" class="form-input gen-formation" placeholder="Nom de votre formation" />
+        <select class="form-input gen-tone">
+          <option value="chaleureux">Chaleureux et bienveillant</option>
+          <option value="professionnel">Professionnel et direct</option>
+          <option value="motivant">Motivant et dynamique</option>
+        </select>
+        <input type="text" class="form-input gen-objective" placeholder="Objectif (ex : démarrer des élèves inactifs)" />
+        <button class="btn btn-primary btn-generate" style="align-self:flex-start">✨ Générer l'email</button>
+        <p class="ai-error gen-error"></p>
+        <div class="generation-result hidden">
+          <input type="text" class="form-input subject-preview" readonly placeholder="Sujet généré" />
+          <textarea class="form-input body-preview" rows={6} readonly placeholder="Contenu généré"></textarea>
+          <button class="btn btn-secondary btn-use-result" style="align-self:flex-start">Utiliser ce contenu →</button>
+        </div>
+      </div>
+    </div>
+
     <!-- F11 — Checkout abandon -->
     <div class="section-divider"><span>Récupération paniers abandonnés</span></div>
 
