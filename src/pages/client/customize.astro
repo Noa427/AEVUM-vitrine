@@ -1409,6 +1409,21 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
         bodyInput.value    = card.dataset.body    ?? '';
       }
 
+      const smsBodyEl    = card.querySelector('.sms-body-input');
+      const smsEditor    = card.querySelector('.sms-editor');
+      const smsCharCount = card.querySelector('.sms-char-count');
+      const smsToggle    = card.querySelector('.toggle-sms-input');
+      const waToggleInput = card.querySelector('.toggle-wa-input');
+      // Pre-fill SMS textarea and set initial visibility on every page load
+      if (smsBodyEl) {
+        smsBodyEl.value = card.dataset.smsBody ?? '';
+        if (smsCharCount) smsCharCount.textContent = String(smsBodyEl.value.length);
+      }
+      if (smsEditor && smsToggle) {
+        smsEditor.style.display = smsToggle.checked ? '' : 'none';
+        if (smsBodyEl) smsBodyEl.disabled = !smsToggle.checked;
+      }
+
       if (card.dataset.initialized) return;
       card.dataset.initialized = 'true';
 
@@ -1436,7 +1451,10 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
           const customLabel = card.dataset.label  ?? '';
           const isActive    = card.querySelector<HTMLInputElement>('.toggle-input')?.checked ?? true;
           const obj: Record<string, string | boolean> = { subject, body, active: isActive };
-          if (customLabel) obj.label = customLabel;
+          if (customLabel)    obj.label           = customLabel;
+          if (waToggleInput)  obj.whatsapp_active  = waToggleInput.checked;
+          if (smsToggle)      obj.sms_active       = smsToggle.checked;
+          if (smsBodyEl)      obj.sms_body         = smsBodyEl.value;
           hiddenVal.value = JSON.stringify(obj);
         });
       }
@@ -1452,7 +1470,13 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
           const subject   = subjectInput?.value ?? card.dataset.subject ?? '';
           const body      = bodyInput?.value    ?? card.dataset.body    ?? '';
           const label     = card.dataset.label  ?? '';
-          const value     = JSON.stringify({ subject, body, active: isActive, ...(label ? { label } : {}) });
+          const value = JSON.stringify({
+            subject, body, active: isActive,
+            ...(label         ? { label }                              : {}),
+            ...(waToggleInput ? { whatsapp_active: waToggleInput.checked } : {}),
+            ...(smsToggle     ? { sms_active: smsToggle.checked }         : {}),
+            ...(smsBodyEl     ? { sms_body: smsBodyEl.value }             : {}),
+          });
           try {
             const res = await fetch('/api/config-update', {
               method: 'PUT',
@@ -1465,6 +1489,67 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
             if (toggleLabel) toggleLabel.textContent = !isActive ? 'Actif' : 'Inactif';
             card.dataset.panelActive = !isActive ? 'true' : 'false';
           }
+        });
+      }
+
+      if (waToggleInput) {
+        waToggleInput.addEventListener('change', async () => {
+          const isWa      = waToggleInput.checked;
+          const configKey = card.dataset.config ?? '';
+          const subject   = subjectInput?.value ?? card.dataset.subject ?? '';
+          const body      = bodyInput?.value    ?? card.dataset.body    ?? '';
+          const label     = card.dataset.label  ?? '';
+          const isActive  = card.querySelector('.toggle-input')?.checked ?? true;
+          const value = JSON.stringify({
+            subject, body, active: isActive,
+            whatsapp_active: isWa,
+            sms_active: smsToggle?.checked ?? false,
+            sms_body: smsBodyEl?.value ?? '',
+            ...(label ? { label } : {}),
+          });
+          try {
+            const res = await fetch('/api/config-update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ config_type: configKey, value }),
+            });
+            if (!res.ok) throw new Error();
+          } catch {
+            waToggleInput.checked = !isWa;
+          }
+        });
+      }
+
+      if (smsToggle && smsEditor) {
+        smsToggle.addEventListener('change', async () => {
+          const isSms     = smsToggle.checked;
+          smsEditor.style.display = isSms ? '' : 'none';
+          if (smsBodyEl) smsBodyEl.disabled = !isSms;
+          const configKey = card.dataset.config ?? '';
+          const subject   = subjectInput?.value ?? card.dataset.subject ?? '';
+          const body      = bodyInput?.value    ?? card.dataset.body    ?? '';
+          const label     = card.dataset.label  ?? '';
+          const isActive  = card.querySelector('.toggle-input')?.checked ?? true;
+          const value = JSON.stringify({
+            subject, body, active: isActive,
+            whatsapp_active: waToggleInput?.checked ?? false,
+            sms_active: isSms,
+            sms_body: smsBodyEl?.value ?? '',
+            ...(label ? { label } : {}),
+          });
+          try {
+            await fetch('/api/config-update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ config_type: configKey, value }),
+            });
+          } catch { /* non-fatal */ }
+        });
+      }
+
+      if (smsBodyEl && smsCharCount) {
+        smsBodyEl.addEventListener('input', () => {
+          smsCharCount.textContent = String(smsBodyEl.value.length);
         });
       }
 
@@ -2895,6 +2980,9 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
   flex-shrink: 0;
 }
 .toggle-input { display: none; }
+/* Hide WA/SMS toggle checkboxes (same as .toggle-input) */
+.toggle-wa-input,
+.toggle-sms-input { display: none; }
 .toggle-track {
   position: relative;
   width: 2.25rem;
@@ -2922,6 +3010,17 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
   color: var(--gray-light);
   min-width: 2.5rem;
 }
+/* Style WA/SMS toggle labels to match existing toggle-label */
+.toggle-label-wa,
+.toggle-label-sms {
+  font-size: 0.75rem;
+  color: var(--gray-light);
+  min-width: 2.5rem;
+  text-align: center;
+}
+/* SMS editor layout */
+.sms-counter { text-align: right; font-size: 0.75rem; color: var(--gray); margin-top: 0.25rem; }
+.sms-note { font-size: 0.8125rem; color: var(--gray); margin: 0.25rem 0 0.5rem; }
 .cust-card[data-panel-active="false"] .editor-tabs,
 .cust-card[data-panel-active="false"] .tab-panel,
 .cust-card[data-panel-active="false"] .default-tpl-wrap {
