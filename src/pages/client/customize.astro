@@ -84,12 +84,13 @@ let configs: Record<string, string> = {};
 let senderName = '';
 let fetchError = '';
 
-const [configsResult, customAutoResult] = await Promise.allSettled([
+const [configsResult, customAutoResult, meResult] = await Promise.allSettled([
   fetch(`${base}/client/configs`, { headers, signal: AbortSignal.timeout(8000) }),
   fetch(`${base}/client/automations/custom`, { headers, signal: AbortSignal.timeout(8000) }),
+  fetch(`${base}/client/me`, { headers, signal: AbortSignal.timeout(8000) }),
 ]);
 
-const fulfilled = [configsResult, customAutoResult].filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled');
+const fulfilled = [configsResult, customAutoResult, meResult].filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled');
 if (fulfilled.some((r) => r.value.status === 401)) {
   Astro.cookies.delete('aevum_token', { path: '/' });
   return Astro.redirect('/login');
@@ -124,6 +125,12 @@ if (customAutoResult.status === 'fulfilled' && customAutoResult.value.ok) {
   customAutomations = Array.isArray(arr) ? arr : [];
 }
 
+let whatsappConnected = false;
+if (meResult.status === 'fulfilled' && meResult.value.ok) {
+  const meData = await meResult.value.json().catch(() => ({})) as { whatsapp_connected?: boolean };
+  whatsappConnected = meData.whatsapp_connected === true;
+}
+
 const VARIABLE_HINTS: Record<string, string[]> = {
   template_onboarding_j0: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}', '{{mot_de_passe}}'],
   template_onboarding_j3: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}'],
@@ -135,6 +142,9 @@ const VARIABLE_HINTS: Record<string, string[]> = {
   testimonial_url: [],
   template_testimonial_j30: ['{{nom}}', '{{prenom}}', '{{nom_formation}}', '{{lien_temoignage}}'],
   template_testimonial_j60: ['{{nom}}', '{{prenom}}', '{{nom_formation}}', '{{lien_temoignage}}'],
+  template_predunning: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_paiement}}', '{{date_expiration}}'],
+  template_churn_reengagement: ['{{nom}}', '{{prenom}}', '{{nom_formation}}', '{{lien_acces}}'],
+  template_coaching_j14: ['{{nom}}', '{{prenom}}', '{{nom_formation}}', '{{lien_acces}}'],
 };
 
 const EMAIL_CONFIGS = [
@@ -151,14 +161,25 @@ const initialTab = validTabKeys.includes(successType) ? successType
   : validTabKeys.includes(errorType)                  ? errorType
   : EMAIL_CONFIGS[0].key;
 
-function parseConfig(raw: string): { subject: string; body: string; label?: string; active: boolean } {
+function parseConfig(raw: string): {
+  subject: string; body: string; label?: string; active: boolean;
+  whatsapp_active: boolean; sms_active: boolean; sms_body: string;
+} {
   try {
     const p = JSON.parse(raw);
     if (p && typeof p.subject === 'string' && typeof p.body === 'string') {
-      return { subject: p.subject, body: p.body, label: typeof p.label === 'string' && p.label ? p.label : undefined, active: p.active !== false };
+      return {
+        subject: p.subject,
+        body: p.body,
+        label: typeof p.label === 'string' && p.label ? p.label : undefined,
+        active: p.active !== false,
+        whatsapp_active: p.whatsapp_active === true,
+        sms_active: p.sms_active === true,
+        sms_body: typeof p.sms_body === 'string' ? p.sms_body : '',
+      };
     }
   } catch {}
-  return { subject: '', body: raw, active: true };
+  return { subject: '', body: raw, active: true, whatsapp_active: false, sms_active: false, sms_body: '' };
 }
 
 const DEFAULT_TEMPLATES: Record<string, { subject: string; body: string }> = {
@@ -190,7 +211,7 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string; body: string }> = {
 
 const allDefaultTemplates = EMAIL_CONFIGS.every(({ key }) => !configs[key]);
 
-const PARSED_CONFIGS: Record<string, { subject: string; body: string; label?: string; active: boolean }> = {};
+const PARSED_CONFIGS: Record<string, ReturnType<typeof parseConfig>> = {};
 for (const { key } of EMAIL_CONFIGS) {
   PARSED_CONFIGS[key] = parseConfig(configs[key] ?? '');
 }
@@ -203,6 +224,9 @@ const testimonialJ30Raw = configs['template_testimonial_j30'];
 const testimonialJ30Config = parseConfig(testimonialJ30Raw ?? '');
 const testimonialJ60Raw = configs['template_testimonial_j60'];
 const testimonialJ60Config = parseConfig(testimonialJ60Raw ?? '');
+const predunningConfig = parseConfig(configs['template_predunning'] ?? '');
+const churnConfig = parseConfig(configs['template_churn_reengagement'] ?? '');
+const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
 ---
 
 <ClientLayout
