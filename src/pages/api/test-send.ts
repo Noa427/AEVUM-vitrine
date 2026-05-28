@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getClientFromCookie } from '../../lib/auth';
-import { jsonRes } from '../../lib/api';
+import { jsonRes, UUID_V4 } from '../../lib/api';
 
 export const prerender = false;
 
@@ -10,7 +10,8 @@ export const POST: APIRoute = async ({ request }) => {
 
   const cookieHeader = request.headers.get('cookie') ?? '';
   const fmMatch = cookieHeader.match(/(?:^|;\s*)aevum_formation_id=([^;]+)/);
-  const formationId = fmMatch?.[1] ?? null;
+  const rawFormationId = fmMatch?.[1] ?? null;
+  const formationId = rawFormationId && UUID_V4.test(rawFormationId) ? rawFormationId : null;
 
   let body: { config_type: string } | null = null;
   try {

@@ -10,7 +10,8 @@ export const GET: APIRoute = async ({ request }) => {
 
   const cookieHeader = request.headers.get('cookie') ?? '';
   const fmMatch = cookieHeader.match(/(?:^|;\s*)aevum_formation_id=([^;]+)/);
-  const formationId = fmMatch?.[1] ?? null;
+  const rawFormationId = fmMatch?.[1] ?? null;
+  const formationId = rawFormationId && UUID_V4.test(rawFormationId) ? rawFormationId : null;
 
   const url = new URL(request.url);
   const id = url.searchParams.get('id');

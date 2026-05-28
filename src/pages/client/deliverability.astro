@@ -2,12 +2,14 @@
 export const prerender = false;
 import ClientLayout from '../../layouts/ClientLayout.astro';
 import { getClientFromCookie } from '../../lib/auth';
+import { UUID_V4 } from '../../lib/api';
 
 const auth = await getClientFromCookie(Astro.request);
 if (!auth) return Astro.redirect('/login');
 
 const base = import.meta.env.AEVUM_URL;
-const formationId = Astro.cookies.get('aevum_formation_id')?.value ?? null;
+const rawFormationId = Astro.cookies.get('aevum_formation_id')?.value ?? null;
+const formationId = rawFormationId && UUID_V4.test(rawFormationId) ? rawFormationId : null;
 const formationHeaders = formationId ? { 'X-Formation-Id': formationId } : {};
 const hdrs = { Authorization: `Bearer ${auth.token}`, ...formationHeaders };
 
