@@ -80,7 +80,11 @@ function fmtDate(iso: string): string {
               <tr>
                 <td class="td-date">{fmtDate(entry.date)}</td>
                 <td class="td-action">{entry.action}</td>
-                <td class="td-details">{entry.details ?? '—'}</td>
+                <td class="td-details">
+                  {entry.action === 'rapport_video_sent' && entry.details
+                    ? <a href={entry.details} target="_blank" rel="noopener noreferrer" class="hist-video-link">Voir la vidéo →</a>
+                    : (entry.details ?? '—')}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -188,6 +192,9 @@ function fmtDate(iso: string): string {
   }
   .hist-btn { padding: 10px 18px; font-size: 14px; }
   .hist-page-info { font-size: 0.875rem; color: var(--gray); min-width: 80px; text-align: center; }
+
+  .hist-video-link { color: var(--light); text-decoration: underline; font-weight: 500; }
+  .hist-video-link:hover { color: #2E8BF0; }
 
   @media (max-width: 600px) {
     .hist-table th:last-child,
