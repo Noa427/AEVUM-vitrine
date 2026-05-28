@@ -16,6 +16,8 @@ let emailMsg = '';
 let emailError = '';
 let pauseMsg = '';
 let pauseError = '';
+let whatsappMsg = '';
+let whatsappError = '';
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
@@ -116,22 +118,76 @@ if (Astro.request.method === 'POST') {
       pauseError = 'Erreur réseau. Réessayez.';
     }
   }
+
+  if (action === 'whatsapp_connect') {
+    const phoneNumberId = (form.get('phone_number_id') as string ?? '').trim();
+    const accessToken   = (form.get('access_token') as string ?? '').trim();
+    if (!phoneNumberId || !accessToken) {
+      whatsappError = 'Veuillez renseigner les deux champs.';
+    } else {
+      try {
+        const res = await fetch(`${import.meta.env.AEVUM_URL}/client/whatsapp/connect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
+          body: JSON.stringify({ phone_number_id: phoneNumberId, access_token: accessToken }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (res.ok) return Astro.redirect('/client/settings');
+        const d = await res.json().catch(() => ({}));
+        whatsappError = (d as Record<string, string>).error ?? (d as Record<string, string>).message ?? 'Impossible de connecter WhatsApp.';
+      } catch {
+        whatsappError = 'Erreur réseau. Réessayez.';
+      }
+    }
+  }
+
+  if (action === 'whatsapp_disconnect') {
+    try {
+      const res = await fetch(`${import.meta.env.AEVUM_URL}/client/whatsapp/connect`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${auth.token}` },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) return Astro.redirect('/client/settings');
+      const d = await res.json().catch(() => ({}));
+      whatsappError = (d as Record<string, string>).error ?? (d as Record<string, string>).message ?? 'Impossible de déconnecter WhatsApp.';
+    } catch {
+      whatsappError = 'Erreur réseau. Réessayez.';
+    }
+  }
 }
 
-let meData: { paused_until?: string | null } | null = null;
-try {
-  const meRes = await fetch(`${import.meta.env.AEVUM_URL}/client/me`, {
+const [meResult, configsResult] = await Promise.allSettled([
+  fetch(`${import.meta.env.AEVUM_URL}/client/me`, {
     headers: { Authorization: `Bearer ${auth.token}` },
     signal: AbortSignal.timeout(8000),
-  });
-  if (meRes.status === 401) {
+  }),
+  fetch(`${import.meta.env.AEVUM_URL}/client/configs`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+    signal: AbortSignal.timeout(8000),
+  }),
+]);
+
+let meData: { paused_until?: string | null; whatsapp_connected?: boolean } | null = null;
+if (meResult.status === 'fulfilled') {
+  if (meResult.value.status === 401) {
     Astro.cookies.delete('aevum_token', { path: '/' });
     return Astro.redirect('/login');
   }
-  if (meRes.ok) meData = await meRes.json().catch(() => null);
-} catch { /* non-fatal */ }
+  if (meResult.value.ok) meData = await meResult.value.json().catch(() => null);
+}
+
+let settingsConfigs: Record<string, string> = {};
+if (configsResult.status === 'fulfilled' && configsResult.value.ok) {
+  const arr: { config_type: string; value: string }[] = await configsResult.value.json().catch(() => []);
+  if (Array.isArray(arr)) {
+    for (const c of arr) settingsConfigs[c.config_type] = c.value;
+  }
+}
 
 const pausedUntil: string | null = meData?.paused_until ?? null;
+const whatsappConnected: boolean = meData?.whatsapp_connected ?? false;
+const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 'true';
 ---
 
 <ClientLayout
@@ -247,6 +303,74 @@ const pausedUntil: string | null = meData?.paused_until ?? null;
       )}
     </div>
 
+    <!-- F16 — WhatsApp Business -->
+    <div class="card settings-card">
+      <h2 class="settings-card-title">WhatsApp Business</h2>
+      {whatsappMsg && <div class="success-msg" role="alert"><span>{whatsappMsg}</span></div>}
+      {whatsappError && <div class="settings-error" role="alert">{whatsappError}</div>}
+      {whatsappConnected ? (
+        <div>
+          <p style="margin:0 0 1rem">
+            <span class="wa-connected-badge">● WhatsApp connecté</span>
+          </p>
+          <form method="POST" style="margin:0">
+            <input type="hidden" name="action" value="whatsapp_disconnect" />
+            <button type="submit" class="btn btn-secondary">Déconnecter</button>
+          </form>
+        </div>
+      ) : (
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
+          <p style="color:var(--gray-light);font-size:0.9375rem;margin:0">
+            Connectez votre compte WhatsApp Business pour envoyer vos messages aussi via WhatsApp.
+          </p>
+          <form method="POST" style="display:flex;flex-direction:column;gap:1.25rem">
+            <input type="hidden" name="action" value="whatsapp_connect" />
+            <div class="form-group">
+              <label for="wa-phone-id" class="form-label">Phone Number ID</label>
+              <input type="text" id="wa-phone-id" name="phone_number_id" class="form-input"
+                     placeholder="Ex : 123456789012345" />
+            </div>
+            <div class="form-group">
+              <label for="wa-token" class="form-label">Access Token</label>
+              <input type="text" id="wa-token" name="access_token" class="form-input"
+                     placeholder="Votre token d'accès Meta" />
+            </div>
+            <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started"
+               target="_blank" rel="noopener noreferrer"
+               style="font-size:0.875rem;color:var(--gray-light)">
+              Obtenir ces identifiants sur Meta for Developers →
+            </a>
+            <button type="submit" class="btn btn-primary" style="align-self:flex-start">Connecter</button>
+          </form>
+        </div>
+      )}
+    </div>
+
+    <!-- F20 — SMS (informatif) -->
+    <div class="card settings-card">
+      <h2 class="settings-card-title">SMS</h2>
+      <p style="color:var(--gray-light);font-size:0.9375rem;margin:0">
+        Les SMS sont envoyés depuis le numéro AEVUM. Assurez-vous que vos élèves ont renseigné leur numéro de téléphone lors de l'achat sur Stripe.
+      </p>
+    </div>
+
+    <!-- F17 — Rapport vidéo hebdomadaire -->
+    <div class="card settings-card">
+      <h2 class="settings-card-title">Rapport vidéo hebdomadaire</h2>
+      <label class="toggle-switch" style="margin-bottom:1rem">
+        <input type="checkbox" id="rapport-toggle-input" checked={rapportVideoActive} />
+        <span class="toggle-track"></span>
+        <span class="toggle-label" id="rapport-toggle-label">{rapportVideoActive ? 'Actif' : 'Inactif'}</span>
+      </label>
+      <p style="color:var(--gray-light);font-size:0.9375rem;margin:0 0 0.5rem">
+        Chaque lundi à 8h, vous recevez par email une vidéo de 60-90 secondes résumant votre semaine : nouveaux élèves, impayés récupérés, emails envoyés.
+      </p>
+      <p style="color:var(--gray);font-size:0.875rem;margin:0">
+        Voix off française générée par IA + slides automatiques.
+      </p>
+      <p class="rapport-error" style="display:none;color:#EF4444;font-size:0.875rem;margin-top:0.5rem"></p>
+    </div>
+
     <!-- Deliverability -->
     <div class="card settings-card">
       <h2 class="settings-card-title">Deliverability</h2>
@@ -276,6 +400,35 @@ const pausedUntil: string | null = meData?.paused_until ?? null;
 
   </div>
 </section>
+
+<script>
+  function initRapportToggle() {
+    const toggle  = document.getElementById('rapport-toggle-input') as HTMLInputElement | null;
+    const label   = document.getElementById('rapport-toggle-label');
+    const errorEl = document.querySelector<HTMLElement>('.rapport-error');
+    if (!toggle || toggle.dataset.initialized) return;
+    toggle.dataset.initialized = 'true';
+    toggle.addEventListener('change', async () => {
+      const active = toggle.checked;
+      if (label) label.textContent = active ? 'Actif' : 'Inactif';
+      if (errorEl) errorEl.style.display = 'none';
+      try {
+        const res = await fetch('/api/config-update', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config_type: 'rapport_video_active', value: active ? 'true' : 'false' }),
+        });
+        if (!res.ok) throw new Error();
+      } catch {
+        toggle.checked = !active;
+        if (label) label.textContent = !active ? 'Actif' : 'Inactif';
+        if (errorEl) { errorEl.textContent = 'Erreur lors de la sauvegarde.'; errorEl.style.display = ''; }
+      }
+    });
+  }
+  initRapportToggle();
+  document.addEventListener('astro:page-load', initRapportToggle);
+</script>
 
 </ClientLayout>
 
@@ -331,4 +484,6 @@ const pausedUntil: string | null = meData?.paused_until ?? null;
     border-color: #EF4444;
     transform: translateY(-1px);
   }
+  .wa-connected-badge { color: #10B981; font-weight: 500; }
+  #rapport-toggle-input { display: none; }
 </style>
