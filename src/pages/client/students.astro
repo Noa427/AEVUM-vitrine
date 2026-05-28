@@ -252,6 +252,7 @@ function fmtDate(iso: string): string {
           drawerBody.innerHTML = `
             <div class="drawer-meta">
               <span class="stu-badge stu-badge--${detail.status}">${statusLabel}</span>
+              ${detail.churn_risk ? '<span class="stu-badge stu-badge--churn">À risque</span>' : ''}
               <span class="drawer-date">Inscrit le ${detail.created_at ? new Date(detail.created_at).toLocaleDateString('fr-FR', { dateStyle: 'short' }) : '—'}</span>
             </div>
             <div class="drawer-section">
@@ -401,6 +402,7 @@ function fmtDate(iso: string): string {
   .stu-badge--en_dunning { background: rgba(245,158,11,0.15); color: #F59E0B; }
   .stu-badge--suspendu  { background: rgba(239,68,68,0.15);  color: #EF4444; }
   .stu-badge--blackliste { background: rgba(100,100,100,0.15); color: #888888; }
+  .stu-badge--churn { background: rgba(249,115,22,0.15); color: #F97316; }
 
   /* Drawer */
   .stu-overlay {
