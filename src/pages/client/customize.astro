@@ -1409,11 +1409,11 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
         bodyInput.value    = card.dataset.body    ?? '';
       }
 
-      const smsBodyEl    = card.querySelector('.sms-body-input');
-      const smsEditor    = card.querySelector('.sms-editor');
-      const smsCharCount = card.querySelector('.sms-char-count');
-      const smsToggle    = card.querySelector('.toggle-sms-input');
-      const waToggleInput = card.querySelector('.toggle-wa-input');
+      const smsBodyEl    = card.querySelector<HTMLTextAreaElement>('.sms-body-input');
+      const smsEditor    = card.querySelector<HTMLElement>('.sms-editor');
+      const smsCharCount = card.querySelector<HTMLElement>('.sms-char-count');
+      const smsToggle    = card.querySelector<HTMLInputElement>('.toggle-sms-input');
+      const waToggleInput = card.querySelector<HTMLInputElement>('.toggle-wa-input');
       // Pre-fill SMS textarea and set initial visibility on every page load
       if (smsBodyEl) {
         smsBodyEl.value = card.dataset.smsBody ?? '';
@@ -1543,7 +1543,12 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ config_type: configKey, value }),
             });
-          } catch { /* non-fatal */ }
+          } catch {
+            // Revert UI state on failure
+            smsToggle.checked = !isSms;
+            smsEditor.style.display = !isSms ? '' : 'none';
+            if (smsBodyEl) smsBodyEl.disabled = isSms;
+          }
         });
       }
 
@@ -3003,8 +3008,12 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
   border-radius: 50%;
   transition: transform 0.2s;
 }
-.toggle-input:checked + .toggle-track { background: #059669; }
-.toggle-input:checked + .toggle-track::after { transform: translateX(1rem); }
+.toggle-input:checked + .toggle-track,
+.toggle-wa-input:checked + .toggle-track,
+.toggle-sms-input:checked + .toggle-track { background: #059669; }
+.toggle-input:checked + .toggle-track::after,
+.toggle-wa-input:checked + .toggle-track::after,
+.toggle-sms-input:checked + .toggle-track::after { transform: translateX(1rem); }
 .toggle-label {
   font-size: 0.75rem;
   color: var(--gray-light);
