@@ -8,6 +8,10 @@ export const POST: APIRoute = async ({ request }) => {
   const auth = await getClientFromCookie(request);
   if (!auth) return jsonRes({ error: 'Non authentifié' }, 401);
 
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const fmMatch = cookieHeader.match(/(?:^|;\s*)aevum_formation_id=([^;]+)/);
+  const formationId = fmMatch?.[1] ?? null;
+
   let body: { student_id: string; config_type: string } | null = null;
   try {
     body = await request.json();
@@ -23,7 +27,11 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const res = await fetch(`${import.meta.env.AEVUM_URL}/client/send-manual`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${auth.token}`, 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        'Content-Type': 'application/json',
+        ...(formationId ? { 'X-Formation-Id': formationId } : {}),
+      },
       body: JSON.stringify({ student_id: body.student_id, config_type: body.config_type }),
       signal: controller.signal,
     });

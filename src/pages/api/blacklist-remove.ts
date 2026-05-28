@@ -10,6 +10,10 @@ export const DELETE: APIRoute = async ({ request }) => {
   const auth = await getClientFromCookie(request);
   if (!auth) return jsonRes({ error: 'Non authentifié' }, 401);
 
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const fmMatch = cookieHeader.match(/(?:^|;\s*)aevum_formation_id=([^;]+)/);
+  const formationId = fmMatch?.[1] ?? null;
+
   let body: { email: string } | null = null;
   try {
     body = await request.json();
@@ -25,7 +29,11 @@ export const DELETE: APIRoute = async ({ request }) => {
   try {
     const res = await fetch(`${import.meta.env.AEVUM_URL}/client/blacklist`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${auth.token}`, 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        'Content-Type': 'application/json',
+        ...(formationId ? { 'X-Formation-Id': formationId } : {}),
+      },
       body: JSON.stringify({ email: body.email }),
       signal: controller.signal,
     });

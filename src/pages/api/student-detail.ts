@@ -8,6 +8,10 @@ export const GET: APIRoute = async ({ request }) => {
   const auth = await getClientFromCookie(request);
   if (!auth) return jsonRes({ error: 'Non authentifié' }, 401);
 
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const fmMatch = cookieHeader.match(/(?:^|;\s*)aevum_formation_id=([^;]+)/);
+  const formationId = fmMatch?.[1] ?? null;
+
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
   if (!id) return jsonRes({ error: 'id requis' }, 400);
@@ -16,7 +20,10 @@ export const GET: APIRoute = async ({ request }) => {
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const res = await fetch(`${import.meta.env.AEVUM_URL}/client/students/${id}`, {
-      headers: { Authorization: `Bearer ${auth.token}` },
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        ...(formationId ? { 'X-Formation-Id': formationId } : {}),
+      },
       signal: controller.signal,
     });
     clearTimeout(timeout);
