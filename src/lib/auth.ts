@@ -27,7 +27,9 @@ export async function getClientFromCookie(request: Request): Promise<AuthPayload
   if (!secret) return null;
 
   try {
-    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret), {
+      algorithms: ['HS256'],
+    });
     const clientId = payload['clientId'] as string | undefined;
     const email = payload['email'] as string | undefined;
     if (!clientId || !email) return null;
