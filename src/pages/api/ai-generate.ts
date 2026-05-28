@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
   };
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 30000);
   try {
     const res = await fetch(`${import.meta.env.AEVUM_URL}/client/ai/generate`, {
       method: 'POST',

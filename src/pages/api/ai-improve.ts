@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
   const validatedBody = { content: b.content, emailType: b.emailType };
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 30000);
   try {
     const res = await fetch(`${import.meta.env.AEVUM_URL}/client/ai/improve`, {
       method: 'POST',
