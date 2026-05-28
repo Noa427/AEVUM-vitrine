@@ -16,7 +16,6 @@ let emailMsg = '';
 let emailError = '';
 let pauseMsg = '';
 let pauseError = '';
-let whatsappMsg = '';
 let whatsappError = '';
 
 if (Astro.request.method === 'POST') {
@@ -306,7 +305,6 @@ const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 
     <!-- F16 — WhatsApp Business -->
     <div class="card settings-card">
       <h2 class="settings-card-title">WhatsApp Business</h2>
-      {whatsappMsg && <div class="success-msg" role="alert"><span>{whatsappMsg}</span></div>}
       {whatsappError && <div class="settings-error" role="alert">{whatsappError}</div>}
       {whatsappConnected ? (
         <div>
@@ -485,5 +483,24 @@ const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 
     transform: translateY(-1px);
   }
   .wa-connected-badge { color: #10B981; font-weight: 500; }
+
+  /* Toggle switch — rapport vidéo (CSS scoped, not leaking from customize.astro) */
   #rapport-toggle-input { display: none; }
+  .toggle-switch {
+    display: flex; align-items: center; gap: 0.4375rem;
+    cursor: pointer; user-select: none;
+  }
+  .toggle-track {
+    position: relative; width: 2.25rem; height: 1.25rem;
+    background: var(--gray-border); border-radius: 999px;
+    transition: background 0.2s; flex-shrink: 0;
+  }
+  .toggle-track::after {
+    content: ''; position: absolute; top: 0.1875rem; left: 0.1875rem;
+    width: 0.875rem; height: 0.875rem;
+    background: #fff; border-radius: 50%; transition: transform 0.2s;
+  }
+  #rapport-toggle-input:checked + .toggle-track { background: #059669; }
+  #rapport-toggle-input:checked + .toggle-track::after { transform: translateX(1rem); }
+  .toggle-label { font-size: 0.875rem; color: var(--gray-light); }
 </style>
