@@ -36,7 +36,3 @@ export async function getClientFromCookie(request: Request): Promise<AuthPayload
     return null;
   }
 }
-
-export function clearAuthCookie(): string {
-  return 'aevum_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/';
-}

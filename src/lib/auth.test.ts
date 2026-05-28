@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SignJWT } from 'jose';
-import { getClientFromCookie, clearAuthCookie } from './auth';
+import { getClientFromCookie } from './auth';
 
 const TEST_SECRET = 'test-secret-at-least-32-chars-long!!';
 const encoder = new TextEncoder();
@@ -60,15 +60,5 @@ describe('getClientFromCookie', () => {
     const req = makeRequest(`session=abc; aevum_token=${token}; other=def`);
     const result = await getClientFromCookie(req);
     expect(result!.clientId).toBe('xyz');
-  });
-});
-
-describe('clearAuthCookie', () => {
-  it('returns a Set-Cookie string that expires the token', () => {
-    const header = clearAuthCookie();
-    expect(header).toContain('aevum_token=');
-    expect(header).toContain('Max-Age=0');
-    expect(header).toContain('HttpOnly');
-    expect(header).toContain('Path=/');
   });
 });

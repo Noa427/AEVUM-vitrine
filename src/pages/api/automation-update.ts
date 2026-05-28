@@ -1,16 +1,14 @@
 import type { APIRoute } from 'astro';
 import { getClientFromCookie } from '../../lib/auth';
-import { jsonRes } from '../../lib/api';
+import { jsonRes, UUID_V4 } from '../../lib/api';
 
 export const prerender = false;
-
-const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const PUT: APIRoute = async ({ request }) => {
   const auth = await getClientFromCookie(request);
   if (!auth) return jsonRes({ error: 'Non authentifié' }, 401);
 
-  let body: { id: string; name?: string } | null = null;
+  let body: { id: string; name?: string; subject?: string; body?: string } | null = null;
   try {
     body = await request.json();
   } catch {
@@ -19,13 +17,18 @@ export const PUT: APIRoute = async ({ request }) => {
   if (!body?.id) return jsonRes({ error: 'id requis' }, 400);
   if (!UUID_V4.test(body.id)) return jsonRes({ error: 'ID invalide' }, 400);
 
+  const payload: Record<string, string | undefined> = {};
+  if (body.name    !== undefined) payload.name    = body.name;
+  if (body.subject !== undefined) payload.subject = body.subject;
+  if (body.body    !== undefined) payload.body    = body.body;
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const res = await fetch(`${import.meta.env.AEVUM_URL}/client/automations/custom/${body.id}`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${auth.token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: body.name }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
     clearTimeout(timeout);
