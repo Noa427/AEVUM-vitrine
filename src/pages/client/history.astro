@@ -81,7 +81,7 @@ function fmtDate(iso: string): string {
                 <td class="td-date">{fmtDate(entry.date)}</td>
                 <td class="td-action">{entry.action}</td>
                 <td class="td-details">
-                  {entry.action === 'rapport_video_sent' && entry.details
+                  {entry.action === 'rapport_video_sent' && entry.details?.startsWith('http')
                     ? <a href={entry.details} target="_blank" rel="noopener noreferrer" class="hist-video-link">Voir la vidéo →</a>
                     : (entry.details ?? '—')}
                 </td>
