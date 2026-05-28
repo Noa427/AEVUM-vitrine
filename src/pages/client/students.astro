@@ -179,6 +179,10 @@ function fmtDate(iso: string): string {
 </ClientLayout>
 
 <script define:vars={{ availableConfigTypes, TEMPLATE_LABELS, STATUS_LABELS }}>
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+  }
+
   function initStudents() {
     const rows = Array.from(document.querySelectorAll('.stu-row'));
     const searchInput = document.getElementById('stu-search');
@@ -251,7 +255,7 @@ function fmtDate(iso: string): string {
 
           drawerBody.innerHTML = `
             <div class="drawer-meta">
-              <span class="stu-badge stu-badge--${detail.status}">${statusLabel}</span>
+              <span class="stu-badge stu-badge--${escapeHtml(detail.status)}">${statusLabel}</span>
               ${detail.churn_risk ? '<span class="stu-badge stu-badge--churn">À risque</span>' : ''}
               <span class="drawer-date">Inscrit le ${detail.created_at ? new Date(detail.created_at).toLocaleDateString('fr-FR', { dateStyle: 'short' }) : '—'}</span>
             </div>
@@ -262,11 +266,11 @@ function fmtDate(iso: string): string {
                 : `<ul class="drawer-history">${history.map((h) => `
                     <li class="drawer-history-item">
                       <span class="dh-date">${h.date ? new Date(h.date).toLocaleDateString('fr-FR', { dateStyle: 'short' }) : '—'}</span>
-                      <span class="dh-type">${h.type || '—'}</span>
-                      <span class="dh-subject">${h.subject || '—'}</span>
+                      <span class="dh-type">${escapeHtml(h.type || '—')}</span>
+                      <span class="dh-subject">${escapeHtml(h.subject || '—')}</span>
                       <span class="dh-engagement">
-                        ${h.opened_at ? `<span class="dh-opened" title="Ouvert le ${new Date(h.opened_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}">✓</span>` : ''}
-                        ${h.clicked_at ? `<span class="dh-clicked" title="Cliqué le ${new Date(h.clicked_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}">🔗</span>` : ''}
+                        ${h.opened_at ? `<span class="dh-opened" title="Ouvert le ${escapeHtml(new Date(h.opened_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }))}">✓</span>` : ''}
+                        ${h.clicked_at ? `<span class="dh-clicked" title="Cliqué le ${escapeHtml(new Date(h.clicked_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }))}">🔗</span>` : ''}
                       </span>
                     </li>`).join('')}</ul>`
               }
@@ -275,7 +279,7 @@ function fmtDate(iso: string): string {
               <div class="drawer-section-title">Envoyer un email</div>
               <select class="form-input drawer-tpl-select" id="drawer-tpl-select">${selectOpts}</select>
               <button type="button" class="btn btn-primary drawer-send-btn" id="drawer-send-btn"
-                      data-student-id="${detail.id ?? studentId}" data-email="${detail.email ?? email}"
+                      data-student-id="${escapeHtml(detail.id ?? studentId)}" data-email="${escapeHtml(detail.email ?? email)}"
                       style="margin-top:0.75rem;align-self:flex-start">
                 Envoyer
               </button>
