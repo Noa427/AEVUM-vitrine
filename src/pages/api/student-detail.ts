@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getClientFromCookie } from '../../lib/auth';
-import { jsonRes } from '../../lib/api';
+import { jsonRes, UUID_V4 } from '../../lib/api';
 
 export const prerender = false;
 
@@ -15,6 +15,7 @@ export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
   if (!id) return jsonRes({ error: 'id requis' }, 400);
+  if (!UUID_V4.test(id)) return jsonRes({ error: 'id invalide' }, 400);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getClientFromCookie } from '../../lib/auth';
-import { jsonRes } from '../../lib/api';
+import { jsonRes, UUID_V4 } from '../../lib/api';
 
 export const prerender = false;
 
@@ -20,6 +20,9 @@ export const POST: APIRoute = async ({ request }) => {
   }
   if (!body?.student_id || !body?.config_type) {
     return jsonRes({ error: 'student_id et config_type requis' }, 400);
+  }
+  if (!UUID_V4.test(body.student_id)) {
+    return jsonRes({ error: 'student_id invalide' }, 400);
   }
 
   const controller = new AbortController();
