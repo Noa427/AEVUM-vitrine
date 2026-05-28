@@ -766,7 +766,10 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
          data-subject={checkoutAbandonConfig.subject}
          data-body={checkoutAbandonConfig.body}
          data-label={checkoutAbandonConfig.label ?? 'Panier abandonné'}
-         data-panel-active={checkoutAbandonConfig.active ? 'true' : 'false'}>
+         data-panel-active={checkoutAbandonConfig.active ? 'true' : 'false'}
+         data-whatsapp-active={checkoutAbandonConfig.whatsapp_active ? 'true' : 'false'}
+         data-sms-active={checkoutAbandonConfig.sms_active ? 'true' : 'false'}
+         data-sms-body={checkoutAbandonConfig.sms_body ?? ''}>
 
       <div class="panel-header">
         <div class="panel-title-group">
@@ -777,6 +780,18 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
             <input type="checkbox" class="toggle-input" checked={checkoutAbandonConfig.active} />
             <span class="toggle-track"></span>
             <span class="toggle-label">{checkoutAbandonConfig.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+          {whatsappConnected && (
+            <label class="toggle-switch toggle-wa" title="Envoyer aussi par WhatsApp">
+              <input type="checkbox" class="toggle-wa-input" checked={checkoutAbandonConfig.whatsapp_active} />
+              <span class="toggle-track"></span>
+              <span class="toggle-label-wa">WhatsApp</span>
+            </label>
+          )}
+          <label class="toggle-switch toggle-sms" title="Envoyer aussi par SMS">
+            <input type="checkbox" class="toggle-sms-input" checked={checkoutAbandonConfig.sms_active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label-sms">SMS</span>
           </label>
         </div>
       </div>
@@ -808,6 +823,13 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
                 <code class="cust-hint" data-var={v}>{v}</code>
               ))}
             </div>
+          </div>
+          <div class="sms-editor" style="display:none">
+            <label class="form-label" style="margin-top:0.75rem">Corps du SMS</label>
+            <textarea class="form-input sms-body-input" rows={3} maxlength={160} disabled
+                      placeholder="Ex : Bonjour {{nom}}, votre panier vous attend. Finalisez ici : {{lien_checkout}}"></textarea>
+            <div class="sms-counter"><span class="sms-char-count">0</span>/160</div>
+            <p class="sms-note">160 caractères max. Les variables sont remplacées par les vraies données.</p>
           </div>
           <div class="manual-actions">
             <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
@@ -877,7 +899,10 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
          data-subject={testimonialJ30Config.subject}
          data-body={testimonialJ30Config.body}
          data-label={testimonialJ30Config.label ?? 'Témoignage J+30'}
-         data-panel-active={testimonialJ30Config.active ? 'true' : 'false'}>
+         data-panel-active={testimonialJ30Config.active ? 'true' : 'false'}
+         data-whatsapp-active={testimonialJ30Config.whatsapp_active ? 'true' : 'false'}
+         data-sms-active={testimonialJ30Config.sms_active ? 'true' : 'false'}
+         data-sms-body={testimonialJ30Config.sms_body ?? ''}>
       <div class="panel-header">
         <div class="panel-title-group">
           <h2 class="cust-card-title section-title" style="margin-bottom:0">Email témoignage J+30</h2>
@@ -887,6 +912,18 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
             <input type="checkbox" class="toggle-input" checked={testimonialJ30Config.active} />
             <span class="toggle-track"></span>
             <span class="toggle-label">{testimonialJ30Config.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+          {whatsappConnected && (
+            <label class="toggle-switch toggle-wa" title="Envoyer aussi par WhatsApp">
+              <input type="checkbox" class="toggle-wa-input" checked={testimonialJ30Config.whatsapp_active} />
+              <span class="toggle-track"></span>
+              <span class="toggle-label-wa">WhatsApp</span>
+            </label>
+          )}
+          <label class="toggle-switch toggle-sms" title="Envoyer aussi par SMS">
+            <input type="checkbox" class="toggle-sms-input" checked={testimonialJ30Config.sms_active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label-sms">SMS</span>
           </label>
         </div>
       </div>
@@ -914,6 +951,13 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
                 <code class="cust-hint" data-var={v}>{v}</code>
               ))}
             </div>
+          </div>
+          <div class="sms-editor" style="display:none">
+            <label class="form-label" style="margin-top:0.75rem">Corps du SMS</label>
+            <textarea class="form-input sms-body-input" rows={3} maxlength={160} disabled
+                      placeholder="Ex : Bonjour {{nom}}, un avis sur {{nom_formation}} ? Lien : {{lien_temoignage}}"></textarea>
+            <div class="sms-counter"><span class="sms-char-count">0</span>/160</div>
+            <p class="sms-note">160 caractères max. Les variables sont remplacées par les vraies données.</p>
           </div>
           <div class="manual-actions">
             <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
@@ -955,6 +999,9 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
          data-body={testimonialJ60Config.body}
          data-label={testimonialJ60Config.label ?? 'Témoignage J+60'}
          data-panel-active={testimonialJ60Config.active ? 'true' : 'false'}
+         data-whatsapp-active={testimonialJ60Config.whatsapp_active ? 'true' : 'false'}
+         data-sms-active={testimonialJ60Config.sms_active ? 'true' : 'false'}
+         data-sms-body={testimonialJ60Config.sms_body ?? ''}
          style="display:none">
       <div class="panel-header">
         <div class="panel-title-group">
@@ -965,6 +1012,18 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
             <input type="checkbox" class="toggle-input" checked={testimonialJ60Config.active} />
             <span class="toggle-track"></span>
             <span class="toggle-label">{testimonialJ60Config.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+          {whatsappConnected && (
+            <label class="toggle-switch toggle-wa" title="Envoyer aussi par WhatsApp">
+              <input type="checkbox" class="toggle-wa-input" checked={testimonialJ60Config.whatsapp_active} />
+              <span class="toggle-track"></span>
+              <span class="toggle-label-wa">WhatsApp</span>
+            </label>
+          )}
+          <label class="toggle-switch toggle-sms" title="Envoyer aussi par SMS">
+            <input type="checkbox" class="toggle-sms-input" checked={testimonialJ60Config.sms_active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label-sms">SMS</span>
           </label>
         </div>
       </div>
@@ -992,6 +1051,13 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
                 <code class="cust-hint" data-var={v}>{v}</code>
               ))}
             </div>
+          </div>
+          <div class="sms-editor" style="display:none">
+            <label class="form-label" style="margin-top:0.75rem">Corps du SMS</label>
+            <textarea class="form-input sms-body-input" rows={3} maxlength={160} disabled
+                      placeholder="Ex : Bonjour {{nom}}, votre accès est disponible. Lien : {{lien_acces}}"></textarea>
+            <div class="sms-counter"><span class="sms-char-count">0</span>/160</div>
+            <p class="sms-note">160 caractères max. Les variables sont remplacées par les vraies données.</p>
           </div>
           <div class="manual-actions">
             <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
