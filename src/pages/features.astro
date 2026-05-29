@@ -9,7 +9,7 @@ const pillars = [
     features: [
       { name: 'Email J0 — Bienvenue & accès', desc: "Envoyé dès la confirmation du paiement Stripe. Contient vos identifiants d'accès, un mot de bienvenue et les premières étapes." },
       { name: 'Email J3 — Premier check-in', desc: "Trois jours après l'inscription, un email de suivi pour s'assurer que l'élève a bien démarré et lui proposer une ressource." },
-      { name: 'Email J7 — Bonus & communauté', desc: "À J+7, un email bonus : accès à un contenu exclusif, invitation dans votre groupe ou tout autre élément de rétention." },
+      { name: 'Email J7 — Bilan première semaine', desc: "Sept jours après l'inscription, un email de suivi sur la progression de l'élève. Template par défaut inclus, entièrement personnalisable depuis votre portail." },
       { name: 'Séquence personnalisable', desc: "Les templates J0, J3 et J7 sont entièrement éditables depuis votre portail client sans passer par nous." },
       { name: 'Sender name configurable', desc: "Chaque email part avec votre nom et votre adresse d'expédition. L'élève ne voit jamais AEVUM." },
       { name: 'Déclenchement instantané', desc: "La séquence démarre dans les secondes qui suivent la confirmation Stripe. De nuit comme de jour." },
@@ -37,8 +37,19 @@ const pillars = [
       { name: 'Nouveaux élèves de la semaine', desc: "Liste des inscriptions confirmées via Stripe : nom, email, date, montant." },
       { name: 'Impayés en cours', desc: "Tableau des paiements échoués non résolus avec le statut de la relance (J+1, J+3, J+7, suspendu)." },
       { name: 'Emails envoyés & statuts', desc: "Nombre total d'emails expédiés dans la semaine par type (onboarding, relance, rapport)." },
-      { name: "Taux d'ouverture & clics", desc: "Performance de chaque séquence email : taux d'ouverture, de clic, et de réponse." },
-      { name: 'Historique glissant 4 semaines', desc: "Comparaison avec les semaines précédentes pour observer les tendances en un coup d'œil." },
+      { name: 'Volume mensuel en temps réel', desc: "Nombre d'emails envoyés ce mois par type : onboarding, relances impayés, automatisations custom." },
+      { name: "Journal d'activité", desc: "Consultez l'historique complet de vos envois depuis votre portail : date, type, et détail de l'action." },
+    ],
+  },
+  {
+    id: 'custom',
+    title: 'Automatisations custom',
+    icon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    features: [
+      { name: 'Création de séquences', desc: "Créez vos propres séquences d'emails déclenchées par vos événements Stripe : upsell post-achat, relance engagement, cross-sell." },
+      { name: 'Activation / désactivation', desc: "Activez ou désactivez chaque automatisation en un clic depuis votre portail. Aucune intervention technique requise." },
+      { name: 'Templates éditables', desc: "Chaque automatisation a son propre sujet et corps d'email, personnalisables avec vos variables ({{nom}}, {{prenom}}, {{nom_formation}}…)." },
+      { name: 'Expéditeur configurable', desc: "Vos automatisations partent avec votre sender name. L'élève voit votre nom, pas le nôtre." },
     ],
   },
 ];
@@ -54,8 +65,8 @@ const pillars = [
   <div class="container">
     <div class="section-header reveal">
       <span class="accent-line"></span>
-      <h1 id="features-title">Tout ce dont vous avez besoin</h1>
-      <p>3 piliers, 18 fonctionnalités. Un seul système.</p>
+      <h1 id="features-title">Les 4 piliers d'AEVUM</h1>
+      <p>Onboarding, impayés, rapport hebdo, automatisations custom. Un seul système.</p>
     </div>
 
     {pillars.map((pillar) => (

@@ -65,7 +65,7 @@ const links = {
   .site-footer {
     padding-top: 80px;
     padding-bottom: 40px;
-    border-top: 1px solid rgba(255,255,255,0.07);
+    border-top: 1px solid var(--line);
     margin-top: clamp(80px, 9vw, 144px);
     position: relative;
     z-index: 1;
@@ -89,17 +89,19 @@ const links = {
     line-height: 1;
     letter-spacing: -0.04em;
     font-weight: 600;
-    color: rgba(255,255,255,0.9);
+    color: var(--fg);
     text-decoration: none;
     margin-bottom: 16px;
+    transition: color .3s;
   }
 
   .footer__tagline {
     font-size: 14px;
-    color: rgba(255,255,255,0.3);
+    color: var(--fg-muted);
     line-height: 1.6;
     max-width: 260px;
     margin: 0;
+    transition: color .3s;
   }
 
   /* Columns */
@@ -108,8 +110,9 @@ const links = {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.25);
+    color: var(--fg-muted);
     margin-bottom: 16px;
+    transition: color .3s;
   }
 
   .footer__col ul {
@@ -120,11 +123,11 @@ const links = {
 
   .footer__col a {
     font-size: 14px;
-    color: rgba(255,255,255,0.45);
+    color: var(--fg-3);
     transition: color .2s;
     text-decoration: none;
   }
-  .footer__col a:hover { color: #ffffff; }
+  .footer__col a:hover { color: var(--fg); }
 
   /* Bottom bar */
   .footer__bottom {
@@ -133,16 +136,17 @@ const links = {
     align-items: center;
     gap: 12px;
     padding-top: 28px;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    border-top: 1px solid var(--line);
     font-size: 12.5px;
-    color: rgba(255,255,255,0.25);
+    color: var(--fg-muted);
+    transition: color .3s, border-color .3s;
   }
-  .footer__bottom a { color: rgba(255,255,255,0.3); transition: color .2s; }
-  .footer__bottom a:hover { color: #ffffff; }
+  .footer__bottom a { color: var(--fg-soft); transition: color .2s; }
+  .footer__bottom a:hover { color: var(--fg); }
 
   .footer__dot {
     width: 3px; height: 3px; border-radius: 50%;
-    background: rgba(255,255,255,0.2);
+    background: var(--line-2);
     display: inline-block;
   }
 

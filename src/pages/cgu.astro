@@ -13,8 +13,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <h1>Conditions Générales d'Utilisation</h1>
     <p><em>Dernière mise à jour : mai 2026</em></p>
 
-    <h2>1. Objet</h2>
-    <p>Les présentes conditions générales d'utilisation (CGU) ont pour objet de définir les modalités d'accès et d'utilisation du service AEVUM.</p>
+    <h2>1. Objet et description du service</h2>
+    <p>Les présentes CGU définissent les modalités d'accès et d'utilisation du service AEVUM, plateforme SaaS d'automatisation d'emails déclenchés par Stripe, à destination des infopreneurs francophones (vendeurs de formations en ligne). Le service comprend : l'onboarding automatique des élèves (emails J0, J+3, J+7), la récupération d'impayés (relances J+1, J+3, J+7), un rapport hebdomadaire automatisé chaque lundi à 8h, et des automatisations email personnalisées.</p>
 
     <h2>2. Accès au service</h2>
     <p>L'accès à AEVUM est réservé aux clients disposant d'un compte actif et d'un abonnement en cours de validité.</p>
@@ -25,14 +25,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <h2>4. Propriété intellectuelle</h2>
     <p>L'ensemble des éléments composant le service AEVUM (logiciel, design, textes, algorithmes) est protégé par le droit de la propriété intellectuelle.</p>
 
-    <h2>5. Responsabilité</h2>
-    <p>AEVUM met tout en œuvre pour assurer la disponibilité et le bon fonctionnement du service, sans pouvoir garantir une disponibilité à 100%.</p>
+    <h2>5. Limitation de responsabilité</h2>
+    <p>AEVUM met tout en œuvre pour assurer la disponibilité et le bon fonctionnement du service, sans pouvoir garantir une disponibilité à 100%. En aucun cas AEVUM ne saurait être tenu responsable de dommages indirects, de pertes d'exploitation, de manque à gagner ou de préjudice commercial résultant de l'utilisation ou de l'impossibilité d'utiliser le service. En cas de faute avérée d'AEVUM, sa responsabilité est expressément limitée aux sommes effectivement versées par le Client au titre des 12 derniers mois précédant le fait générateur.</p>
 
     <h2>6. Résiliation</h2>
     <p>Le client peut résilier son abonnement à tout moment avec un préavis d'un mois par email. La résiliation prend effet à la fin du mois en cours.</p>
 
-    <h2>7. Droit applicable</h2>
-    <p>Les présentes CGU sont soumises au droit français. En cas de litige, les tribunaux compétents seront ceux du ressort du siège social.</p>
+    <h2>7. Propriété des données</h2>
+    <p>Le Client conserve la pleine propriété de ses données et de celles de ses élèves (acheteurs de formations). AEVUM n'en revendique aucun droit et n'y accède qu'aux fins strictement nécessaires à l'exécution du service. AEVUM agit en qualité de sous-traitant au sens de l'article 28 du RGPD pour le traitement des données des élèves du Client. À la résiliation, le Client peut récupérer ses templates et l'historique de ses envois en CSV. Les données sont supprimées dans les 30 jours suivant la fin du contrat.</p>
+
+    <!-- RECOMMANDÉ : préciser le tribunal compétent une fois le siège social défini dans les mentions légales -->
+    <!-- RECOMMANDÉ : ajouter prix, facturation et modalités de paiement (renvoyer à /pricing) -->
+    <!-- RECOMMANDÉ : mentionner Resend, Stripe, Supabase, Vercel, Render comme sous-traitants (Art. 28 RGPD) ou renvoyer à la politique de confidentialité -->
+
+    <h2>8. Droit applicable</h2>
+    <p>Les présentes CGU sont soumises au droit français. En cas de litige, les tribunaux français seront compétents.</p>
 
     <p style="margin-top:3rem"><a href="/" style="color:var(--primary)">← Retour à l'accueil</a></p>
   </div>

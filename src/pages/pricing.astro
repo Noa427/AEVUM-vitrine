@@ -4,8 +4,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const plans = [
   {
     name: 'Case Study',
-    target: "En échange d'un témoignage vidéo",
-    setup: '1 500€',
+    target: "Offert — en échange d'un témoignage vidéo",
+    setup: '0€',
     monthly: '500€',
     popular: false,
     note: '2 places disponibles par trimestre',
@@ -14,6 +14,7 @@ const plans = [
       'Relances impayés (J+1, J+3, J+7)',
       'Suspension et reprise automatiques',
       'Rapport hebdomadaire lundi 8h',
+      'Automatisations custom',
       'Portail client (lecture seule)',
       'Support email',
       'Configuration initiale incluse',
@@ -30,8 +31,8 @@ const plans = [
       'Tout le tier Case Study',
       'Portail client avec édition templates',
       'Support prioritaire (réponse sous 24h)',
-      'Configurations illimitées',
-      'Rapport personnalisé',
+      'Templates et automatisations custom illimités',
+      'Rapport hebdo personnalisé',
       'Révisions de templates incluses',
     ],
   },
@@ -41,11 +42,12 @@ const comparison = [
   { feature: 'Onboarding J0 / J3 / J7', casestudy: true, standard: true },
   { feature: 'Relances impayés automatiques', casestudy: true, standard: true },
   { feature: 'Rapport hebdo lundi 8h', casestudy: true, standard: true },
+  { feature: 'Automatisations custom', casestudy: true, standard: true },
   { feature: 'Portail client', casestudy: 'Lecture seule', standard: 'Édition complète' },
   { feature: 'Support email', casestudy: true, standard: true },
   { feature: 'Support prioritaire (24h)', casestudy: false, standard: true },
-  { feature: 'Configurations illimitées', casestudy: false, standard: true },
-  { feature: 'Rapport personnalisé', casestudy: false, standard: true },
+  { feature: 'Templates et automatisations illimités', casestudy: false, standard: true },
+  { feature: 'Rapport hebdo personnalisé', casestudy: false, standard: true },
   { feature: 'Révisions de templates', casestudy: false, standard: true },
   { feature: 'Témoignage vidéo requis', casestudy: true, standard: false },
 ];
@@ -60,7 +62,7 @@ const faqPricing = [
 
 <BaseLayout
   title="Tarifs — AEVUM"
-  description="Setup 1 500€ + 500€/mois (Case Study) ou Setup 3 000€ + 1 200€/mois (Standard). Automatisation email complète pour infopreneurs francophones."
+  description="Setup offert + 500€/mois (Case Study, 2 places/trimestre) ou Setup 3 000€ + 1 200€/mois (Standard). Automatisation email complète pour infopreneurs francophones."
   canonical="/pricing"
 >
 

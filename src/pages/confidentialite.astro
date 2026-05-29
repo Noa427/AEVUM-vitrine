@@ -14,16 +14,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <p><em>Dernière mise à jour : mai 2026</em></p>
 
     <h2>1. Responsable du traitement</h2>
-    <p>AEVUM, dont le responsable est joignable à noa.pardal1@gmail.com, est responsable du traitement des données personnelles collectées via le service.</p>
+    <p>Le responsable du traitement est <strong>Noa Pardal</strong>, agissant sous l'enseigne AEVUM (SIRET : [À COMPLÉTER]).<br/>
+    Contact : <a href="/contact" style="color:var(--primary)">formulaire de contact</a> — ou par email à l'adresse indiquée dans les <a href="/mentions-legales" style="color:var(--primary)">mentions légales</a>.</p>
 
     <h2>2. Données collectées</h2>
     <p>Nous collectons les données strictement nécessaires au fonctionnement du service : nom, adresse email, données de paiement (via Stripe), et données d'utilisation du service.</p>
 
-    <h2>3. Finalités du traitement</h2>
-    <p>Vos données sont utilisées pour la gestion de votre compte, le fonctionnement des automatisations email, l'amélioration de nos services et la communication relative à votre abonnement.</p>
+    <h2>3. Finalités et bases légales du traitement</h2>
+    <p>Vos données sont traitées aux fins suivantes, sur les bases légales du RGPD indiquées :</p>
+    <ul style="margin:0.5rem 0 0 1.25rem;color:var(--gray-light);display:flex;flex-direction:column;gap:0.375rem">
+      <li><strong>Gestion du compte et accès au service</strong> — exécution du contrat (Art. 6(1)(b) RGPD)</li>
+      <li><strong>Fonctionnement des automatisations email</strong> — exécution du contrat (Art. 6(1)(b) RGPD)</li>
+      <li><strong>Communication relative à l'abonnement</strong> (factures, alertes) — exécution du contrat (Art. 6(1)(b) RGPD)</li>
+      <li><strong>Amélioration du service et sécurité</strong> — intérêt légitime (Art. 6(1)(f) RGPD)</li>
+    </ul>
 
-    <h2>4. Hébergement et sécurité</h2>
-    <p>Vos données sont hébergées en France sur des serveurs certifiés. Elles sont chiffrées en transit (TLS) et au repos, avec des sauvegardes régulières.</p>
+    <h2>4. Hébergement, sous-traitants et transferts hors UE</h2>
+    <p>Le service AEVUM repose sur les prestataires suivants susceptibles de traiter vos données :</p>
+    <ul style="margin:0.5rem 0 0 1.25rem;color:var(--gray-light);display:flex;flex-direction:column;gap:0.375rem">
+      <li><strong>Vercel Inc.</strong> — infrastructure frontend — 340 Pine Street, Suite 200, San Francisco, CA 94104, USA — transfert hors UE encadré par des clauses contractuelles types (SCCs)</li>
+      <li><strong>Render Services Inc.</strong> — API backend — USA — transfert hors UE encadré par des SCCs</li>
+      <li><strong>Supabase Inc.</strong> — base de données — région EU-West — données hébergées en Europe</li>
+      <li><strong>Resend Inc.</strong> — envoi d'emails transactionnels — USA — transfert hors UE encadré par des SCCs</li>
+      <li><strong>Stripe Inc.</strong> — paiements — USA — transfert hors UE encadré par des SCCs</li>
+    </ul>
+    <p style="margin-top:0.5rem">Les données sont chiffrées en transit (TLS) et au repos.</p>
 
     <h2>5. Vos droits</h2>
     <p>Conformément au RGPD, vous disposez des droits d'accès, de rectification, d'effacement, de portabilité et d'opposition sur vos données. <a href="/contact" style="color:var(--primary)">Contactez-nous</a> pour exercer vos droits.</p>
@@ -33,6 +48,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     <h2>7. Cookies</h2>
     <p>AEVUM n'utilise pas de cookies publicitaires. Seuls des cookies techniques essentiels au fonctionnement du service sont utilisés.</p>
+
+    <!-- RECOMMANDÉ : §5 — préciser le délai de réponse de 30 jours (Art. 12 RGPD) -->
+    <!-- RECOMMANDÉ : §6 — détailler la conservation par type : données compte (durée abonnement + 30j), facturation (10 ans, obligation légale), logs (12 mois) -->
+    <!-- RECOMMANDÉ : §7 — nommer le cookie aevum_token (HttpOnly, Secure, 7 jours, authentification au portail client) -->
+
+    <h2>8. Droit de plainte auprès de la CNIL</h2>
+    <p>Vous avez le droit d'introduire une réclamation auprès de la <strong>Commission Nationale de l'Informatique et des Libertés (CNIL)</strong> si vous estimez que le traitement de vos données n'est pas conforme au RGPD.<br/>
+    Site : <a href="https://www.cnil.fr" style="color:var(--primary)" target="_blank" rel="noopener noreferrer">www.cnil.fr</a> — Service des plaintes : 3 Place de Fontenoy, TSA 80715, 75334 Paris Cedex 07.</p>
+
+    <h2>9. Rôle de sous-traitant</h2>
+    <p>Dans le cadre de son service, AEVUM traite des données relatives aux élèves (acheteurs de formations) de ses clients infopreneurs. Pour ces traitements, AEVUM agit en qualité de <strong>sous-traitant</strong> au sens de l'article 28 du RGPD : le client infopreneur reste responsable du traitement de ces données vis-à-vis de ses propres élèves. Un accord de traitement de données (DPA) peut être fourni sur demande via le <a href="/contact" style="color:var(--primary)">formulaire de contact</a>.</p>
 
     <p style="margin-top:3rem"><a href="/" style="color:var(--primary)">← Retour à l'accueil</a></p>
   </div>

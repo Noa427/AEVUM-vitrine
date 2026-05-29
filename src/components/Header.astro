@@ -31,6 +31,15 @@ const navLinks = [
         Prendre contact
       </a>
 
+      <button id="theme-toggle" class="theme-toggle" aria-label="Passer en mode clair">
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+
       <button class="nav__toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="nav-menu">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <line x1="3" y1="6" x2="21" y2="6"/>
@@ -65,8 +74,28 @@ const navLinks = [
       mobile.setAttribute('aria-hidden', String(isOpen));
     });
   }
+  function initThemeToggle() {
+    const btn = document.getElementById('theme-toggle') as HTMLButtonElement | null;
+    if (!btn || btn.dataset.initialized) return;
+    btn.dataset.initialized = 'true';
+    function update(theme: string) {
+      const sun = btn!.querySelector('.icon-sun') as HTMLElement | null;
+      const moon = btn!.querySelector('.icon-moon') as HTMLElement | null;
+      if (sun) sun.style.display = theme === 'dark' ? 'block' : 'none';
+      if (moon) moon.style.display = theme === 'light' ? 'block' : 'none';
+      btn!.setAttribute('aria-label', theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre');
+    }
+    update(document.documentElement.getAttribute('data-theme') || 'dark');
+    btn.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('aevum_theme', next);
+      update(next);
+    });
+  }
   initMenu();
-  document.addEventListener('astro:after-swap', initMenu);
+  initThemeToggle();
+  document.addEventListener('astro:after-swap', () => { initMenu(); initThemeToggle(); });
 </script>
 
 <style>
@@ -88,12 +117,13 @@ const navLinks = [
     height: 60px;
     padding: 0 8px 0 20px;
     gap: 12px;
-    background: rgba(15,15,15,0.82);
+    background: var(--nav-glass);
     backdrop-filter: blur(20px) saturate(160%);
     -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid rgba(255,255,255,0.10);
+    border: 1px solid var(--nav-glass-border);
     border-radius: 999px;
-    box-shadow: 0 8px 24px -8px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.04) inset;
+    box-shadow: var(--nav-glass-shadow);
+    transition: background .3s, border-color .3s, box-shadow .3s;
   }
 
   /* Brand */
@@ -105,14 +135,15 @@ const navLinks = [
     font-size: 17px;
     font-weight: 600;
     letter-spacing: -0.02em;
-    color: #fafafa;
+    color: var(--nav-text);
     text-decoration: none;
     flex-shrink: 0;
+    transition: color .3s;
   }
 
   .brand__dot {
     width: 7px; height: 7px; border-radius: 50%;
-    background: #ffffff;
+    background: currentColor;
     display: inline-block;
     transform: translateY(-1px);
     box-shadow: 0 0 12px rgba(140,170,255,0.7), 0 0 24px rgba(180,140,255,0.4);
@@ -132,14 +163,14 @@ const navLinks = [
     font-size: 14px;
     font-weight: 500;
     letter-spacing: -0.005em;
-    color: rgba(255,255,255,0.55);
+    color: var(--nav-text-muted);
     padding: 7px 13px;
     border-radius: 999px;
     transition: color .2s, background .2s;
     text-decoration: none;
   }
-  .nav__link:hover { color: #ffffff; background: rgba(255,255,255,0.07); }
-  .nav__link--active { color: #ffffff; background: rgba(255,255,255,0.08); }
+  .nav__link:hover { color: var(--nav-text-hover); background: var(--nav-item-hover); }
+  .nav__link--active { color: var(--nav-text-hover); background: var(--nav-item-active); }
 
   /* CTA */
   .nav__cta {
@@ -149,6 +180,23 @@ const navLinks = [
     flex-shrink: 0;
   }
 
+  /* Theme toggle */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    background: transparent;
+    border: 1px solid var(--nav-ctrl-border);
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--nav-ctrl-color);
+    transition: background .2s, color .2s, border-color .2s;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover { background: var(--nav-ctrl-hover); color: var(--nav-text-hover); }
+  @media (max-width: 860px) { .theme-toggle { display: none; } }
+
   /* Hamburger */
   .nav__toggle {
     display: flex;
@@ -156,13 +204,13 @@ const navLinks = [
     justify-content: center;
     width: 38px; height: 38px;
     border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.12);
+    border: 1px solid var(--nav-ctrl-border);
     background: transparent;
-    color: rgba(255,255,255,0.6);
-    transition: background .2s, color .2s;
+    color: var(--nav-ctrl-color);
+    transition: background .2s, color .2s, border-color .2s;
     flex-shrink: 0;
   }
-  .nav__toggle:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .nav__toggle:hover { background: var(--nav-ctrl-hover); color: var(--nav-text-hover); }
   @media (min-width: 860px) { .nav__toggle { display: none; } }
 
   /* Mobile menu */
@@ -171,20 +219,46 @@ const navLinks = [
     flex-direction: column;
     gap: 4px;
     padding: 16px clamp(20px,4vw,56px);
-    background: rgba(10,10,10,0.96);
+    background: var(--nav-mobile-bg);
     backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid var(--nav-mobile-border);
     margin-top: 8px;
+    transition: background .3s;
   }
   .nav__mobile.is-open { display: flex; }
 
   .nav__mobile-link {
     font-size: 15px;
     font-weight: 500;
-    color: rgba(255,255,255,0.55);
+    color: var(--nav-text-muted);
     padding: 12px 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--nav-mobile-sep);
     transition: color .2s;
   }
-  .nav__mobile-link:hover, .nav__mobile-link.is-active { color: #ffffff; }
+  .nav__mobile-link:hover, .nav__mobile-link.is-active { color: var(--nav-text-hover); }
+
+  /* ── Light mode — overrides directs (spécificité > scoped dark) ── */
+  :global(html[data-theme="light"]) .nav__inner {
+    background: rgba(252,252,250,0.92);
+    border-color: rgba(0,0,0,0.10);
+    box-shadow: 0 8px 24px -8px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.9) inset;
+  }
+  :global(html[data-theme="light"]) .brand { color: #0a0a0f; }
+  :global(html[data-theme="light"]) .nav__link { color: rgba(0,0,0,0.50); }
+  :global(html[data-theme="light"]) .nav__link:hover { color: #0a0a0f; background: rgba(0,0,0,0.06); }
+  :global(html[data-theme="light"]) .nav__link--active { color: #0a0a0f; background: rgba(0,0,0,0.08); }
+  :global(html[data-theme="light"]) .nav__toggle,
+  :global(html[data-theme="light"]) .theme-toggle {
+    border-color: rgba(0,0,0,0.15);
+    color: rgba(0,0,0,0.55);
+  }
+  :global(html[data-theme="light"]) .nav__toggle:hover,
+  :global(html[data-theme="light"]) .theme-toggle:hover { background: rgba(0,0,0,0.06); color: #0a0a0f; }
+  :global(html[data-theme="light"]) .nav__mobile {
+    background: rgba(245,245,242,0.98);
+    border-top-color: rgba(0,0,0,0.08);
+  }
+  :global(html[data-theme="light"]) .nav__mobile-link { color: rgba(0,0,0,0.50); border-bottom-color: rgba(0,0,0,0.06); }
+  :global(html[data-theme="light"]) .nav__mobile-link:hover,
+  :global(html[data-theme="light"]) .nav__mobile-link.is-active { color: #0a0a0f; }
 </style>

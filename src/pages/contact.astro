@@ -21,15 +21,6 @@ const formUrl = import.meta.env.PUBLIC_CONTACT_FORM_URL ?? '';
         <div class="contact-details">
           <div class="contact-detail-item">
             <div class="icon-box" style="width:44px;height:44px;margin-bottom:0">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            </div>
-            <div>
-              <strong>Email</strong>
-              <p>noa.pardal1@gmail.com</p>
-            </div>
-          </div>
-          <div class="contact-detail-item">
-            <div class="icon-box" style="width:44px;height:44px;margin-bottom:0">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             </div>
             <div>
@@ -74,7 +65,7 @@ const formUrl = import.meta.env.PUBLIC_CONTACT_FORM_URL ?? '';
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <div>
             <strong>Erreur d'envoi</strong>
-            <p style="margin-top:0.25rem;font-weight:400;font-size:0.875rem">Réessayez ou écrivez directement à noa.pardal1@gmail.com.</p>
+            <p style="margin-top:0.25rem;font-weight:400;font-size:0.875rem">Veuillez réessayer dans quelques instants.</p>
           </div>
         </div>
       </div>
@@ -110,8 +101,8 @@ const formUrl = import.meta.env.PUBLIC_CONTACT_FORM_URL ?? '';
       }
 
       if (!formUrl) {
-        // Fallback si PUBLIC_CONTACT_FORM_URL non configuré
-        window.location.href = `mailto:noa.pardal1@gmail.com?subject=${encodeURIComponent('Contact AEVUM — ' + data.nom)}&body=${encodeURIComponent('De : ' + data.nom + ' <' + data.email + '>\n\n' + data.message)}`;
+        if (errorMsg) errorMsg.style.display = 'flex';
+        if (submitBtn) submitBtn.removeAttribute('disabled');
         return;
       }
 
