@@ -32,7 +32,11 @@ if (Astro.request.method === 'POST') {
     const newPassword = form.get('newPassword') as string;
     const confirmNewPassword = form.get('confirmNewPassword') as string;
 
-    if (newPassword !== confirmNewPassword) {
+    if (!currentPassword) {
+      passwordError = 'Mot de passe actuel requis.';
+    } else if (!newPassword || newPassword.length < 8) {
+      passwordError = 'Le nouveau mot de passe doit contenir au moins 8 caractères.';
+    } else if (newPassword !== confirmNewPassword) {
       passwordError = 'Les nouveaux mots de passe ne correspondent pas.';
     } else {
       try {
@@ -59,9 +63,16 @@ if (Astro.request.method === 'POST') {
 
   if (action === 'email') {
     const currentPassword = form.get('currentPassword') as string;
-    const newEmail = form.get('newEmail') as string;
+    const newEmail = (form.get('newEmail') as string ?? '').trim();
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    try {
+    if (!currentPassword) {
+      emailError = 'Mot de passe requis pour modifier l\'email.';
+    } else if (!newEmail || !EMAIL_RE.test(newEmail)) {
+      emailError = 'Format email invalide.';
+    }
+
+    if (!emailError) try {
       const res = await fetch(`${import.meta.env.AEVUM_URL}/client/settings/email`, {
         method: 'POST',
         headers: {
