@@ -2342,6 +2342,43 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
     });
   }
 
+  function initCategoryTabs() {
+    const catNav = document.querySelector<HTMLElement>('.cat-tab-nav');
+    if (!catNav || catNav.dataset.catInit) return;
+    catNav.dataset.catInit = 'true';
+
+    function activateCat(cat: string) {
+      catNav.querySelectorAll<HTMLElement>('.cat-tab').forEach((t) => {
+        t.classList.toggle('active', t.dataset.cat === cat);
+      });
+      document.querySelectorAll<HTMLElement>('.cat-panel').forEach((p) => {
+        p.style.display = p.dataset.catPanel === cat ? '' : 'none';
+      });
+      // Reset sub-tabs to first when switching categories
+      const activePanel = document.querySelector<HTMLElement>(`.cat-panel[data-cat-panel="${cat}"]`);
+      if (!activePanel) return;
+      const subNav = activePanel.querySelector<HTMLElement>('.config-tab-nav');
+      if (subNav) {
+        const firstTab = subNav.querySelector<HTMLButtonElement>('.config-tab');
+        if (firstTab?.dataset.target) {
+          subNav.querySelectorAll<HTMLElement>('.config-tab').forEach((t) => {
+            t.classList.toggle('active', t === firstTab);
+          });
+          const wrap = activePanel.querySelector<HTMLElement>('.config-panel-wrap');
+          wrap?.querySelectorAll<HTMLElement>('.config-panel').forEach((p) => {
+            p.style.display = p.id === firstTab.dataset.target ? '' : 'none';
+          });
+        }
+      }
+    }
+
+    catNav.querySelectorAll<HTMLButtonElement>('.cat-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        if (tab.dataset.cat) activateCat(tab.dataset.cat);
+      });
+    });
+  }
+
   function initCustomEditor() {
     document.querySelectorAll<HTMLElement>('.auto-item').forEach((item) => {
       const subjectInput = item.querySelector<HTMLInputElement>('.auto-subject-input');
@@ -2518,6 +2555,7 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
   initEditor();
   initAutomations();
   initConfigTabs();
+  initCategoryTabs();
   initCustomEditor();
   initTestimonialTabs();
   initTestimonialUrlForm();
@@ -2526,6 +2564,7 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
     initEditor();
     initAutomations();
     initConfigTabs();
+    initCategoryTabs();
     initCustomEditor();
     initTestimonialTabs();
     initTestimonialUrlForm();
