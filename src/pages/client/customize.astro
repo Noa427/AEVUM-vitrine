@@ -303,36 +303,46 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
       </form>
     </div>
 
-    <!-- Onglets email templates -->
-    <div class="config-tab-nav" role="tablist">
-      {EMAIL_CONFIGS.map(({ key, tabLabel }) => (
-        <button class={`config-tab${key === initialTab ? ' active' : ''}`}
-                data-target={`panel-${key}`}
-                id={`tab-${key}`}
-                role="tab"
-                type="button">
-          {PARSED_CONFIGS[key].label ?? tabLabel}
-        </button>
-      ))}
+    <!-- ── Onglets niveau 1 (catégories) ── -->
+    <div class="cat-tab-nav tabs-level1" role="tablist">
+      <button class={`cat-tab${initialCat === 'onboarding'   ? ' active' : ''}`} data-cat="onboarding"   type="button">Onboarding</button>
+      <button class={`cat-tab${initialCat === 'impayes'      ? ' active' : ''}`} data-cat="impayes"      type="button">Impayés</button>
+      <button class={`cat-tab${initialCat === 'fidelisation' ? ' active' : ''}`} data-cat="fidelisation" type="button">Fidélisation</button>
+      <button class={`cat-tab${initialCat === 'recuperation' ? ' active' : ''}`} data-cat="recuperation" type="button">Récupération</button>
+      <button class={`cat-tab${initialCat === 'temoignages'  ? ' active' : ''}`} data-cat="temoignages"  type="button">Témoignages</button>
+      <button class={`cat-tab${initialCat === 'automations'  ? ' active' : ''}`} data-cat="automations"  type="button">Automatisations</button>
     </div>
-    <p class="tab-rename-error" style="display:none"></p>
 
-    <div class="card config-panel-wrap">
-      {EMAIL_CONFIGS.map(({ key, label }) => {
-        const isSuccess = successType === key;
-        const isError   = errorType === key;
-        const hints     = VARIABLE_HINTS[key];
-        const isActive  = key === initialTab;
-        const parsed    = PARSED_CONFIGS[key];
-        return (
-          <div class="cust-card config-panel" id={`panel-${key}`} data-config={key}
-               data-subject={parsed.subject} data-body={parsed.body}
-               data-label={parsed.label ?? ''} data-panel-active={parsed.active ? 'true' : 'false'}
-               data-whatsapp-active={parsed.whatsapp_active ? 'true' : 'false'}
-               data-sms-active={parsed.sms_active ? 'true' : 'false'}
-               data-sms-body={parsed.sms_body ?? ''}
-               style={!isActive ? "display:none" : ""}>
-            <div class="panel-header">
+    <!-- ── Catégorie : Onboarding ── -->
+    <div class="cat-panel" data-cat-panel="onboarding" style={initialCat !== 'onboarding' ? 'display:none' : ''}>
+      <div class="config-tab-nav" role="tablist">
+        {ONBOARDING_CONFIGS.map(({ key, tabLabel }) => (
+          <button class={`config-tab${isPanelActive(key, 'onboarding') ? ' active' : ''}`}
+                  data-target={`panel-${key}`}
+                  id={`tab-${key}`}
+                  role="tab"
+                  type="button">
+            {PARSED_CONFIGS[key].label ?? tabLabel}
+          </button>
+        ))}
+      </div>
+      <p class="tab-rename-error" style="display:none"></p>
+      <div class="card config-panel-wrap">
+        {ONBOARDING_CONFIGS.map(({ key, label }) => {
+          const isSuccess = successType === key;
+          const isError   = errorType === key;
+          const hints     = VARIABLE_HINTS[key];
+          const isActive  = isPanelActive(key, 'onboarding');
+          const parsed    = PARSED_CONFIGS[key];
+          return (
+            <div class="cust-card config-panel" id={`panel-${key}`} data-config={key}
+                 data-subject={parsed.subject} data-body={parsed.body}
+                 data-label={parsed.label ?? ''} data-panel-active={parsed.active ? 'true' : 'false'}
+                 data-whatsapp-active={parsed.whatsapp_active ? 'true' : 'false'}
+                 data-sms-active={parsed.sms_active ? 'true' : 'false'}
+                 data-sms-body={parsed.sms_body ?? ''}
+                 style={!isActive ? "display:none" : ""}>
+              <div class="panel-header">
               <div class="panel-title-group">
                 <h2 class="cust-card-title section-title" style="margin-bottom:0">{parsed.label ?? label}</h2>
                 <button type="button" class="btn-section-rename" title="Renommer cette section">✏️</button>
@@ -461,16 +471,191 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
               </div>
             </div>
           </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
 
-    <!-- F14 — Pré-dunning -->
-    <div class="section-divider"><span>Pré-dunning (CB expirant bientôt)</span></div>
+    <!-- ── Catégorie : Impayés ── -->
+    <div class="cat-panel" data-cat-panel="impayes" style={initialCat !== 'impayes' ? 'display:none' : ''}>
+      <div class="config-tab-nav" role="tablist">
+        {IMPAYES_CONFIGS.map(({ key, tabLabel }) => (
+          <button class={`config-tab${isPanelActive(key, 'impayes') ? ' active' : ''}`}
+                  data-target={`panel-${key}`}
+                  id={`tab-${key}`}
+                  role="tab"
+                  type="button">
+            {PARSED_CONFIGS[key].label ?? tabLabel}
+          </button>
+        ))}
+      </div>
+      <p class="tab-rename-error" style="display:none"></p>
+      <div class="card config-panel-wrap">
+        {IMPAYES_CONFIGS.map(({ key, label }) => {
+          const isSuccess = successType === key;
+          const isError   = errorType === key;
+          const hints     = VARIABLE_HINTS[key];
+          const isActive  = isPanelActive(key, 'impayes');
+          const parsed    = PARSED_CONFIGS[key];
+          return (
+            <div class="cust-card config-panel" id={`panel-${key}`} data-config={key}
+                 data-subject={parsed.subject} data-body={parsed.body}
+                 data-label={parsed.label ?? ''} data-panel-active={parsed.active ? 'true' : 'false'}
+                 data-whatsapp-active={parsed.whatsapp_active ? 'true' : 'false'}
+                 data-sms-active={parsed.sms_active ? 'true' : 'false'}
+                 data-sms-body={parsed.sms_body ?? ''}
+                 style={!isActive ? "display:none" : ""}>
+              <div class="panel-header">
+              <div class="panel-title-group">
+                <h2 class="cust-card-title section-title" style="margin-bottom:0">{parsed.label ?? label}</h2>
+                <button type="button" class="btn-section-rename" title="Renommer cette section">✏️</button>
+              </div>
+              <div class="panel-right-actions">
+                <label class="toggle-switch" title="Activer/désactiver cet email">
+                  <input type="checkbox" class="toggle-input" checked={parsed.active} />
+                  <span class="toggle-track"></span>
+                  <span class="toggle-label">{parsed.active ? 'Actif' : 'Inactif'}</span>
+                </label>
+                {whatsappConnected && (
+                  <label class="toggle-switch toggle-wa" title="Envoyer aussi par WhatsApp">
+                    <input type="checkbox" class="toggle-wa-input" checked={parsed.whatsapp_active} />
+                    <span class="toggle-track"></span>
+                    <span class="toggle-label-wa">WhatsApp</span>
+                  </label>
+                )}
+                <label class="toggle-switch toggle-sms" title="Envoyer aussi par SMS">
+                  <input type="checkbox" class="toggle-sms-input" checked={parsed.sms_active} />
+                  <span class="toggle-track"></span>
+                  <span class="toggle-label-sms">SMS</span>
+                </label>
+                <form method="POST" class="reset-form">
+                  <input type="hidden" name="config_type" value={key} />
+                  <input type="hidden" name="value" value="" />
+                  <button type="submit" class="btn-reset-tpl" title="Supprimer la personnalisation">
+                    Supprimer la personnalisation
+                  </button>
+                </form>
+              </div>
+            </div>
+            {DEFAULT_TEMPLATES[key] && (
+              <div class="default-tpl-wrap">
+                <button type="button" class="btn-default-toggle" data-key={key}>
+                  Voir le template par défaut ▾
+                </button>
+                <div class="default-tpl-preview hidden" data-preview={key}>
+                  <div class="default-tpl-row">
+                    <span class="default-tpl-label">Sujet :</span>
+                    <code class="default-tpl-value">{DEFAULT_TEMPLATES[key].subject}</code>
+                  </div>
+                  <div class="default-tpl-row" style="flex-direction:column;align-items:flex-start;gap:0.25rem">
+                    <span class="default-tpl-label">Corps :</span>
+                    <pre class="default-tpl-body">{DEFAULT_TEMPLATES[key].body}</pre>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-use-default"
+                          data-subject={DEFAULT_TEMPLATES[key].subject}
+                          data-body={JSON.stringify(DEFAULT_TEMPLATES[key].body)}>
+                    Utiliser ce template
+                  </button>
+                </div>
+              </div>
+            )}
+            {isSuccess && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+            {isError   && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+            <div class="editor-tabs-row">
+              <div class="editor-tabs">
+                <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+                <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+              </div>
+              <button type="button" class="btn btn-secondary btn-library" data-config-type={key}>📚 Bibliothèque</button>
+            </div>
+            <div class="tab-panel" data-panel="manual">
+              <form method="POST" class="cust-form">
+                <input type="hidden" name="config_type" value={key} />
+                <input type="hidden" name="value" class="hidden-value"
+                       value={JSON.stringify(parsed)} />
+                <label class="form-label">Sujet</label>
+                <input type="text" class="form-input subject-input"
+                       placeholder="Sujet de l'email..." />
+                <label class="form-label" style="margin-top:0.25rem">Corps</label>
+                <textarea class="form-input cust-textarea body-input" rows={7}
+                          placeholder="Contenu de l'email..."></textarea>
+                {hints && (
+                  <div class="cust-hints">
+                    <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+                    <div class="cust-hints-list">
+                      {hints.map((v) => (
+                        <code class="cust-hint" data-var={v}>{v}</code>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div class="sms-editor" style="display:none">
+                  <label class="form-label" style="margin-top:0.75rem">Corps du SMS</label>
+                  <textarea class="form-input sms-body-input" rows={3} maxlength={160} disabled
+                            placeholder="Ex : Bonjour {{nom}}, votre accès est disponible. Lien : {{lien_acces}}"></textarea>
+                  <div class="sms-counter"><span class="sms-char-count">0</span>/160</div>
+                  <p class="sms-note">160 caractères max. Les variables sont remplacées par les vraies données.</p>
+                </div>
+                <div class="manual-actions">
+                  <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+                  <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+                </div>
+                <p class="ai-error improve-error"></p>
+              </form>
+              <div class="test-send-wrap">
+                <button type="button" class="btn btn-secondary btn-test-send"
+                        data-config-type={key}
+                        data-email={auth.email}>
+                  📧 M'envoyer un aperçu
+                </button>
+                <span class="test-send-feedback" aria-live="polite"></span>
+              </div>
+            </div>
+            <div class="tab-panel hidden" data-panel="generate">
+              <input type="text" class="form-input gen-formation"
+                     placeholder="Nom de votre formation (ex: Maîtriser Instagram)" />
+              <select class="form-input gen-tone">
+                <option value="chaleureux">Chaleureux et bienveillant</option>
+                <option value="professionnel">Professionnel et direct</option>
+                <option value="motivant">Motivant et dynamique</option>
+              </select>
+              <input type="text" class="form-input gen-objective"
+                     placeholder="Objectif de cet email (ex: rassurer, engager, fidéliser)" />
+              <button class="btn btn-primary btn-generate"
+                      style="align-self:flex-start">✨ Générer l'email</button>
+              <p class="ai-error gen-error"></p>
+              <div class="generation-result hidden">
+                <input type="text" class="form-input subject-preview"
+                       readonly placeholder="Sujet généré" />
+                <textarea class="form-input body-preview" rows={6}
+                          readonly placeholder="Contenu généré"></textarea>
+                <button class="btn btn-secondary btn-use-result"
+                        style="align-self:flex-start">Utiliser ce contenu →</button>
+              </div>
+            </div>
+          </div>
+          );
+        })}
+      </div>
+    </div>
+
+    <!-- ── Catégorie : Fidélisation ── -->
+    <div class="cat-panel" data-cat-panel="fidelisation" style={initialCat !== 'fidelisation' ? 'display:none' : ''}>
+      <div class="config-tab-nav" role="tablist">
+        <button class={`config-tab${isPanelActive('template_predunning', 'fidelisation') ? ' active' : ''}`}
+                data-target="panel-template_predunning" type="button">Pré-dunning</button>
+        <button class={`config-tab${isPanelActive('template_churn_reengagement', 'fidelisation') ? ' active' : ''}`}
+                data-target="panel-template_churn_reengagement" type="button">Re-engagement</button>
+        <button class={`config-tab${isPanelActive('template_coaching_j14', 'fidelisation') ? ' active' : ''}`}
+                data-target="panel-template_coaching_j14" type="button">Coaching</button>
+      </div>
+      <p class="tab-rename-error" style="display:none"></p>
+      <div class="card config-panel-wrap">
 
     <div class="cust-card config-panel"
          id="panel-template_predunning"
          data-config="template_predunning"
+         style={!isPanelActive('template_predunning','fidelisation') ? 'display:none' : ''}
          data-subject={predunningConfig.subject}
          data-body={predunningConfig.body}
          data-panel-active={predunningConfig.active ? 'true' : 'false'}
@@ -573,12 +758,10 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
       </div>
     </div>
 
-    <!-- F15 — Re-engagement churn -->
-    <div class="section-divider"><span>Re-engagement (élèves inactifs)</span></div>
-
     <div class="cust-card config-panel"
          id="panel-template_churn_reengagement"
          data-config="template_churn_reengagement"
+         style={!isPanelActive('template_churn_reengagement','fidelisation') ? 'display:none' : ''}
          data-subject={churnConfig.subject}
          data-body={churnConfig.body}
          data-panel-active={churnConfig.active ? 'true' : 'false'}
@@ -681,12 +864,10 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
       </div>
     </div>
 
-    <!-- F19 — Coaching élèves inactifs -->
-    <div class="section-divider"><span>Coaching élèves inactifs</span></div>
-
     <div class="cust-card config-panel"
          id="panel-template_coaching_j14"
          data-config="template_coaching_j14"
+         style={!isPanelActive('template_coaching_j14','fidelisation') ? 'display:none' : ''}
          data-subject={coachingConfig.subject}
          data-body={coachingConfig.body}
          data-panel-active={coachingConfig.active ? 'true' : 'false'}
@@ -788,9 +969,12 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
         </div>
       </div>
     </div>
+      </div>
+    </div>
 
-    <!-- F11 — Checkout abandon -->
-    <div class="section-divider"><span>Récupération paniers abandonnés</span></div>
+    <!-- ── Catégorie : Récupération ── -->
+    <div class="cat-panel" data-cat-panel="recuperation" style={initialCat !== 'recuperation' ? 'display:none' : ''}>
+      <div class="card config-panel-wrap" style="border-radius:var(--r-lg)">
 
     <div class="cust-card config-panel checkout-abandon-card"
          id="panel-template_checkout_abandon"
@@ -895,9 +1079,11 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
         </div>
       </div>
     </div>
+      </div>
+    </div>
 
-    <!-- F12 — Témoignages -->
-    <div class="section-divider"><span>Demandes de témoignage</span></div>
+    <!-- ── Catégorie : Témoignages ── -->
+    <div class="cat-panel" data-cat-panel="temoignages" style={initialCat !== 'temoignages' ? 'display:none' : ''}>
 
     <!-- URL du formulaire -->
     <div class="card testimonial-url-card">
@@ -919,10 +1105,12 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
     </div>
 
     <!-- Tabs J+30 / J+60 -->
-    <div class="testimonial-tabs-header">
+    <div class="testimonial-tabs-header" style="margin-top:1rem">
       <button class="testi-tab active" data-testi-tab="j30" type="button">À J+30</button>
       <button class="testi-tab" data-testi-tab="j60" type="button">À J+60</button>
     </div>
+
+    <div class="card config-panel-wrap">
 
     <!-- Panel J+30 -->
     <div class="cust-card config-panel"
@@ -1122,8 +1310,11 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
         </div>
       </div>
     </div>
+    </div>
+    </div>
 
-    <div class="section-divider"></div>
+    <!-- ── Catégorie : Automatisations ── -->
+    <div class="cat-panel" data-cat-panel="automations" style={initialCat !== 'automations' ? 'display:none' : ''}>
 
     <div class="auto-section">
       <div class="auto-section-header">
@@ -1282,6 +1473,7 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
           })}
         </div>
       )}
+    </div>
     </div>
 
   </div>
