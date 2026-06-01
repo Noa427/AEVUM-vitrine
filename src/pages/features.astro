@@ -1,55 +1,65 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-const pillars = [
+const categories = [
   {
     id: 'onboarding',
-    title: 'Onboarding automatique',
+    title: 'Automatisation & onboarding',
     icon: '<path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>',
     features: [
-      { name: 'Email J0 — Bienvenue & accès', desc: "Envoyé dès la confirmation du paiement Stripe. Contient vos identifiants d'accès, un mot de bienvenue et les premières étapes." },
-      { name: 'Email J3 — Premier check-in', desc: "Trois jours après l'inscription, un email de suivi pour s'assurer que l'élève a bien démarré et lui proposer une ressource." },
-      { name: 'Email J7 — Bilan première semaine', desc: "Sept jours après l'inscription, un email de suivi sur la progression de l'élève. Template par défaut inclus, entièrement personnalisable depuis votre portail." },
-      { name: 'Séquence personnalisable', desc: "Les templates J0, J3 et J7 sont entièrement éditables depuis votre portail client sans passer par nous." },
-      { name: 'Sender name configurable', desc: "Chaque email part avec votre nom et votre adresse d'expédition. L'élève ne voit jamais AEVUM." },
-      { name: 'Déclenchement instantané', desc: "La séquence démarre dans les secondes qui suivent la confirmation Stripe. De nuit comme de jour." },
+      { name: 'Email J0 — Bienvenue & accès', desc: "Envoyé dès la confirmation Stripe. Contient vos identifiants d'accès et un mot de bienvenue." },
+      { name: 'Email J3 — Premier check-in', desc: "Check-in automatique à J+3 pour s'assurer que l'élève a bien démarré et lui proposer une ressource." },
+      { name: 'Email J7 — Bilan première semaine', desc: "Suivi de progression à J+7, entièrement personnalisable depuis votre portail." },
+      { name: 'Envoi de test', desc: "Prévisualisez n'importe quel template en vous l'envoyant à vous-même avant tout envoi réel." },
+      { name: 'Envoi manuel', desc: "Déclenchez un email spécifique à un élève depuis le portail, quand vous le décidez." },
+      { name: 'Mode pause global', desc: "Stoppez toutes les campagnes en un clic — utile pendant une fermeture ou une refonte." },
     ],
   },
   {
     id: 'impayes',
-    title: 'Récupération impayés',
+    title: 'Récupération & impayés',
     icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
     features: [
-      { name: 'Relance J+1 — Rappel doux', desc: "Un email cordial 24h après l'échec de paiement. Ton empathique, lien de paiement direct, pas de pression." },
-      { name: 'Relance J+3 — Ton plus direct', desc: "Si aucun paiement à J+3, un second email plus direct avec un sentiment d'urgence modéré." },
-      { name: 'Relance J+7 — Avertissement', desc: "Dernier avertissement avant suspension. L'élève est informé clairement des conséquences." },
-      { name: 'Suspension automatique', desc: "Sans réponse à J+7, un email de suspension est envoyé. La reprise est automatique dès le prochain paiement réussi." },
-      { name: 'Reprise automatique', desc: "Dès qu'un paiement réussi est détecté, l'accès est rétabli et un email de confirmation part automatiquement." },
-      { name: 'Blacklist après N échecs', desc: "Après un nombre d'échecs configuré, le contact est blacklisté pour éviter les relances inutiles." },
+      { name: 'Relance J+1 — Rappel doux', desc: "Ton empathique, lien de paiement direct. Envoyé 24h après l'échec de paiement." },
+      { name: 'Relance J+3 — Ton direct', desc: "Si aucun paiement à J+3, email plus direct avec sentiment d'urgence modéré." },
+      { name: 'Relance J+7 — Avertissement final', desc: "Dernier email avant suspension. L'élève est informé clairement des conséquences." },
+      { name: 'Suspension et reprise automatiques', desc: "Sans réponse à J+7, accès suspendu. Rétabli automatiquement dès le prochain paiement réussi." },
+      { name: 'Pré-dunning CB expirant (Premium)', desc: "AEVUM détecte les cartes bancaires de vos élèves qui expirent dans 14 jours et envoie automatiquement un email préventif avant que le paiement échoue." },
     ],
   },
   {
-    id: 'rapport',
-    title: 'Rapport hebdomadaire',
+    id: 'client',
+    title: 'Connaissance client',
     icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>',
     features: [
-      { name: 'Envoi automatique lundi à 8h', desc: "Sans action de votre part, un rapport complet atterrit dans votre boîte chaque début de semaine." },
-      { name: 'Nouveaux élèves de la semaine', desc: "Liste des inscriptions confirmées via Stripe : nom, email, date, montant." },
-      { name: 'Impayés en cours', desc: "Tableau des paiements échoués non résolus avec le statut de la relance (J+1, J+3, J+7, suspendu)." },
-      { name: 'Emails envoyés & statuts', desc: "Nombre total d'emails expédiés dans la semaine par type (onboarding, relance, rapport)." },
-      { name: 'Volume mensuel en temps réel', desc: "Nombre d'emails envoyés ce mois par type : onboarding, relances impayés, automatisations custom." },
-      { name: "Journal d'activité", desc: "Consultez l'historique complet de vos envois depuis votre portail : date, type, et détail de l'action." },
+      { name: 'Dashboard stats ROI', desc: "Montant récupéré, taux de recouvrement, taux d'ouverture, taux de clic — en temps réel." },
+      { name: 'Tracking ouvertures & clics', desc: "Pixel de suivi et redirections traçées pour mesurer l'engagement réel de vos élèves." },
+      { name: 'Page élèves complète', desc: "Liste de tous vos élèves avec filtres par statut, historique individuel et badges ouvert/cliqué." },
+      { name: 'Multi-formations', desc: "Gérez plusieurs formations depuis un seul compte — chaque formation a ses propres séquences et élèves." },
+      { name: 'Blacklist emails', desc: "Bloquez définitivement un email de toute communication AEVUM en un clic." },
     ],
   },
   {
-    id: 'custom',
-    title: 'Automatisations custom',
+    id: 'fidelisation',
+    title: 'Fidélisation & réputation',
     icon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
     features: [
-      { name: 'Création de séquences', desc: "Créez vos propres séquences d'emails déclenchées par vos événements Stripe : upsell post-achat, relance engagement, cross-sell." },
-      { name: 'Activation / désactivation', desc: "Activez ou désactivez chaque automatisation en un clic depuis votre portail. Aucune intervention technique requise." },
-      { name: 'Templates éditables', desc: "Chaque automatisation a son propre sujet et corps d'email, personnalisables avec vos variables ({{nom}}, {{prenom}}, {{nom_formation}}…)." },
-      { name: 'Expéditeur configurable', desc: "Vos automatisations partent avec votre sender name. L'élève voit votre nom, pas le nôtre." },
+      { name: 'Détection churn + re-engagement (Premium)', desc: "Repère automatiquement les élèves silencieux depuis 21 jours et déclenche une relance personnalisée." },
+      { name: 'Coaching élèves inactifs (Premium)', desc: "Si aucune ouverture depuis 14 jours, AEVUM envoie une relance pédagogique pour ramener l'élève dans la formation." },
+      { name: 'Demandes de témoignage automatiques', desc: "Email à J+30 et J+60 avec lien vers votre formulaire personnalisé — vos avis arrivent sans que vous les demandiez." },
+      { name: 'Guide deliverability intégré', desc: "Guide pas-à-pas SPF/DKIM/DMARC directement dans votre portail pour maximiser la délivrabilité de vos emails." },
+    ],
+  },
+  {
+    id: 'multicanal',
+    title: 'Multi-canal & IA avancée',
+    icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
+    features: [
+      { name: 'WhatsApp Business (Premium)', desc: "Envoyez chaque template en parallèle par WhatsApp via votre propre compte Business." },
+      { name: 'SMS multi-canal (Premium)', desc: "Corps court 160 caractères par template, envoyé via numéro AEVUM Twilio." },
+      { name: 'Rapport vidéo IA hebdomadaire (Premium)', desc: "Chaque lundi, une vidéo 60-90s voix off IA avec slides résumant la semaine — sans rien faire de votre côté." },
+      { name: 'Automatisations personnalisées illimitées', desc: "Créez vos propres séquences email (upsell, re-engagement, cross-sell) activables/désactivables en un clic." },
+      { name: 'Récupération vocale IA (Option)', desc: "Agent vocal IA qui rappelle l'élève pour récupérer un impayé ou closer une vente. Disponible en option sur Standard et Premium." },
     ],
   },
 ];
@@ -57,7 +67,7 @@ const pillars = [
 
 <BaseLayout
   title="Fonctionnalités — AEVUM"
-  description="Les 3 piliers d'AEVUM : onboarding automatique J0/J3/J7, récupération impayés et rapport hebdomadaire lundi 8h."
+  description="Les 5 domaines d'AEVUM : automatisation onboarding, récupération impayés, connaissance client, fidélisation et multi-canal. Un seul système."
   canonical="/features"
 >
 
@@ -65,20 +75,20 @@ const pillars = [
   <div class="container">
     <div class="section-header reveal">
       <span class="accent-line"></span>
-      <h1 id="features-title">Les 4 piliers d'AEVUM</h1>
-      <p>Onboarding, impayés, rapport hebdo, automatisations custom. Un seul système.</p>
+      <h1 id="features-title">Les 5 piliers d'AEVUM</h1>
+      <p>Onboarding, impayés, connaissance client, fidélisation, multi-canal. Un seul système.</p>
     </div>
 
-    {pillars.map((pillar) => (
-      <div class="feature-category reveal" id={`cat-${pillar.id}`}>
+    {categories.map((cat) => (
+      <div class="feature-category reveal" id={`cat-${cat.id}`}>
         <div class="category-header">
           <div class="icon-box">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={pillar.icon} />
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={cat.icon} />
           </div>
-          <h2>{pillar.title}</h2>
+          <h2>{cat.title}</h2>
         </div>
         <div class="grid-3 feature-grid">
-          {pillar.features.map((feat) => (
+          {cat.features.map((feat) => (
             <div class="card feature-card">
               <h3>{feat.name}</h3>
               <p>{feat.desc}</p>
