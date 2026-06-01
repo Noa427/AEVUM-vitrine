@@ -445,7 +445,7 @@ const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 
   .settings-section { padding-top: 0; }
   .settings-container { max-width: 600px; }
   .settings-card { padding: 2rem; margin-bottom: 1.5rem; }
-  .settings-card-title { font-size: 1.0625rem; font-weight: 600; color: var(--light); margin-bottom: 1.25rem; }
+  .settings-card-title { font-size: 1.0625rem; font-weight: 600; color: var(--ink); margin-bottom: 1.25rem; }
 
   .force-banner {
     padding: 1rem 1.5rem;
@@ -509,7 +509,7 @@ const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 
   .toggle-track::after {
     content: ''; position: absolute; top: 0.1875rem; left: 0.1875rem;
     width: 0.875rem; height: 0.875rem;
-    background: #fff; border-radius: 50%; transition: transform 0.2s;
+    background: var(--ink); border-radius: 50%; transition: transform 0.2s;
   }
   #rapport-toggle-input:checked + .toggle-track { background: #059669; }
   #rapport-toggle-input:checked + .toggle-track::after { transform: translateX(1rem); }
