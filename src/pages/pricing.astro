@@ -1,62 +1,157 @@
 ﻿---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-const plans = [
+const launchPlans = [
   {
     name: 'Case Study',
-    target: "Offert — en échange d'un témoignage vidéo",
+    target: "Accès aux conditions les plus avantageuses — en échange d'un retour d'expérience structuré",
     setup: '0€',
-    monthly: '500€',
+    monthly: '300€',
+    engagement: '3 mois minimum',
+    note: '2 places disponibles',
     popular: false,
-    note: '2 places disponibles par trimestre',
+    condition: 'Témoignage vidéo obligatoire',
     features: [
       'Onboarding J0 / J3 / J7',
       'Relances impayés (J+1, J+3, J+7)',
       'Suspension et reprise automatiques',
-      'Rapport hebdomadaire lundi 8h',
-      'Automatisations custom',
-      'Portail client (lecture seule)',
+      'Dashboard & stats ROI',
+      'Automatisations personnalisées',
+      'Portail client complet',
       'Support email',
       'Configuration initiale incluse',
     ],
   },
   {
-    name: 'Standard',
-    target: 'Configuration complète sans contrepartie',
-    setup: '3 000€',
-    monthly: '1 200€',
+    name: 'Membre Fondateur',
+    target: 'Accès fondateur avec accompagnement renforcé',
+    setup: '990€',
+    monthly: '590€',
+    engagement: '6 mois minimum',
+    note: '3 places disponibles',
     popular: true,
-    note: null,
+    condition: 'Témoignage écrit + vidéo obligatoire',
     features: [
       'Tout le tier Case Study',
-      'Portail client avec édition templates',
-      'Support prioritaire (réponse sous 24h)',
-      'Templates et automatisations custom illimités',
-      'Rapport hebdo personnalisé',
+      'Suivi dédié 6 mois',
       'Révisions de templates incluses',
+      'Accès anticipé aux nouvelles features',
     ],
   },
 ];
 
-const comparison = [
-  { feature: 'Onboarding J0 / J3 / J7', casestudy: true, standard: true },
-  { feature: 'Relances impayés automatiques', casestudy: true, standard: true },
-  { feature: 'Rapport hebdo lundi 8h', casestudy: true, standard: true },
-  { feature: 'Automatisations custom', casestudy: true, standard: true },
-  { feature: 'Portail client', casestudy: 'Lecture seule', standard: 'Édition complète' },
-  { feature: 'Support email', casestudy: true, standard: true },
-  { feature: 'Support prioritaire (24h)', casestudy: false, standard: true },
-  { feature: 'Templates et automatisations illimités', casestudy: false, standard: true },
-  { feature: 'Rapport hebdo personnalisé', casestudy: false, standard: true },
-  { feature: 'Révisions de templates', casestudy: false, standard: true },
-  { feature: 'Témoignage vidéo requis', casestudy: true, standard: false },
+const permanentPlans = [
+  {
+    name: 'Standard',
+    target: 'Configuration complète, sans contrepartie',
+    setup: '2 500€',
+    monthly: '690€',
+    engagement: 'Mensuel sans engagement',
+    popular: false,
+    features: [
+      'Onboarding J0 / J3 / J7',
+      'Relances impayés (J+1, J+3, J+7) + coupure auto',
+      'Dashboard stats ROI complet',
+      'Tracking ouvertures & clics',
+      'Page élèves (filtres + historique individuel)',
+      'Multi-formations',
+      'Blacklist emails',
+      'Guide deliverability (SPF/DKIM/DMARC)',
+      'Demandes de témoignage J+30/J+60',
+      'Automatisations personnalisées illimitées',
+      'Portail client complet + édition templates',
+      'Support prioritaire (réponse sous 24h)',
+    ],
+  },
+  {
+    name: 'Premium',
+    target: 'Tout Standard + automatisations avancées et multi-canal',
+    setup: '4 500€',
+    monthly: '1 290€',
+    engagement: 'Mensuel sans engagement',
+    popular: true,
+    features: [
+      'Tout le plan Standard',
+      'Pré-dunning CB expirant (14j avant échec)',
+      'Détection churn + re-engagement (21j silence)',
+      'Coaching élèves inactifs (14j sans ouverture)',
+      'WhatsApp Business (parallèle email)',
+      'SMS multi-canal (160 chars/template)',
+      'Rapport vidéo IA hebdomadaire (lundi, 60-90s)',
+    ],
+  },
+];
+
+const launchComparison = [
+  { feature: 'Setup', casestudy: '0€', fondateur: '990€' },
+  { feature: 'Abonnement mensuel', casestudy: '300€/mois', fondateur: '590€/mois' },
+  { feature: 'Engagement minimum', casestudy: '3 mois', fondateur: '6 mois' },
+  { feature: 'Onboarding J0/J3/J7', casestudy: true, fondateur: true },
+  { feature: 'Relances impayés + coupure auto', casestudy: true, fondateur: true },
+  { feature: 'Dashboard & stats ROI', casestudy: true, fondateur: true },
+  { feature: 'Automatisations personnalisées', casestudy: true, fondateur: true },
+  { feature: 'Portail client complet', casestudy: true, fondateur: true },
+  { feature: 'Suivi dédié 6 mois', casestudy: false, fondateur: true },
+  { feature: 'Révisions de templates', casestudy: false, fondateur: true },
+  { feature: 'Accès anticipé nouvelles features', casestudy: false, fondateur: true },
+  { feature: 'Témoignage requis', casestudy: 'Vidéo', fondateur: 'Écrit + vidéo' },
+];
+
+const permanentComparison = [
+  { feature: 'Onboarding J0/J3/J7', standard: true, premium: true },
+  { feature: 'Relances impayés + coupure auto', standard: true, premium: true },
+  { feature: 'Dashboard stats ROI', standard: true, premium: true },
+  { feature: 'Tracking ouvertures & clics', standard: true, premium: true },
+  { feature: 'Page élèves + filtres + historique', standard: true, premium: true },
+  { feature: 'Multi-formations', standard: true, premium: true },
+  { feature: 'Blacklist emails', standard: true, premium: true },
+  { feature: 'Guide deliverability (SPF/DKIM/DMARC)', standard: true, premium: true },
+  { feature: 'Demandes de témoignage J+30/J+60', standard: true, premium: true },
+  { feature: 'Automatisations personnalisées illimitées', standard: true, premium: true },
+  { feature: 'Support prioritaire (24h)', standard: true, premium: true },
+  { feature: 'Pré-dunning CB expirant', standard: false, premium: true },
+  { feature: 'Détection churn + re-engagement', standard: false, premium: true },
+  { feature: 'Coaching élèves inactifs', standard: false, premium: true },
+  { feature: 'WhatsApp Business', standard: false, premium: true },
+  { feature: 'SMS multi-canal', standard: false, premium: true },
+  { feature: 'Rapport vidéo IA hebdomadaire', standard: false, premium: true },
+];
+
+const options = [
+  {
+    name: 'Récupération abandons checkout',
+    price: '+200€/mois',
+    desc: "Détecte les prospects qui quittent Stripe sans payer et les relance automatiquement 30 min après. Disponible sur Standard et Premium.",
+  },
+  {
+    name: 'Récupération vocale IA',
+    price: "+350€/mois + coûts d'appels",
+    desc: "Agent vocal IA qui rappelle l'élève pour récupérer un impayé ou closer une vente. Coûts d'appels facturés à la consommation. Disponible sur Standard et Premium.",
+  },
+  {
+    name: 'Module Notaire',
+    price: '149€/dossier',
+    desc: "Automatisation des calculs et documents juridiques/fiscaux pour les notaires infopreneurs. Disponible sur Standard et Premium.",
+  },
 ];
 
 const faqPricing = [
-  { q: "Y a-t-il un engagement minimum ?", a: "Non. Vous pouvez résilier à tout moment avec un préavis d'un mois. Le setup est facturé une seule fois à la mise en place." },
-  { q: "Quel est le délai de mise en place ?", a: "Comptez 3 à 5 jours ouvrés entre la signature et la mise en production. On a besoin de vos templates et de votre webhook Stripe." },
-  { q: "Qu'est-ce qui est inclus dans le setup ?", a: "La configuration complète de vos séquences dans notre système, les tests de bout en bout, la connexion Stripe et la livraison de votre portail client." },
-  { q: "Comment résilier ?", a: "Un email suffit avec un préavis d'un mois. Vous récupérez vos templates et l'historique de vos envois en CSV." },
+  {
+    q: "Qu'est-ce que le setup ?",
+    a: "Investissement unique couvrant la configuration complète de vos séquences, l'intégration Stripe, les tests de bout en bout, et la session d'onboarding.",
+  },
+  {
+    q: "Y a-t-il un engagement ?",
+    a: "Standard et Premium sont mensuels sans engagement. Les offres de lancement ont un engagement minimum (3 mois pour Case Study, 6 mois pour Fondateur).",
+  },
+  {
+    q: "Peut-on changer de plan ?",
+    a: "Oui, l'upgrade est possible à tout moment. Le setup complémentaire est proratisé.",
+  },
+  {
+    q: "Quel est le délai de mise en place ?",
+    a: "Comptez 3 à 5 jours ouvrés entre la signature et la mise en production. On a besoin de vos templates et de votre webhook Stripe.",
+  },
 ];
 ---
 
