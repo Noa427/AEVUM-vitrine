@@ -185,10 +185,28 @@ Routes qui transmettent `X-Formation-Id` : `config-update`, `blacklist-add`, `bl
 - Bannière pause si `paused_until` non null (depuis `/client/me`)
 - Stats étendues : montant récupéré, taux récupération, taux ouverture/clic
 
+## Pages marketing — état actuel (2026-06-01, branche feat/phase2-features8-12)
+Pages `index`, `features`, `pricing`, `comment-ca-marche` mises à jour pour refléter le produit complet.
+
+**Tarifs actuels dans `pricing.astro` :**
+| Plan | Setup | /mois | Type |
+|------|-------|-------|------|
+| Case Study | 0€ | 300€ | Lancement (2 places) |
+| Membre Fondateur | 990€ | 590€ | Lancement (3 places) |
+| Standard | 2 500€ | 690€ | Permanent |
+| Premium | 4 500€ | 1 290€ | Permanent |
+
+Options : Abandons checkout (+200€/mois), Vocale IA (+350€/mois + usage), Module Notaire (149€/dossier).
+
+**`features.astro`** : 5 catégories, 25 features. Variables frontmatter : `categories[]` (id, title, icon, features[]).
+
+**`index.astro`** : preview Standard + Premium (pas les offres lancement). Piliers : Onboarding, Récupération impayés, Dashboard & stats ROI, Portail complet.
+
 ## TODO — prochaine session
 - Tracker les 3 fichiers non-commités git (`src/lib/api.ts`, `forgot-password.astro`, `reset-password.astro`)
 - Tests E2E portail client (login → customize → save template → rename → delete automation)
 - Déploiement Vercel : vérifier variables d'env `AEVUM_URL` + `JWT_SECRET` en production
+- Mettre à jour `pricing.astro` quand les places lancement sont prises (supprimer la section "Offres de lancement")
 
 ## CSS
 `global.css` est intentionnellement vide — tous les styles sont injectés via `<style is:global>` dans les layouts (pattern Astro, bypasse les caches).
