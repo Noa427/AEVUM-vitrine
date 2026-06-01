@@ -306,7 +306,7 @@ Cartes à mettre à jour :
 > Dès qu'un paiement Stripe arrive, votre élève reçoit ses emails J0, J3 et J7 — rédigés avec vos mots. Personnalisez chaque template depuis votre portail, lancez un envoi de test, ou déclenchez un email manuel en cas de besoin.
 
 *Pilier 2 — Récupération impayés* (card--purple) :
-> Paiement échoué ? Les relances partent à J+1, J+3, J+7 avec un ton progressif. Suspension automatique si aucune réponse. Et si votre CB expire dans 14 jours, AEVUM vous prévient avant l'échec. (pré-dunning — Premium)
+> Paiement échoué ? Les relances partent à J+1, J+3, J+7 avec un ton progressif. Suspension automatique si aucune réponse. Et si la CB de votre élève expire dans 14 jours, AEVUM l'avertit avant l'échec. (pré-dunning — Premium)
 
 *Pilier 3 — Dashboard & stats ROI* (card--green, était "Rapport hebdomadaire") :
 - Titre : "Dashboard & stats ROI"
