@@ -305,12 +305,12 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
 
     <!-- ── Onglets niveau 1 (catégories) ── -->
     <div class="cat-tab-nav tabs-level1" role="tablist">
-      <button class={`cat-tab${initialCat === 'onboarding'   ? ' active' : ''}`} data-cat="onboarding"   type="button">Onboarding</button>
-      <button class={`cat-tab${initialCat === 'impayes'      ? ' active' : ''}`} data-cat="impayes"      type="button">Impayés</button>
-      <button class={`cat-tab${initialCat === 'fidelisation' ? ' active' : ''}`} data-cat="fidelisation" type="button">Fidélisation</button>
-      <button class={`cat-tab${initialCat === 'recuperation' ? ' active' : ''}`} data-cat="recuperation" type="button">Récupération</button>
-      <button class={`cat-tab${initialCat === 'temoignages'  ? ' active' : ''}`} data-cat="temoignages"  type="button">Témoignages</button>
-      <button class={`cat-tab${initialCat === 'automations'  ? ' active' : ''}`} data-cat="automations"  type="button">Automatisations</button>
+      <button class={`cat-tab${initialCat === 'onboarding'   ? ' active' : ''}`} data-cat="onboarding"   role="tab" type="button">Onboarding</button>
+      <button class={`cat-tab${initialCat === 'impayes'      ? ' active' : ''}`} data-cat="impayes"      role="tab" type="button">Impayés</button>
+      <button class={`cat-tab${initialCat === 'fidelisation' ? ' active' : ''}`} data-cat="fidelisation" role="tab" type="button">Fidélisation</button>
+      <button class={`cat-tab${initialCat === 'recuperation' ? ' active' : ''}`} data-cat="recuperation" role="tab" type="button">Récupération</button>
+      <button class={`cat-tab${initialCat === 'temoignages'  ? ' active' : ''}`} data-cat="temoignages"  role="tab" type="button">Témoignages</button>
+      <button class={`cat-tab${initialCat === 'automations'  ? ' active' : ''}`} data-cat="automations"  role="tab" type="button">Automatisations</button>
     </div>
 
     <!-- ── Catégorie : Onboarding ── -->
@@ -2741,6 +2741,40 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
   .sender-card .cust-card-title { margin-bottom: 0.25rem; }
   .sender-input { max-width: 320px; }
 
+  /* ── Onglets niveau 1 — catégories ── */
+  .cat-tab-nav {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    white-space: nowrap;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 2px solid var(--gray-border);
+  }
+  .cat-tab-nav::-webkit-scrollbar { display: none; }
+  .cat-tab {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 0.625rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--gray);
+    cursor: pointer;
+    transition: color .2s, border-color .2s, background .2s;
+    white-space: nowrap;
+    margin-bottom: -2px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+  .cat-tab:hover { color: var(--gray-light); background: rgba(255,255,255,0.04); }
+  .cat-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+  /* ── Conteneur de catégorie ── */
+  .cat-panel { margin-bottom: 2rem; }
+
   /* ── Tab navigation ── */
   .config-tab-nav {
     display: flex;
@@ -3066,29 +3100,7 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
   opacity: 0.7;
   pointer-events: none;
 }
-.section-divider {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin: 2.5rem 0;
-}
-.section-divider::before,
-.section-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--gray-border);
-}
-.section-divider:empty::before,
-.section-divider:empty::after { display: none; }
-.section-divider span {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--fg-muted);
-  white-space: nowrap;
-}
+
 .auto-section { margin-bottom: 3rem; }
 .auto-section-header {
   display: flex;
