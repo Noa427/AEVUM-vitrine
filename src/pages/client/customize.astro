@@ -2226,121 +2226,120 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
   }
 
   function initConfigTabs() {
-    const nav = document.querySelector<HTMLElement>('.config-tab-nav');
-    if (!nav || nav.dataset.tabsInit) return;
-    nav.dataset.tabsInit = 'true';
+    document.querySelectorAll<HTMLElement>('.config-tab-nav').forEach((nav) => {
+      if (nav.dataset.tabsInit) return;
+      nav.dataset.tabsInit = 'true';
 
-    function activateTab(targetId: string) {
-      nav.querySelectorAll<HTMLElement>('.config-tab').forEach((t) => {
-        t.classList.toggle('active', t.dataset.target === targetId);
-      });
-      document.querySelectorAll<HTMLElement>('.config-panel').forEach((p) => {
-        p.style.display = p.id === targetId ? '' : 'none';
-      });
-    }
+      const catPanel = nav.closest<HTMLElement>('.cat-panel');
 
-    nav.querySelectorAll<HTMLButtonElement>('.config-tab').forEach((tab) => {
-      tab.addEventListener('click', () => {
-        if (tab.dataset.editing) return;
-        if (tab.dataset.target) activateTab(tab.dataset.target);
-      });
-
-      tab.addEventListener('dblclick', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (tab.dataset.editing) return;
-        tab.dataset.editing = 'true';
-
-        const configKey   = tab.dataset.target?.replace('panel-', '') ?? '';
-        const currentText = tab.textContent?.trim() ?? '';
-
-        // contenteditable sur le bouton lui-même — évite <input> dans <button> (HTML invalide)
-        tab.contentEditable = 'true';
-        tab.focus();
-        const range = document.createRange();
-        range.selectNodeContents(tab);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-
-        let committed = false;
-
-        function cancelTabEdit() {
-          tab.contentEditable = 'false';
-          tab.textContent = currentText;
-          delete tab.dataset.editing;
-        }
-
-        async function doTabSave() {
-          if (committed) return;
-          committed = true;
-
-          tab.contentEditable = 'false';
-          const newLabel = tab.textContent?.trim() ?? '';
-          delete tab.dataset.editing;
-
-          if (!newLabel || newLabel === currentText) {
-            tab.textContent = currentText;
-            return;
-          }
-
-          const panel           = document.getElementById(`panel-${configKey}`);
-          const existingSubject = panel?.querySelector<HTMLInputElement>('.subject-input')?.value
-                                ?? panel?.dataset.subject ?? '';
-          const existingBody    = panel?.querySelector<HTMLTextAreaElement>('.body-input')?.value
-                                ?? panel?.dataset.body ?? '';
-          const value = JSON.stringify({ subject: existingSubject, body: existingBody, label: newLabel });
-
-          try {
-            const res = await fetch('/api/config-update', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ config_type: configKey, value }),
-            });
-            if (!res.ok) {
-              const d = await res.json().catch(() => ({}));
-              throw new Error('Erreur de sauvegarde');
-            }
-            if (panel) {
-              panel.dataset.label = newLabel;
-              const h2 = panel.querySelector<HTMLElement>('.section-title');
-              if (h2) h2.textContent = newLabel;
-            }
-          } catch (err) {
-            tab.textContent = currentText;
-            const errEl = document.querySelector<HTMLElement>('.tab-rename-error');
-            if (errEl) {
-              errEl.textContent = 'Erreur de sauvegarde';
-              errEl.style.display = 'block';
-              setTimeout(() => { errEl.style.display = 'none'; }, 3000);
-            }
-          }
-        }
-
-        tab.addEventListener('keydown', function kbHandler(e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            tab.removeEventListener('keydown', kbHandler);
-            tab.removeEventListener('blur', blurHandler);
-            doTabSave();
-          }
-          if (e.key === 'Escape') {
-            e.preventDefault();
-            tab.removeEventListener('keydown', kbHandler);
-            tab.removeEventListener('blur', blurHandler);
-            cancelTabEdit();
-          }
+      function activateTab(targetId: string) {
+        nav.querySelectorAll<HTMLElement>('.config-tab').forEach((t) => {
+          t.classList.toggle('active', t.dataset.target === targetId);
         });
-        function blurHandler() { tab.removeEventListener('blur', blurHandler); doTabSave(); }
-        tab.addEventListener('blur', blurHandler);
-      });
-    });
+        const wrap = catPanel?.querySelector<HTMLElement>('.config-panel-wrap');
+        if (wrap) {
+          wrap.querySelectorAll<HTMLElement>('.config-panel').forEach((p) => {
+            p.style.display = p.id === targetId ? '' : 'none';
+          });
+        }
+      }
 
-    const feedbackEl = document.querySelector<HTMLElement>('.config-panel .success-msg, .config-panel .cust-field-error');
-    if (feedbackEl) {
-      const panel = feedbackEl.closest<HTMLElement>('.config-panel');
-      if (panel) activateTab(panel.id);
-    }
+      nav.querySelectorAll<HTMLButtonElement>('.config-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          if (tab.dataset.editing) return;
+          if (tab.dataset.target) activateTab(tab.dataset.target);
+        });
+
+        tab.addEventListener('dblclick', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (tab.dataset.editing) return;
+          tab.dataset.editing = 'true';
+
+          const configKey   = tab.dataset.target?.replace('panel-', '') ?? '';
+          const currentText = tab.textContent?.trim() ?? '';
+
+          tab.contentEditable = 'true';
+          tab.focus();
+          const range = document.createRange();
+          range.selectNodeContents(tab);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+
+          let committed = false;
+
+          function cancelTabEdit() {
+            tab.contentEditable = 'false';
+            tab.textContent = currentText;
+            delete tab.dataset.editing;
+          }
+
+          async function doTabSave() {
+            if (committed) return;
+            committed = true;
+            tab.contentEditable = 'false';
+            const newLabel = tab.textContent?.trim() ?? '';
+            delete tab.dataset.editing;
+            if (!newLabel || newLabel === currentText) {
+              tab.textContent = currentText;
+              return;
+            }
+            const panel           = document.getElementById(`panel-${configKey}`);
+            const existingSubject = panel?.querySelector<HTMLInputElement>('.subject-input')?.value
+                                  ?? panel?.dataset.subject ?? '';
+            const existingBody    = panel?.querySelector<HTMLTextAreaElement>('.body-input')?.value
+                                  ?? panel?.dataset.body ?? '';
+            const value = JSON.stringify({ subject: existingSubject, body: existingBody, label: newLabel });
+            try {
+              const res = await fetch('/api/config-update', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ config_type: configKey, value }),
+              });
+              if (!res.ok) throw new Error('Erreur de sauvegarde');
+              if (panel) {
+                panel.dataset.label = newLabel;
+                const h2 = panel.querySelector<HTMLElement>('.section-title');
+                if (h2) h2.textContent = newLabel;
+              }
+            } catch {
+              tab.textContent = currentText;
+              const errEl = nav.nextElementSibling as HTMLElement | null;
+              if (errEl?.classList.contains('tab-rename-error')) {
+                errEl.textContent = 'Erreur de sauvegarde';
+                errEl.style.display = 'block';
+                setTimeout(() => { errEl.style.display = 'none'; }, 3000);
+              }
+            }
+          }
+
+          tab.addEventListener('keydown', function kbHandler(e) {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              tab.removeEventListener('keydown', kbHandler);
+              tab.removeEventListener('blur', blurHandler);
+              doTabSave();
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              tab.removeEventListener('keydown', kbHandler);
+              tab.removeEventListener('blur', blurHandler);
+              cancelTabEdit();
+            }
+          });
+          function blurHandler() { tab.removeEventListener('blur', blurHandler); doTabSave(); }
+          tab.addEventListener('blur', blurHandler);
+        });
+      });
+
+      // Auto-activate the panel matching any success/error feedback within this cat-panel
+      const feedbackEl = catPanel?.querySelector<HTMLElement>('.config-panel .success-msg, .config-panel .cust-field-error');
+      if (feedbackEl) {
+        const panel = feedbackEl.closest<HTMLElement>('.config-panel');
+        if (panel) activateTab(panel.id);
+      }
+    });
   }
 
   function initCustomEditor() {
