@@ -56,6 +56,7 @@ const categories = [
     features: [
       { name: 'Détection churn + re-engagement (Premium)', desc: "Repère automatiquement les élèves silencieux depuis 21 jours et déclenche une relance personnalisée." },
       { name: 'Coaching élèves inactifs (Premium)', desc: "Si aucune ouverture depuis 14 jours, AEVUM envoie une relance pédagogique pour ramener l'élève dans la formation." },
+      { name: 'Upsell automatique J+30', desc: "Email envoyé automatiquement 30 jours après l'achat pour proposer une montée en gamme ou un produit complémentaire." },
       { name: 'Demandes de témoignage automatiques', desc: "Email à J+30 et J+60 avec lien vers votre formulaire personnalisé — vos avis arrivent sans que vous les demandiez." },
       { name: 'Guide deliverability intégré', desc: "Guide pas-à-pas SPF/DKIM/DMARC directement dans votre portail pour maximiser la délivrabilité de vos emails." },
     ],
@@ -63,15 +64,14 @@ const categories = [
   {
     id: 'multicanal',
     title: 'Multi-canal & IA avancée',
-    subtitle: 'WhatsApp, SMS, rapport vidéo IA hebdomadaire, agent vocal.',
+    subtitle: 'WhatsApp, SMS, rapport vidéo IA hebdomadaire, module notaire.',
     color: '#8B5CF6',
     icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
     features: [
       { name: 'WhatsApp Business (Premium)', desc: "Envoyez chaque template en parallèle par WhatsApp via votre propre compte Business." },
       { name: 'SMS multi-canal (Premium)', desc: "Corps court 160 caractères par template, envoyé via numéro AEVUM Twilio." },
       { name: 'Rapport vidéo IA hebdomadaire (Premium)', desc: "Chaque lundi, une vidéo 60-90s voix off IA avec slides résumant la semaine — sans rien faire de votre côté." },
-      { name: 'Récupération vocale IA (Option)', desc: "Agent vocal IA qui rappelle l'élève pour récupérer un impayé ou closer une vente. Disponible en option sur Standard et Premium." },
-      { name: 'Module Notaire (Option 149€/dossier)', desc: "Automatisation des calculs et documents juridiques/fiscaux pour les notaires infopreneurs. Facturation à l'usage." },
+      { name: 'Module Notaire (Bientôt)', desc: "Automatisation des calculs et documents juridiques/fiscaux pour les notaires infopreneurs." },
     ],
   },
 ];
@@ -102,14 +102,16 @@ const categories = [
         </div>
         <div class="split-right">
           {cat.features.map((feat) => {
-            const badgeMatch = feat.name.match(/\s*\((Premium|Option)\)$/);
+            const badgeMatch = feat.name.match(/\s*\((Premium|Option|Bientôt)\)$/);
             const badge = badgeMatch ? badgeMatch[1] : null;
-            const cleanName = feat.name.replace(/\s*\((Premium|Option)\)$/, '');
+            const cleanName = feat.name.replace(/\s*\((Premium|Option|Bientôt)\)$/, '');
+            const badgeCls = badge === 'Bientôt' ? 'badge-soon' : badge ? `badge-${badge.toLowerCase()}` : '';
+            const badgeLabel = badge === 'Bientôt' ? 'Bientôt disponible' : badge;
             return (
               <div class="feat-row">
                 <div class="feat-row-title">
                   {cleanName}
-                  {badge && <span class={`feat-badge badge-${badge.toLowerCase()}`}>{badge}</span>}
+                  {badge && <span class={`feat-badge ${badgeCls}`}>{badgeLabel}</span>}
                 </div>
                 <p class="feat-row-desc">{feat.desc}</p>
               </div>
@@ -244,6 +246,7 @@ const categories = [
   }
   .badge-premium { background: rgba(46,139,240,0.12); border: 1px solid rgba(46,139,240,0.3); color: #6bb3f5; }
   .badge-option  { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.3); color: #b392f7; }
+  .badge-soon    { background: rgba(107,114,128,0.10); border: 1px solid rgba(107,114,128,0.25); color: #9ca3af; }
 
   /* ---- CTA ---- */
   .cta-section {
