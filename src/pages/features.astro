@@ -5,6 +5,8 @@ const categories = [
   {
     id: 'onboarding',
     title: 'Automatisation & onboarding',
+    subtitle: 'Bienvenue automatique, accès, suivi J+3 et J+7 — sans action manuelle.',
+    color: 'var(--fg)',
     icon: '<path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>',
     features: [
       { name: 'Email J0 — Bienvenue & accès', desc: "Envoyé dès la confirmation Stripe. Contient vos identifiants d'accès et un mot de bienvenue." },
@@ -13,11 +15,14 @@ const categories = [
       { name: 'Envoi de test', desc: "Prévisualisez n'importe quel template en vous l'envoyant à vous-même avant tout envoi réel." },
       { name: 'Envoi manuel', desc: "Déclenchez un email spécifique à un élève depuis le portail, quand vous le décidez." },
       { name: 'Mode pause global', desc: "Stoppez toutes les campagnes en un clic — utile pendant une fermeture ou une refonte." },
+      { name: 'Automatisations personnalisées illimitées', desc: "Créez vos propres séquences email (upsell, re-engagement, cross-sell) activables/désactivables en un clic." },
     ],
   },
   {
     id: 'impayes',
     title: 'Récupération & impayés',
+    subtitle: '3 relances progressives, suspension auto, prévention CB expirant.',
+    color: '#F59E0B',
     icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
     features: [
       { name: 'Relance J+1 — Rappel doux', desc: "Ton empathique, lien de paiement direct. Envoyé 24h après l'échec de paiement." },
@@ -25,11 +30,14 @@ const categories = [
       { name: 'Relance J+7 — Avertissement final', desc: "Dernier email avant suspension. L'élève est informé clairement des conséquences." },
       { name: 'Suspension et reprise automatiques', desc: "Sans réponse à J+7, accès suspendu. Rétabli automatiquement dès le prochain paiement réussi." },
       { name: 'Pré-dunning CB expirant (Premium)', desc: "AEVUM détecte les cartes bancaires de vos élèves qui expirent dans 14 jours et envoie automatiquement un email préventif avant que le paiement échoue." },
+      { name: 'Récupération abandons checkout (Option +200€/mois)', desc: "Détecte les prospects qui quittent Stripe sans payer et déclenche automatiquement une relance 30 minutes après." },
     ],
   },
   {
     id: 'client',
     title: 'Connaissance client',
+    subtitle: 'Stats ROI temps réel, tracking ouvertures/clics, multi-formations.',
+    color: '#2E8BF0',
     icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>',
     features: [
       { name: 'Dashboard stats ROI', desc: "Montant récupéré, taux de recouvrement, taux d'ouverture, taux de clic — en temps réel." },
@@ -42,6 +50,8 @@ const categories = [
   {
     id: 'fidelisation',
     title: 'Fidélisation & réputation',
+    subtitle: 'Re-engagement automatique, témoignages, guide deliverability intégré.',
+    color: '#10B981',
     icon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
     features: [
       { name: 'Détection churn + re-engagement (Premium)', desc: "Repère automatiquement les élèves silencieux depuis 21 jours et déclenche une relance personnalisée." },
@@ -53,13 +63,15 @@ const categories = [
   {
     id: 'multicanal',
     title: 'Multi-canal & IA avancée',
+    subtitle: 'WhatsApp, SMS, rapport vidéo IA hebdomadaire, agent vocal.',
+    color: '#8B5CF6',
     icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
     features: [
       { name: 'WhatsApp Business (Premium)', desc: "Envoyez chaque template en parallèle par WhatsApp via votre propre compte Business." },
       { name: 'SMS multi-canal (Premium)', desc: "Corps court 160 caractères par template, envoyé via numéro AEVUM Twilio." },
       { name: 'Rapport vidéo IA hebdomadaire (Premium)', desc: "Chaque lundi, une vidéo 60-90s voix off IA avec slides résumant la semaine — sans rien faire de votre côté." },
-      { name: 'Automatisations personnalisées illimitées', desc: "Créez vos propres séquences email (upsell, re-engagement, cross-sell) activables/désactivables en un clic." },
       { name: 'Récupération vocale IA (Option)', desc: "Agent vocal IA qui rappelle l'élève pour récupérer un impayé ou closer une vente. Disponible en option sur Standard et Premium." },
+      { name: 'Module Notaire (Option 149€/dossier)', desc: "Automatisation des calculs et documents juridiques/fiscaux pour les notaires infopreneurs. Facturation à l'usage." },
     ],
   },
 ];
@@ -67,7 +79,7 @@ const categories = [
 
 <BaseLayout
   title="Fonctionnalités — AEVUM"
-  description="Les 5 domaines d'AEVUM : automatisation onboarding, récupération impayés, connaissance client, fidélisation et multi-canal. Un seul système."
+  description="Les 5 piliers d'AEVUM : automatisation onboarding, récupération impayés, connaissance client, fidélisation et multi-canal. Un seul système."
   canonical="/features"
 >
 
@@ -80,20 +92,29 @@ const categories = [
     </div>
 
     {categories.map((cat) => (
-      <div class="feature-category reveal" id={`cat-${cat.id}`}>
-        <div class="category-header">
-          <div class="icon-box">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={cat.icon} />
+      <div class="split-section" id={`cat-${cat.id}`} style={`--cat-color:${cat.color}`}>
+        <div class="split-left">
+          <div class="split-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={cat.icon} />
           </div>
           <h2>{cat.title}</h2>
+          <p class="split-sub">{cat.subtitle}</p>
         </div>
-        <div class="grid-3 feature-grid">
-          {cat.features.map((feat) => (
-            <div class="card feature-card">
-              <h3>{feat.name}</h3>
-              <p>{feat.desc}</p>
-            </div>
-          ))}
+        <div class="split-right">
+          {cat.features.map((feat) => {
+            const badgeMatch = feat.name.match(/\s*\((Premium|Option)\)$/);
+            const badge = badgeMatch ? badgeMatch[1] : null;
+            const cleanName = feat.name.replace(/\s*\((Premium|Option)\)$/, '');
+            return (
+              <div class="feat-row">
+                <div class="feat-row-title">
+                  {cleanName}
+                  {badge && <span class={`feat-badge badge-${badge.toLowerCase()}`}>{badge}</span>}
+                </div>
+                <p class="feat-row-desc">{feat.desc}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     ))}
@@ -115,29 +136,127 @@ const categories = [
 
 </BaseLayout>
 
-<style>
+<style is:global>
   .hero-features { padding-top: 8rem; }
 
-  .feature-category { margin-bottom: 4rem; }
-  .feature-category:last-of-type { margin-bottom: 0; }
-
-  .category-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
+  @keyframes feat-in {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: none; }
   }
 
-  .category-header .icon-box { margin-bottom: 0; }
-  .category-header h2 { font-size: 1.5rem; }
+  /* ---- Split section ---- */
+  .split-section {
+    animation: feat-in 0.55s var(--ease-out) both;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 4rem;
+    padding: 3.5rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .split-section:first-of-type  { padding-top: 0; }
+  .split-section:last-of-type   { border-bottom: none; }
+  .split-section:nth-child(2)  { animation-delay: 0.08s; }
+  .split-section:nth-child(3)  { animation-delay: 0.16s; }
+  .split-section:nth-child(4)  { animation-delay: 0.24s; }
+  .split-section:nth-child(5)  { animation-delay: 0.32s; }
+  .split-section:nth-child(6)  { animation-delay: 0.40s; }
+  @media (prefers-reduced-motion: reduce) {
+    .split-section { animation: none; }
+  }
 
-  .feature-card { padding: 1.75rem; }
-  .feature-card h3 { font-size: 1.0625rem; margin-bottom: 0.5rem; }
-  .feature-card p { font-size: 0.9375rem; }
-  .feature-grid { gap: 1.25rem; }
+  /* ---- Left col ---- */
+  .split-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
 
+  .split-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cat-color, var(--fg));
+    border: 1px solid transparent;
+    margin-bottom: 0.25rem;
+    flex-shrink: 0;
+  }
+  /* Icon backgrounds hardcodés par catégorie — évite color-mix() */
+  #cat-onboarding  .split-icon { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); }
+  #cat-impayes     .split-icon { background: rgba(245,158,11,0.10);  border-color: rgba(245,158,11,0.22);  }
+  #cat-client      .split-icon { background: rgba(46,139,240,0.10);  border-color: rgba(46,139,240,0.22);  }
+  #cat-fidelisation .split-icon{ background: rgba(16,185,129,0.10); border-color: rgba(16,185,129,0.22);  }
+  #cat-multicanal  .split-icon { background: rgba(139,92,246,0.10);  border-color: rgba(139,92,246,0.22);  }
+
+  html[data-theme="light"] #cat-onboarding .split-icon { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.14); }
+
+  .split-left h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--cat-color, var(--fg));
+    margin: 0;
+    line-height: 1.3;
+  }
+  /* Onboarding : var(--fg) s'adapte au thème automatiquement */
+
+  .split-sub {
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ---- Right col — feature rows ---- */
+  .split-right { display: flex; flex-direction: column; }
+
+  .feat-row {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .feat-row:first-child { padding-top: 0; }
+  .feat-row:last-child  { border-bottom: none; padding-bottom: 0; }
+
+  .feat-row-title {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .feat-row-desc {
+    font-size: 0.875rem;
+    color: var(--gray);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* ---- Badges ---- */
+  .feat-badge {
+    flex-shrink: 0;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .badge-premium { background: rgba(46,139,240,0.12); border: 1px solid rgba(46,139,240,0.3); color: #6bb3f5; }
+  .badge-option  { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.3); color: #b392f7; }
+
+  /* ---- CTA ---- */
   .cta-section {
-    background: linear-gradient(135deg, rgba(46, 139, 240, 0.08) 0%, rgba(46, 139, 240, 0.02) 100%);
-    border-top: 1px solid rgba(46, 139, 240, 0.15);
+    background: linear-gradient(135deg, rgba(46,139,240,0.08) 0%, rgba(46,139,240,0.02) 100%);
+    border-top: 1px solid rgba(46,139,240,0.15);
+  }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 768px) {
+    .split-section { grid-template-columns: 1fr; gap: 1.5rem; padding: 2.5rem 0; }
+    .split-left    { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+    .split-icon    { margin-bottom: 0; }
+    .split-left h2 { font-size: 1rem; }
+    .split-sub     { width: 100%; }
   }
 </style>
