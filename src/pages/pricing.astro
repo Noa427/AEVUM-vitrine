@@ -12,6 +12,7 @@ const launchPlans = [
     popular: false,
     condition: 'Témoignage vidéo obligatoire',
     features: [
+      'Tout le périmètre Standard inclus',
       'Onboarding J0 / J3 / J7',
       'Relances impayés (J+1, J+3, J+7)',
       'Suspension et reprise automatiques',
@@ -51,6 +52,9 @@ const permanentPlans = [
     features: [
       'Onboarding J0 / J3 / J7',
       'Relances impayés (J+1, J+3, J+7) + coupure auto',
+      'Envoi de test (prévisualisation avant envoi réel)',
+      'Envoi manuel depuis le portail',
+      'Mode pause global des campagnes',
       'Dashboard stats ROI complet',
       'Tracking ouvertures & clics',
       'Page élèves (filtres + historique individuel)',
@@ -276,6 +280,7 @@ const faqPricing = [
         </tbody>
       </table>
     </div>
+    <p class="launch-inclusion-note">Les deux offres de lancement incluent l'intégralité du périmètre Standard.</p>
   </div>
 </section>
 
@@ -506,6 +511,14 @@ const faqPricing = [
   }
 
   .option-name { font-size: 1rem; margin-bottom: 0.375rem; }
+
+  .launch-inclusion-note {
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    color: var(--gray);
+    text-align: center;
+    font-style: italic;
+  }
 
   .faq-container { max-width: 800px; }
 
