@@ -104,6 +104,9 @@ const launchComparison = [
 const permanentComparison = [
   { feature: 'Onboarding J0/J3/J7', standard: true, premium: true },
   { feature: 'Relances impayés + coupure auto', standard: true, premium: true },
+  { feature: 'Envoi de test (prévisualisation)', standard: true, premium: true },
+  { feature: 'Envoi manuel depuis le portail', standard: true, premium: true },
+  { feature: 'Mode pause global des campagnes', standard: true, premium: true },
   { feature: 'Dashboard stats ROI', standard: true, premium: true },
   { feature: 'Tracking ouvertures & clics', standard: true, premium: true },
   { feature: 'Page élèves + filtres + historique', standard: true, premium: true },
@@ -128,14 +131,9 @@ const options = [
     desc: "Détecte les prospects qui quittent Stripe sans payer et les relance automatiquement 30 min après. Disponible sur Standard et Premium.",
   },
   {
-    name: 'Récupération vocale IA',
-    price: "+350€/mois + coûts d'appels",
-    desc: "Agent vocal IA qui rappelle l'élève pour récupérer un impayé ou closer une vente. Coûts d'appels facturés à la consommation. Disponible sur Standard et Premium.",
-  },
-  {
     name: 'Module Notaire',
-    price: '149€/dossier',
-    desc: "Automatisation des calculs et documents juridiques/fiscaux pour les notaires infopreneurs. Disponible sur Standard et Premium.",
+    soon: true,
+    desc: "Automatisation des calculs et documents juridiques/fiscaux pour les notaires infopreneurs.",
   },
 ];
 
@@ -333,7 +331,10 @@ const faqPricing = [
     <div class="options-list reveal">
       {options.map((opt) => (
         <div class="card option-card">
-          <div class="option-price">{opt.price}</div>
+          {opt.soon
+            ? <span class="option-soon">Bientôt disponible</span>
+            : <div class="option-price">{opt.price}</div>
+          }
           <div>
             <h3 class="option-name">{opt.name}</h3>
             <p>{opt.desc}</p>
@@ -511,6 +512,21 @@ const faqPricing = [
   }
 
   .option-name { font-size: 1rem; margin-bottom: 0.375rem; }
+
+  .option-soon {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(107,114,128,0.10);
+    border: 1px solid rgba(107,114,128,0.25);
+    color: #9ca3af;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
   .launch-inclusion-note {
     margin-top: 1.5rem;
