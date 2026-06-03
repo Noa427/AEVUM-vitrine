@@ -147,6 +147,7 @@ const VARIABLE_HINTS: Record<string, string[]> = {
   template_predunning: ['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_paiement}}', '{{date_expiration}}'],
   template_churn_reengagement: ['{{nom}}', '{{prenom}}', '{{nom_formation}}', '{{lien_acces}}'],
   template_coaching_j14: ['{{nom}}', '{{prenom}}', '{{nom_formation}}', '{{lien_acces}}'],
+  template_upsell_j30: ['{{nom}}', '{{prenom}}', '{{nom_formation}}', '{{lien_acces}}'],
 };
 
 const EMAIL_CONFIGS = [
@@ -164,7 +165,7 @@ const IMPAYES_CONFIGS    = EMAIL_CONFIGS.slice(3, 6);  // j1, j3, j7
 const CAT_KEYS: Record<string, readonly string[]> = {
   onboarding:   ['template_onboarding_j0', 'template_onboarding_j3', 'template_onboarding_j7'],
   impayes:      ['template_failed_payment_j1', 'template_failed_payment_j3', 'template_failed_payment_j7'],
-  fidelisation: ['template_predunning', 'template_churn_reengagement', 'template_coaching_j14'],
+  fidelisation: ['template_predunning', 'template_churn_reengagement', 'template_coaching_j14', 'template_upsell_j30'],
   recuperation: ['template_checkout_abandon'],
   temoignages:  ['template_testimonial_j30', 'template_testimonial_j60'],
 };
@@ -259,6 +260,7 @@ const testimonialJ60Config = parseConfig(testimonialJ60Raw ?? '');
 const predunningConfig = parseConfig(configs['template_predunning'] ?? '');
 const churnConfig = parseConfig(configs['template_churn_reengagement'] ?? '');
 const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
+const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
 ---
 
 <ClientLayout
@@ -648,6 +650,8 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
                 data-target="panel-template_churn_reengagement" type="button">Re-engagement</button>
         <button class={`config-tab${isPanelActive('template_coaching_j14', 'fidelisation') ? ' active' : ''}`}
                 data-target="panel-template_coaching_j14" type="button">Coaching</button>
+        <button class={`config-tab${isPanelActive('template_upsell_j30', 'fidelisation') ? ' active' : ''}`}
+                data-target="panel-template_upsell_j30" type="button">Upsell</button>
       </div>
       <p class="tab-rename-error" style="display:none"></p>
       <div class="card config-panel-wrap">
@@ -960,6 +964,112 @@ const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
           <option value="motivant">Motivant et dynamique</option>
         </select>
         <input type="text" class="form-input gen-objective" placeholder="Objectif (ex : démarrer des élèves inactifs)" />
+        <button class="btn btn-primary btn-generate" style="align-self:flex-start">✨ Générer l'email</button>
+        <p class="ai-error gen-error"></p>
+        <div class="generation-result hidden">
+          <input type="text" class="form-input subject-preview" readonly placeholder="Sujet généré" />
+          <textarea class="form-input body-preview" rows={6} readonly placeholder="Contenu généré"></textarea>
+          <button class="btn btn-secondary btn-use-result" style="align-self:flex-start">Utiliser ce contenu →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cust-card config-panel"
+         id="panel-template_upsell_j30"
+         data-config="template_upsell_j30"
+         style={!isPanelActive('template_upsell_j30','fidelisation') ? 'display:none' : ''}
+         data-subject={upsellConfig.subject}
+         data-body={upsellConfig.body}
+         data-panel-active={upsellConfig.active ? 'true' : 'false'}
+         data-whatsapp-active={upsellConfig.whatsapp_active ? 'true' : 'false'}
+         data-sms-active={upsellConfig.sms_active ? 'true' : 'false'}
+         data-sms-body={upsellConfig.sms_body ?? ''}>
+
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <h2 class="cust-card-title section-title" style="margin-bottom:0">Email upsell J+30</h2>
+        </div>
+        <div class="panel-right-actions">
+          <label class="toggle-switch" title="Activer/désactiver">
+            <input type="checkbox" class="toggle-input" checked={upsellConfig.active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label">{upsellConfig.active ? 'Actif' : 'Inactif'}</span>
+          </label>
+          {whatsappConnected && (
+            <label class="toggle-switch toggle-wa" title="Envoyer aussi par WhatsApp">
+              <input type="checkbox" class="toggle-wa-input" checked={upsellConfig.whatsapp_active} />
+              <span class="toggle-track"></span>
+              <span class="toggle-label-wa">WhatsApp</span>
+            </label>
+          )}
+          <label class="toggle-switch toggle-sms" title="Envoyer aussi par SMS">
+            <input type="checkbox" class="toggle-sms-input" checked={upsellConfig.sms_active} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label-sms">SMS</span>
+          </label>
+        </div>
+      </div>
+
+      <p class="card-note" style="margin:0 0 1rem;font-size:0.875rem;color:var(--fg-muted)">
+        Envoyé automatiquement 30 jours après l'achat pour proposer une montée en gamme ou un produit complémentaire.
+      </p>
+
+      {successType === 'template_upsell_j30' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      {errorType === 'template_upsell_j30' && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+
+      <div class="editor-tabs-row">
+        <div class="editor-tabs">
+          <button class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+          <button class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="manual">
+        <form method="POST" class="cust-form">
+          <input type="hidden" name="config_type" value="template_upsell_j30" />
+          <input type="hidden" name="value" class="hidden-value" value={JSON.stringify(upsellConfig)} />
+          <label class="form-label">Sujet</label>
+          <input type="text" class="form-input subject-input" placeholder="Sujet de l'email..." />
+          <label class="form-label" style="margin-top:0.25rem">Corps</label>
+          <textarea class="form-input cust-textarea body-input" rows={7} placeholder="Contenu de l'email..."></textarea>
+          <div class="cust-hints">
+            <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+            <div class="cust-hints-list">
+              {VARIABLE_HINTS['template_upsell_j30']!.map((v) => (
+                <code class="cust-hint" data-var={v}>{v}</code>
+              ))}
+            </div>
+          </div>
+          <div class="sms-editor" style="display:none">
+            <label class="form-label" style="margin-top:0.75rem">Corps du SMS</label>
+            <textarea class="form-input sms-body-input" rows={3} maxlength={160} disabled
+                      placeholder="Ex : Bonjour {{nom}}, découvrez notre nouvelle offre sur {{nom_formation}} : {{lien_acces}}"></textarea>
+            <div class="sms-counter"><span class="sms-char-count">0</span>/160</div>
+            <p class="sms-note">160 caractères max. Les variables sont remplacées par les vraies données.</p>
+          </div>
+          <div class="manual-actions">
+            <button type="submit" class="btn btn-primary cust-save-btn">Sauvegarder</button>
+            <button type="button" class="btn btn-secondary btn-improve">🔧 Améliorer avec l'IA</button>
+          </div>
+          <p class="ai-error improve-error"></p>
+        </form>
+        <div class="test-send-wrap">
+          <button type="button" class="btn btn-secondary btn-test-send"
+                  data-config-type="template_upsell_j30" data-email={auth.email}>
+            📧 M'envoyer un aperçu
+          </button>
+          <span class="test-send-feedback" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="tab-panel hidden" data-panel="generate">
+        <input type="text" class="form-input gen-formation" placeholder="Nom de votre formation" />
+        <select class="form-input gen-tone">
+          <option value="chaleureux">Chaleureux et bienveillant</option>
+          <option value="professionnel">Professionnel et direct</option>
+          <option value="motivant">Motivant et dynamique</option>
+        </select>
+        <input type="text" class="form-input gen-objective" placeholder="Objectif (ex : proposer une offre complémentaire)" />
         <button class="btn btn-primary btn-generate" style="align-self:flex-start">✨ Générer l'email</button>
         <p class="ai-error gen-error"></p>
         <div class="generation-result hidden">
