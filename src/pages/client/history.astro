@@ -40,6 +40,31 @@ function fmtDate(iso: string): string {
   const d = new Date(iso);
   return isNaN(d.getTime()) ? '—' : d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 }
+
+const ACTION_LABELS: Record<string, string> = {
+  email_sent: 'Email envoyé',
+  email_sent_onboarding_j0: 'Email bienvenue (J+0) envoyé',
+  email_sent_onboarding_j3: 'Email J+3 onboarding envoyé',
+  email_sent_onboarding_j7: 'Email J+7 onboarding envoyé',
+  email_sent_failed_payment_j1: 'Relance impayé J+1 envoyée',
+  email_sent_failed_payment_j3: 'Relance impayé J+3 envoyée',
+  email_sent_failed_payment_j7: 'Relance impayé J+7 envoyée',
+  payment_recovered: 'Paiement récupéré',
+  checkout_abandon_sent: 'Relance panier abandonné envoyée',
+  testimonial_j30_sent: 'Email témoignage J+30 envoyé',
+  testimonial_j60_sent: 'Email témoignage J+60 envoyé',
+  predunning_sent: 'Email pré-dunning envoyé',
+  churn_reengagement_sent: 'Email re-engagement envoyé',
+  coaching_j14_sent: 'Email coaching J+14 envoyé',
+  upsell_sent: 'Email upsell J+30 envoyé',
+  rapport_video_sent: 'Rapport vidéo envoyé',
+  vocal_call_sent: 'Appel vocal IA déclenché',
+  manual_send: 'Email manuel envoyé',
+  custom_automation: 'Automatisation personnalisée déclenchée',
+  payment_failed: 'Paiement échoué',
+  access_suspended: 'Accès suspendu',
+  access_restored: 'Accès rétabli',
+};
 ---
 
 <ClientLayout
@@ -81,7 +106,7 @@ function fmtDate(iso: string): string {
             {history.map((entry) => (
               <tr>
                 <td class="td-date">{fmtDate(entry.date)}</td>
-                <td class="td-action">{entry.action}</td>
+                <td class="td-action">{ACTION_LABELS[entry.action] ?? entry.action}</td>
                 <td class="td-details">
                   {entry.action === 'rapport_video_sent' && entry.details?.startsWith('http')
                     ? <a href={entry.details} target="_blank" rel="noopener noreferrer" class="hist-video-link">Voir la vidéo →</a>

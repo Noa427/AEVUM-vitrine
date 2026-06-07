@@ -48,6 +48,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     <h2>7. Cookies</h2>
     <p>AEVUM n'utilise pas de cookies publicitaires. Seuls des cookies techniques essentiels au fonctionnement du service sont utilisés.</p>
+    <p>Cookie utilisé par le portail client :</p>
+    <ul style="margin:0.5rem 0 0 1.25rem;color:var(--gray-light);display:flex;flex-direction:column;gap:0.25rem">
+      <li><strong>aevum_token</strong> — cookie d'authentification au portail client (HttpOnly, Secure, durée 7 jours). Supprimé à la déconnexion.</li>
+    </ul>
 
     <!-- RECOMMANDÉ : §5 — préciser le délai de réponse de 30 jours (Art. 12 RGPD) -->
     <!-- RECOMMANDÉ : §6 — détailler la conservation par type : données compte (durée abonnement + 30j), facturation (10 ans, obligation légale), logs (12 mois) -->

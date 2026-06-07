@@ -102,7 +102,7 @@ function fmtDate(iso: string): string {
     <div style="margin-bottom:2rem">
       <span class="accent-line" style="margin:0 0 1rem"></span>
       <h1 style="font-size:clamp(1.5rem,3vw,2rem)">
-        Élèves <span class="stu-total">({students.length})</span>
+        Élèves <span class="stu-total" id="stu-total-count">({students.length})</span>
       </h1>
     </div>
 
@@ -123,7 +123,7 @@ function fmtDate(iso: string): string {
 
     <!-- Tableau -->
     {students.length === 0 ? (
-      <div class="card" style="padding:1.5rem;color:var(--gray)">Aucun élève trouvé.</div>
+      <div class="card" style="padding:1.5rem;color:var(--gray)" id="stu-empty">Aucun élève trouvé.</div>
     ) : (
       <div class="card" style="padding:0;overflow:hidden">
         <div class="stu-table-wrap">
@@ -138,7 +138,7 @@ function fmtDate(iso: string): string {
                 <th>Dernière action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="stu-tbody">
               {students.map((s) => (
                 <tr class="stu-row"
                     data-id={s.id}
@@ -156,6 +156,15 @@ function fmtDate(iso: string): string {
             </tbody>
           </table>
         </div>
+      </div>
+    )}
+
+    <!-- Charger plus -->
+    {students.length >= 50 && (
+      <div style="display:flex;justify-content:center;margin-top:1.25rem" id="stu-loadmore-wrap">
+        <button type="button" class="btn btn-secondary" id="stu-loadmore">
+          Charger plus
+        </button>
       </div>
     )}
 
@@ -185,33 +194,78 @@ function fmtDate(iso: string): string {
     return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
   }
 
+  // Module-level state shared between initStudents() calls (page-load vs astro:page-load)
+  let _currentFilter = 'all';
+  let _currentSearch = '';
+  let _nextPage = 2;
+  let _loadingMore = false;
+
+  function fmtDateClient(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('fr-FR', { dateStyle: 'short' });
+  }
+
+  function getAllRows() {
+    return Array.from(document.querySelectorAll('#stu-tbody .stu-row'));
+  }
+
+  function applyFiltersGlobal() {
+    const q = _currentSearch.toLowerCase();
+    getAllRows().forEach((row) => {
+      const r = row;
+      const status = r.dataset.status ?? '';
+      const name   = (r.dataset.name ?? '').toLowerCase();
+      const email  = (r.dataset.email ?? '').toLowerCase();
+      const matchFilter = _currentFilter === 'all' || status === _currentFilter;
+      const matchSearch = !q || name.includes(q) || email.includes(q);
+      r.style.display = (matchFilter && matchSearch) ? '' : 'none';
+    });
+  }
+
+  function updateTotalCount() {
+    const el = document.getElementById('stu-total-count');
+    if (el) el.textContent = `(${getAllRows().length})`;
+  }
+
+  function attachRowHandler(row) {
+    if (row.dataset.rowInitialized) return;
+    row.dataset.rowInitialized = 'true';
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', () => {
+      openDrawer(row.dataset.id, row.dataset.name ?? '', row.dataset.email ?? '');
+    });
+  }
+
+  function buildRow(s) {
+    const statusLabels = STATUS_LABELS;
+    const tr = document.createElement('tr');
+    tr.className = 'stu-row';
+    tr.dataset.id     = s.id;
+    tr.dataset.name   = s.name ?? '';
+    tr.dataset.email  = s.email ?? '';
+    tr.dataset.status = s.status ?? '';
+    const statusLabel = statusLabels[s.status] ?? s.status;
+    const badgeClass  = `stu-badge stu-badge--${escapeHtml(s.status)}`;
+    tr.innerHTML = `
+      <td class="stu-td-name">${escapeHtml(s.name || '—')}</td>
+      <td class="stu-td-email">${escapeHtml(s.email)}</td>
+      <td><span class="${badgeClass}">${escapeHtml(statusLabel)}</span></td>
+      <td class="stu-td-date">${escapeHtml(fmtDateClient(s.created_at))}</td>
+      <td class="stu-td-count">${escapeHtml(String(s.emails_received ?? 0))}</td>
+      <td class="stu-td-action">${escapeHtml(s.last_action || '—')}</td>
+    `;
+    return tr;
+  }
+
   function initStudents() {
-    const rows = Array.from(document.querySelectorAll('.stu-row'));
-    const searchInput = document.getElementById('stu-search');
-    const pillsEl     = document.getElementById('stu-pills');
-    const overlay     = document.getElementById('stu-overlay');
-    const drawerClose = document.getElementById('drawer-close');
-    const drawerName  = document.getElementById('drawer-name');
-    const drawerEmail = document.getElementById('drawer-email');
-    const drawerBody  = document.getElementById('drawer-body');
+    const searchInput   = document.getElementById('stu-search');
+    const pillsEl       = document.getElementById('stu-pills');
+    const loadMoreWrap  = document.getElementById('stu-loadmore-wrap');
+    const loadMoreBtn   = document.getElementById('stu-loadmore');
 
-    if (!rows.length) return;
-
-    let currentFilter = 'all';
-    let currentSearch = '';
-
-    function applyFilters() {
-      rows.forEach((row) => {
-        const r = row;
-        const status = r.dataset.status ?? '';
-        const name   = (r.dataset.name ?? '').toLowerCase();
-        const email  = (r.dataset.email ?? '').toLowerCase();
-        const q = currentSearch.toLowerCase();
-        const matchFilter = currentFilter === 'all' || status === currentFilter;
-        const matchSearch = !q || name.includes(q) || email.includes(q);
-        r.style.display = (matchFilter && matchSearch) ? '' : 'none';
-      });
-    }
+    // Attach handlers to already-rendered SSR rows
+    getAllRows().forEach(attachRowHandler);
 
     if (pillsEl && !pillsEl.dataset.initialized) {
       pillsEl.dataset.initialized = 'true';
@@ -219,8 +273,8 @@ function fmtDate(iso: string): string {
         pill.addEventListener('click', () => {
           pillsEl.querySelectorAll('.stu-pill').forEach((p) => p.classList.remove('active'));
           pill.classList.add('active');
-          currentFilter = pill.dataset.filter ?? 'all';
-          applyFilters();
+          _currentFilter = pill.dataset.filter ?? 'all';
+          applyFiltersGlobal();
         });
       });
     }
@@ -228,12 +282,70 @@ function fmtDate(iso: string): string {
     if (searchInput && !searchInput.dataset.initialized) {
       searchInput.dataset.initialized = 'true';
       searchInput.addEventListener('input', () => {
-        currentSearch = searchInput.value;
-        applyFilters();
+        _currentSearch = searchInput.value;
+        applyFiltersGlobal();
       });
     }
 
-    function openDrawer(studentId, name, email) {
+    const overlay     = document.getElementById('stu-overlay');
+    const drawerClose = document.getElementById('drawer-close');
+
+    if (overlay && !overlay.dataset.initialized) {
+      overlay.dataset.initialized = 'true';
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDrawer(); });
+    }
+    if (drawerClose && !drawerClose.dataset.initialized) {
+      drawerClose.dataset.initialized = 'true';
+      drawerClose.addEventListener('click', closeDrawer);
+    }
+
+    if (loadMoreBtn && !loadMoreBtn.dataset.initialized) {
+      loadMoreBtn.dataset.initialized = 'true';
+      loadMoreBtn.addEventListener('click', async () => {
+        if (_loadingMore) return;
+        _loadingMore = true;
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Chargement…';
+        try {
+          const res = await fetch(`/api/students-page?page=${_nextPage}`);
+          if (res.status === 401) { _loadingMore = false; window.location.href = '/login'; return; }
+          const data = await res.json().catch(() => []);
+          const newStudents = Array.isArray(data) ? data : [];
+          const tbody = document.getElementById('stu-tbody');
+          if (tbody) {
+            newStudents.forEach((s) => {
+              const tr = buildRow(s);
+              tbody.appendChild(tr);
+              attachRowHandler(tr);
+            });
+          }
+          _nextPage++;
+          updateTotalCount();
+          applyFiltersGlobal();
+          if (newStudents.length < 50) {
+            loadMoreWrap?.remove();
+          } else {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Charger plus';
+          }
+        } catch {
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = 'Charger plus';
+        }
+        _loadingMore = false;
+      });
+    }
+  }
+
+  function closeDrawer() {
+    document.getElementById('stu-overlay')?.classList.add('hidden');
+  }
+
+  function openDrawer(studentId, name, email) {
+    const overlay    = document.getElementById('stu-overlay');
+    const drawerName  = document.getElementById('drawer-name');
+    const drawerEmail = document.getElementById('drawer-email');
+    const drawerBody  = document.getElementById('drawer-body');
       if (!overlay || !drawerName || !drawerEmail || !drawerBody) return;
       drawerName.textContent = name || email;
       drawerEmail.textContent = email;
@@ -294,6 +406,18 @@ function fmtDate(iso: string): string {
               </div>
               <div class="drawer-send-feedback hidden" id="drawer-send-feedback"></div>
             </div>
+            ${detail.phone ? `
+            <div class="drawer-section">
+              <div class="drawer-section-title">Appel vocal IA</div>
+              <button type="button" class="btn btn-secondary drawer-vocal-btn" id="drawer-vocal-btn"
+                      data-student-id="${escapeHtml(detail.id ?? studentId)}"
+                      style="display:flex;align-items:center;gap:0.5rem;align-self:flex-start">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+                Appel vocal IA
+              </button>
+              <div class="drawer-vocal-feedback hidden" id="drawer-vocal-feedback"></div>
+            </div>
+            ` : ''}
           `;
 
           const sendBtn     = drawerBody.querySelector('#drawer-send-btn');
@@ -347,25 +471,44 @@ function fmtDate(iso: string): string {
             }
             if (sendBtn) sendBtn.disabled = false;
           });
+
+          const vocalBtn     = drawerBody.querySelector('#drawer-vocal-btn');
+          const vocalFeedback = drawerBody.querySelector('#drawer-vocal-feedback');
+          vocalBtn?.addEventListener('click', async () => {
+            const vsid = vocalBtn.dataset.studentId ?? '';
+            if (vocalBtn) vocalBtn.disabled = true;
+            if (vocalFeedback) {
+              vocalFeedback.className = 'drawer-vocal-feedback';
+              vocalFeedback.textContent = 'Génération de l\'appel en cours…';
+              vocalFeedback.classList.remove('hidden');
+            }
+            try {
+              const res = await fetch('/api/vocal-send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ student_id: vsid }),
+              });
+              const data = await res.json().catch(() => ({}));
+              if (vocalFeedback) {
+                vocalFeedback.className = res.ok
+                  ? 'drawer-vocal-feedback drawer-send-feedback--ok'
+                  : 'drawer-vocal-feedback drawer-send-feedback--err';
+                vocalFeedback.textContent = res.ok
+                  ? (data.message ?? 'Appel en cours vers le numéro renseigné.')
+                  : (data.error ?? "Erreur lors du déclenchement de l'appel.");
+                vocalFeedback.classList.remove('hidden');
+              }
+            } catch {
+              if (vocalFeedback) {
+                vocalFeedback.className = 'drawer-vocal-feedback drawer-send-feedback--err';
+                vocalFeedback.textContent = 'Erreur réseau. Réessayez.';
+                vocalFeedback.classList.remove('hidden');
+              }
+            }
+            if (vocalBtn) vocalBtn.disabled = false;
+          });
         });
     }
-
-    function closeDrawer() {
-      overlay?.classList.add('hidden');
-    }
-
-    drawerClose?.addEventListener('click', closeDrawer);
-    overlay?.addEventListener('click', (e) => { if (e.target === overlay) closeDrawer(); });
-
-    rows.forEach((row) => {
-      if (row.dataset.rowInitialized) return;
-      row.dataset.rowInitialized = 'true';
-      row.style.cursor = 'pointer';
-      row.addEventListener('click', () => {
-        openDrawer(row.dataset.id, row.dataset.name ?? '', row.dataset.email ?? '');
-      });
-    });
-  }
 
   initStudents();
   document.addEventListener('astro:page-load', initStudents);
@@ -461,5 +604,6 @@ function fmtDate(iso: string): string {
   .drawer-send-feedback { font-size: 0.875rem; padding: 0.75rem 1rem; border-radius: var(--r-sm); }
   .drawer-send-feedback--ok  { background: rgba(16,185,129,0.1); color: #10B981; }
   .drawer-send-feedback--err { background: rgba(239,68,68,0.1); color: #EF4444; }
+  .drawer-vocal-feedback { font-size: 0.875rem; padding: 0.75rem 1rem; border-radius: var(--r-sm); margin-top: 0.5rem; }
   .hidden { display: none !important; }
 </style>

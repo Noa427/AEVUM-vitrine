@@ -64,8 +64,8 @@ const formationId = fmMatch?.[1] ?? null;
 | `/client/history?limit=N` | GET | `[{date, action, details?}]` |
 | `/client/configs` | GET | `[{config_type, value}]` |
 | `/client/configs` | PUT `{config_type, value}` | update config |
-| `/client/settings/password` | POST `{currentPassword, newPassword}` | |
-| `/client/settings/email` | POST `{currentPassword, newEmail}` | |
+| `/client/settings/password` | PUT `{currentPassword, newPassword}` | |
+| `/client/settings/email` | PUT `{currentPassword, newEmail}` | |
 | `/client/ai/generate` | POST `{emailType, formationName, tone, objective}` → `{subject, body}` | IA génération |
 | `/client/ai/improve` | POST `{content, emailType}` → `{subject, body}` | IA amélioration |
 | `/client/automations/custom` | GET | liste automatisations perso |
@@ -85,10 +85,13 @@ const formationId = fmMatch?.[1] ?? null;
 | `/client/blacklist` | DELETE `{email}` | retirer de la blacklist |
 | `/client/pause` | POST `{duration_days}` | activer pause (1/3/7/14/30 j) |
 | `/client/pause` | DELETE | désactiver pause |
+| `/client/vocal/send` | POST `{student_id}` | déclencher appel vocal IA |
+| `/client/settings/whatsapp` | POST `{phone_number_id, access_token}` | connecter WhatsApp |
+| `/client/settings/whatsapp` | DELETE | déconnecter WhatsApp |
 | `/client/forgot-password` | POST `{email}` | demande reset mdp |
 | `/client/reset-password` | POST `{token, newPassword}` | reset mdp |
 
-Config types : `sender_name`, `template_onboarding_j0`, `template_onboarding_j3`, `template_onboarding_j7`, `template_failed_payment_j1`, `template_failed_payment_j3`, `template_failed_payment_j7`
+Config types : `sender_name`, `template_onboarding_j0`, `template_onboarding_j3`, `template_onboarding_j7`, `template_failed_payment_j1`, `template_failed_payment_j3`, `template_failed_payment_j7`, `rapport_video_active`, `vocal_ia_active`
 
 **Templates par défaut (définis dans `customize.astro` → `DEFAULT_TEMPLATES`) :**
 - `template_onboarding_j0` : sujet "Bienvenue {{nom}}, voici vos accès"
@@ -108,11 +111,11 @@ Config types : `sender_name`, `template_onboarding_j0`, `template_onboarding_j3`
 | `/client/dashboard` | `src/pages/client/dashboard.astro` | Client | Stats, badges 3 états, 5 dernières activités, bannière pause |
 | `/client/history` | `src/pages/client/history.astro` | Client | Tableau Date/Type/Détails, pagination JS 50/page si >50 |
 | `/client/customize` | `src/pages/client/customize.astro` | Client | Éditeur templates (Manuel + IA), automatisations perso |
-| `/client/students` | `src/pages/client/students.astro` | Client | Liste élèves, filtres statut, modal détail, envoi manuel |
+| `/client/students` | `src/pages/client/students.astro` | Client | Liste élèves, filtres statut, drawer détail, envoi email manuel, appel vocal IA (si phone), pagination "Charger plus" |
 | `/client/blacklist` | `src/pages/client/blacklist.astro` | Client | Ajout/suppression emails blacklistés |
 | `/client/deliverability` | `src/pages/client/deliverability.astro` | Client | Guide SPF/DKIM/DMARC, affiche clé DKIM |
 | `/client/formations` | `src/pages/client/formations.astro` | Client | CRUD formations (visible si >1 formation) |
-| `/client/settings` | `src/pages/client/settings.astro` | Client | Mdp, email, mode pause, lien deliverability, logout |
+| `/client/settings` | `src/pages/client/settings.astro` | Client | Mdp, email, mode pause, WhatsApp, SMS, vocal IA toggle, rapport vidéo toggle, deliverability, logout |
 
 ## Layouts
 
@@ -152,9 +155,9 @@ Fournit : sidebar (logo, 8 liens nav dont Formations conditionnel si >1 formatio
 Toutes SSR (`prerender = false`). Pattern : auth via cookie → parse body → fetch backend avec Bearer token → forward réponse.
 Utilitaires partagés : `src/lib/api.ts` → `jsonRes(data, status)`, `UUID_V4` regex.
 
-Timeouts : 8 s pour tous les endpoints sauf IA (30 s).
+Timeouts : 8 s pour tous les endpoints sauf IA (30 s) et vocal (45 s).
 
-Routes qui transmettent `X-Formation-Id` : `config-update`, `blacklist-add`, `blacklist-remove`, `send-manual`, `student-detail`, `test-send`.
+Routes qui transmettent `X-Formation-Id` : `config-update`, `blacklist-add`, `blacklist-remove`, `send-manual`, `student-detail`, `test-send`, `vocal-send`.
 
 | Fichier | Méthode | Backend |
 |---------|---------|---------|
@@ -174,6 +177,7 @@ Routes qui transmettent `X-Formation-Id` : `config-update`, `blacklist-add`, `bl
 | `send-manual.ts` | POST | `/client/send-manual` |
 | `student-detail.ts` | GET | `/client/students/:id` |
 | `test-send.ts` | POST | `/client/test-send` |
+| `vocal-send.ts` | POST | `/client/vocal/send` (timeout 45s) |
 
 ## dashboard.astro — état actuel (shipped)
 - `Promise.allSettled` sur 5 appels : stats, automations, history, configs, me
@@ -185,7 +189,7 @@ Routes qui transmettent `X-Formation-Id` : `config-update`, `blacklist-add`, `bl
 - Bannière pause si `paused_until` non null (depuis `/client/me`)
 - Stats étendues : montant récupéré, taux récupération, taux ouverture/clic
 
-## Pages marketing — état actuel (2026-06-01, branche feat/phase2-features8-12)
+## Pages marketing — état actuel (2026-06-03)
 Pages `index`, `features`, `pricing`, `comment-ca-marche` mises à jour pour refléter le produit complet.
 
 **Tarifs actuels dans `pricing.astro` :**
@@ -196,17 +200,18 @@ Pages `index`, `features`, `pricing`, `comment-ca-marche` mises à jour pour ref
 | Standard | 2 500€ | 690€ | Permanent |
 | Premium | 4 500€ | 1 290€ | Permanent |
 
-Options : Abandons checkout (+200€/mois), Vocale IA (+350€/mois + usage), Module Notaire (149€/dossier).
+Options : Abandons checkout (+200€/mois), Vocale IA (+350€/mois + coûts d'appels), Module Notaire (bientôt disponible).
 
-**`features.astro`** : 5 catégories, 25 features. Variables frontmatter : `categories[]` (id, title, icon, features[]).
+**`features.astro`** : 5 catégories, 28 features (vocal IA réintégrée dans "Multi-canal & IA avancée"). Variables frontmatter : `categories[]` (id, title, icon, features[]).
 
 **`index.astro`** : preview Standard + Premium (pas les offres lancement). Piliers : Onboarding, Récupération impayés, Dashboard & stats ROI, Portail complet.
 
 ## TODO — prochaine session
-- Tracker les 3 fichiers non-commités git (`src/lib/api.ts`, `forgot-password.astro`, `reset-password.astro`)
+- Committer `src/pages/api/vocal-send.ts` (fichier présent mais non tracké git)
 - Tests E2E portail client (login → customize → save template → rename → delete automation)
 - Déploiement Vercel : vérifier variables d'env `AEVUM_URL` + `JWT_SECRET` en production
 - Mettre à jour `pricing.astro` quand les places lancement sont prises (supprimer la section "Offres de lancement")
+- F13 vocal IA : tester le bouton "Appel vocal IA" dans le drawer élève une fois le backend déployé
 
 ## CSS
 `global.css` est intentionnellement vide — tous les styles sont injectés via `<style is:global>` dans les layouts (pattern Astro, bypasse les caches).
@@ -251,6 +256,7 @@ npm run build   # vérification TypeScript + build Vercel
 - API routes proxy Astro (`src/pages/api/*.ts`) pour les appels backend nécessitant le Bearer token depuis JS client
 - UUID validation : utiliser `UUID_V4` importé depuis `src/lib/api.ts` (ne pas redéfinir localement)
 - X-Formation-Id : toujours transmettre le cookie `aevum_formation_id` en header dans les routes proxy concernées
+- Navigation 2 niveaux (`customize.astro`) : `CAT_KEYS` mappe catégorie→templates, `initCategoryTabs()` gère les onglets catégorie, `initConfigTabs()` gère les sous-onglets template — ne pas briser ce couplage
 
 ## RÈGLES POUR ÉCONOMISER LES TOKENS
 - Toujours lire CLAUDE.md en début de session

@@ -41,7 +41,7 @@ if (Astro.request.method === 'POST') {
     } else {
       try {
         const res = await fetch(`${import.meta.env.AEVUM_URL}/client/settings/password`, {
-          method: 'POST',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${auth.token}`,
@@ -74,7 +74,7 @@ if (Astro.request.method === 'POST') {
 
     if (!emailError) try {
       const res = await fetch(`${import.meta.env.AEVUM_URL}/client/settings/email`, {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${auth.token}`,
@@ -136,7 +136,7 @@ if (Astro.request.method === 'POST') {
       whatsappError = 'Veuillez renseigner les deux champs.';
     } else {
       try {
-        const res = await fetch(`${import.meta.env.AEVUM_URL}/client/whatsapp/connect`, {
+        const res = await fetch(`${import.meta.env.AEVUM_URL}/client/settings/whatsapp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
           body: JSON.stringify({ phone_number_id: phoneNumberId, access_token: accessToken }),
@@ -153,7 +153,7 @@ if (Astro.request.method === 'POST') {
 
   if (action === 'whatsapp_disconnect') {
     try {
-      const res = await fetch(`${import.meta.env.AEVUM_URL}/client/whatsapp/connect`, {
+      const res = await fetch(`${import.meta.env.AEVUM_URL}/client/settings/whatsapp`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${auth.token}` },
         signal: AbortSignal.timeout(8000),
@@ -178,7 +178,7 @@ const [meResult, configsResult] = await Promise.allSettled([
   }),
 ]);
 
-let meData: { paused_until?: string | null; whatsapp_connected?: boolean } | null = null;
+let meData: { paused_until?: string | null; whatsapp_connected?: boolean; plan?: string } | null = null;
 if (meResult.status === 'fulfilled') {
   if (meResult.value.status === 401) {
     Astro.cookies.delete('aevum_token', { path: '/' });
@@ -197,7 +197,9 @@ if (configsResult.status === 'fulfilled' && configsResult.value.ok) {
 
 const pausedUntil: string | null = meData?.paused_until ?? null;
 const whatsappConnected: boolean = meData?.whatsapp_connected ?? false;
+const isPremium: boolean = meData?.plan === 'premium';
 const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 'true';
+const vocalIaActive: boolean = settingsConfigs['vocal_ia_active'] === 'true';
 ---
 
 <ClientLayout
@@ -366,18 +368,56 @@ const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 
     <!-- F17 — Rapport vidéo hebdomadaire -->
     <div class="card settings-card">
       <h2 class="settings-card-title">Rapport vidéo hebdomadaire</h2>
+      {isPremium ? (
+        <>
+          <label class="toggle-switch" style="margin-bottom:1rem">
+            <input type="checkbox" id="rapport-toggle-input" checked={rapportVideoActive} />
+            <span class="toggle-track"></span>
+            <span class="toggle-label" id="rapport-toggle-label">{rapportVideoActive ? 'Actif' : 'Inactif'}</span>
+          </label>
+          <p style="color:var(--gray-light);font-size:0.9375rem;margin:0 0 0.5rem">
+            Chaque lundi à 8h, vous recevez par email une vidéo de 60-90 secondes résumant votre semaine : nouveaux élèves, impayés récupérés, emails envoyés.
+          </p>
+          <p style="color:var(--gray);font-size:0.875rem;margin:0">
+            Voix off française générée par IA + slides automatiques.
+          </p>
+          <p class="rapport-error" style="display:none;color:#EF4444;font-size:0.875rem;margin-top:0.5rem"></p>
+        </>
+      ) : (
+        <>
+          <label class="toggle-switch" style="margin-bottom:1rem;opacity:0.5;cursor:not-allowed">
+            <input type="checkbox" id="rapport-toggle-input" disabled />
+            <span class="toggle-track"></span>
+            <span class="toggle-label">Inactif</span>
+          </label>
+          <p style="color:var(--gray-light);font-size:0.9375rem;margin:0 0 0.5rem">
+            Chaque lundi à 8h, vous recevez par email une vidéo de 60-90 secondes résumant votre semaine : nouveaux élèves, impayés récupérés, emails envoyés.
+          </p>
+          <p style="color:var(--gray);font-size:0.875rem;margin:0 0 0.75rem">
+            Voix off française générée par IA + slides automatiques.
+          </p>
+          <p style="color:var(--gray-light);font-size:0.875rem;margin:0;font-style:italic">
+            Disponible avec le plan Premium.
+          </p>
+        </>
+      )}
+    </div>
+
+    <!-- F13 — Récupération vocale IA -->
+    <div class="card settings-card">
+      <h2 class="settings-card-title">Récupération vocale IA</h2>
       <label class="toggle-switch" style="margin-bottom:1rem">
-        <input type="checkbox" id="rapport-toggle-input" checked={rapportVideoActive} />
+        <input type="checkbox" id="vocal-toggle-input" checked={vocalIaActive} />
         <span class="toggle-track"></span>
-        <span class="toggle-label" id="rapport-toggle-label">{rapportVideoActive ? 'Actif' : 'Inactif'}</span>
+        <span class="toggle-label" id="vocal-toggle-label">{vocalIaActive ? 'Actif' : 'Inactif'}</span>
       </label>
       <p style="color:var(--gray-light);font-size:0.9375rem;margin:0 0 0.5rem">
-        Chaque lundi à 8h, vous recevez par email une vidéo de 60-90 secondes résumant votre semaine : nouveaux élèves, impayés récupérés, emails envoyés.
+        Quand activé, AEVUM passe automatiquement un appel téléphonique à l'élève après la relance J+7 sans paiement. Un message vocal personnalisé (voix IA française) lui rappelle le montant dû et le lien de paiement.
       </p>
       <p style="color:var(--gray);font-size:0.875rem;margin:0">
-        Voix off française générée par IA + slides automatiques.
+        Nécessite que le numéro de téléphone de l'élève soit renseigné lors de l'achat sur Stripe. Coûts d'appels facturés à la consommation en supplément de l'option.
       </p>
-      <p class="rapport-error" style="display:none;color:#EF4444;font-size:0.875rem;margin-top:0.5rem"></p>
+      <p class="vocal-error" style="display:none;color:#EF4444;font-size:0.875rem;margin-top:0.5rem"></p>
     </div>
 
     <!-- Deliverability -->
@@ -415,7 +455,7 @@ const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 
     const toggle  = document.getElementById('rapport-toggle-input') as HTMLInputElement | null;
     const label   = document.getElementById('rapport-toggle-label');
     const errorEl = document.querySelector<HTMLElement>('.rapport-error');
-    if (!toggle || toggle.dataset.initialized) return;
+    if (!toggle || toggle.disabled || toggle.dataset.initialized) return;
     toggle.dataset.initialized = 'true';
     toggle.addEventListener('change', async () => {
       const active = toggle.checked;
@@ -437,6 +477,33 @@ const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 
   }
   initRapportToggle();
   document.addEventListener('astro:page-load', initRapportToggle);
+
+  function initVocalToggle() {
+    const toggle  = document.getElementById('vocal-toggle-input') as HTMLInputElement | null;
+    const label   = document.getElementById('vocal-toggle-label');
+    const errorEl = document.querySelector<HTMLElement>('.vocal-error');
+    if (!toggle || toggle.dataset.initialized) return;
+    toggle.dataset.initialized = 'true';
+    toggle.addEventListener('change', async () => {
+      const active = toggle.checked;
+      if (label) label.textContent = active ? 'Actif' : 'Inactif';
+      if (errorEl) errorEl.style.display = 'none';
+      try {
+        const res = await fetch('/api/config-update', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config_type: 'vocal_ia_active', value: active ? 'true' : 'false' }),
+        });
+        if (!res.ok) throw new Error();
+      } catch {
+        toggle.checked = !active;
+        if (label) label.textContent = !active ? 'Actif' : 'Inactif';
+        if (errorEl) { errorEl.textContent = 'Erreur lors de la sauvegarde.'; errorEl.style.display = ''; }
+      }
+    });
+  }
+  initVocalToggle();
+  document.addEventListener('astro:page-load', initVocalToggle);
 </script>
 
 </ClientLayout>
@@ -513,5 +580,8 @@ const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 
   }
   #rapport-toggle-input:checked + .toggle-track { background: #059669; }
   #rapport-toggle-input:checked + .toggle-track::after { transform: translateX(1rem); }
+  #vocal-toggle-input { display: none; }
+  #vocal-toggle-input:checked + .toggle-track { background: #059669; }
+  #vocal-toggle-input:checked + .toggle-track::after { transform: translateX(1rem); }
   .toggle-label { font-size: 0.875rem; color: var(--gray-light); }
 </style>
