@@ -178,7 +178,7 @@ const [meResult, configsResult] = await Promise.allSettled([
   }),
 ]);
 
-let meData: { paused_until?: string | null; whatsapp_connected?: boolean; plan?: string } | null = null;
+let meData: { paused_until?: string | null; whatsapp_connected?: boolean; plan?: string; option_vocal?: boolean } | null = null;
 if (meResult.status === 'fulfilled') {
   if (meResult.value.status === 401) {
     Astro.cookies.delete('aevum_token', { path: '/' });
@@ -200,6 +200,7 @@ const whatsappConnected: boolean = meData?.whatsapp_connected ?? false;
 const isPremium: boolean = meData?.plan === 'premium';
 const rapportVideoActive: boolean = settingsConfigs['rapport_video_active'] === 'true';
 const vocalIaActive: boolean = settingsConfigs['vocal_ia_active'] === 'true';
+const optionVocal: boolean = meData?.option_vocal === true;
 ---
 
 <ClientLayout
@@ -385,19 +386,20 @@ const vocalIaActive: boolean = settingsConfigs['vocal_ia_active'] === 'true';
         </>
       ) : (
         <>
-          <label class="toggle-switch" style="margin-bottom:1rem;opacity:0.5;cursor:not-allowed">
-            <input type="checkbox" id="rapport-toggle-input" disabled />
-            <span class="toggle-track"></span>
-            <span class="toggle-label">Inactif</span>
-          </label>
+          <div class="lock-row">
+            <label class="toggle-switch" style="margin:0;opacity:0.5;cursor:not-allowed">
+              <input type="checkbox" id="rapport-toggle-input" disabled />
+              <span class="toggle-track"></span>
+              <span class="toggle-label">Inactif</span>
+            </label>
+            <span class="lock-badge">Plan Premium requis</span>
+            <a href="/contact" class="lock-link">En savoir plus →</a>
+          </div>
           <p style="color:var(--gray-light);font-size:0.9375rem;margin:0 0 0.5rem">
             Chaque lundi à 8h, vous recevez par email une vidéo de 60-90 secondes résumant votre semaine : nouveaux élèves, impayés récupérés, emails envoyés.
           </p>
-          <p style="color:var(--gray);font-size:0.875rem;margin:0 0 0.75rem">
+          <p style="color:var(--gray);font-size:0.875rem;margin:0">
             Voix off française générée par IA + slides automatiques.
-          </p>
-          <p style="color:var(--gray-light);font-size:0.875rem;margin:0;font-style:italic">
-            Disponible avec le plan Premium.
           </p>
         </>
       )}
@@ -406,11 +408,23 @@ const vocalIaActive: boolean = settingsConfigs['vocal_ia_active'] === 'true';
     <!-- F13 — Récupération vocale IA -->
     <div class="card settings-card">
       <h2 class="settings-card-title">Récupération vocale IA</h2>
-      <label class="toggle-switch" style="margin-bottom:1rem">
-        <input type="checkbox" id="vocal-toggle-input" checked={vocalIaActive} />
-        <span class="toggle-track"></span>
-        <span class="toggle-label" id="vocal-toggle-label">{vocalIaActive ? 'Actif' : 'Inactif'}</span>
-      </label>
+      {optionVocal ? (
+        <label class="toggle-switch" style="margin-bottom:1rem">
+          <input type="checkbox" id="vocal-toggle-input" checked={vocalIaActive} />
+          <span class="toggle-track"></span>
+          <span class="toggle-label" id="vocal-toggle-label">{vocalIaActive ? 'Actif' : 'Inactif'}</span>
+        </label>
+      ) : (
+        <div class="lock-row" style="margin-bottom:1rem">
+          <label class="toggle-switch" style="margin:0;opacity:0.5;cursor:not-allowed">
+            <input type="checkbox" id="vocal-toggle-input" disabled />
+            <span class="toggle-track"></span>
+            <span class="toggle-label">Inactif</span>
+          </label>
+          <span class="lock-badge">Option +350€/mois</span>
+          <a href="/contact" class="lock-link">En savoir plus →</a>
+        </div>
+      )}
       <p style="color:var(--gray-light);font-size:0.9375rem;margin:0 0 0.5rem">
         Quand activé, AEVUM passe automatiquement un appel téléphonique à l'élève après la relance J+7 sans paiement. Un message vocal personnalisé (voix IA française) lui rappelle le montant dû et le lien de paiement.
       </p>
@@ -482,7 +496,7 @@ const vocalIaActive: boolean = settingsConfigs['vocal_ia_active'] === 'true';
     const toggle  = document.getElementById('vocal-toggle-input') as HTMLInputElement | null;
     const label   = document.getElementById('vocal-toggle-label');
     const errorEl = document.querySelector<HTMLElement>('.vocal-error');
-    if (!toggle || toggle.dataset.initialized) return;
+    if (!toggle || toggle.disabled || toggle.dataset.initialized) return;
     toggle.dataset.initialized = 'true';
     toggle.addEventListener('change', async () => {
       const active = toggle.checked;
@@ -561,6 +575,14 @@ const vocalIaActive: boolean = settingsConfigs['vocal_ia_active'] === 'true';
     transform: translateY(-1px);
   }
   .wa-connected-badge { color: #10B981; font-weight: 500; }
+
+  .lock-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .lock-badge {
+    display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 600;
+    background: var(--dark-elevated); color: var(--gray);
+  }
+  .lock-link { font-size: 0.875rem; color: #2E8BF0; text-decoration: underline; white-space: nowrap; }
 
   /* Toggle switch — rapport vidéo (CSS scoped, not leaking from customize.astro) */
   #rapport-toggle-input { display: none; }
