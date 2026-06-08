@@ -201,60 +201,7 @@ try {
 </div>
 <div class="formations-modal-overlay" id="formations-overlay" style="display:none"></div>
 
-<script>
-  function initFormations() {
-    // Rename modal
-    document.querySelectorAll<HTMLButtonElement>('.btn-inline-rename').forEach((btn) => {
-      if (btn.dataset.initialized) return;
-      btn.dataset.initialized = 'true';
-      btn.addEventListener('click', () => {
-        const modal   = document.getElementById('rename-modal')!;
-        const overlay = document.getElementById('formations-overlay')!;
-        const idInput = document.getElementById('rename-id') as HTMLInputElement;
-        const nameInput = document.getElementById('rename-input') as HTMLInputElement;
-        idInput.value   = btn.dataset.id!;
-        nameInput.value = btn.dataset.name!;
-        modal.style.display   = '';
-        overlay.style.display = '';
-        nameInput.focus();
-      });
-    });
-
-    document.getElementById('rename-cancel')?.addEventListener('click', () => {
-      document.getElementById('rename-modal')!.style.display   = 'none';
-      document.getElementById('formations-overlay')!.style.display = 'none';
-    });
-
-    // Delete modal
-    document.querySelectorAll<HTMLButtonElement>('.btn-confirm-delete').forEach((btn) => {
-      if (btn.dataset.initialized) return;
-      btn.dataset.initialized = 'true';
-      btn.addEventListener('click', () => {
-        const modal   = document.getElementById('delete-modal')!;
-        const overlay = document.getElementById('formations-overlay')!;
-        const idInput = document.getElementById('delete-id') as HTMLInputElement;
-        const nameEl  = modal.querySelector('.delete-modal-name')!;
-        idInput.value      = btn.dataset.id!;
-        nameEl.textContent = btn.dataset.name!;
-        modal.style.display   = '';
-        overlay.style.display = '';
-      });
-    });
-
-    document.getElementById('delete-cancel')?.addEventListener('click', () => {
-      document.getElementById('delete-modal')!.style.display   = 'none';
-      document.getElementById('formations-overlay')!.style.display = 'none';
-    });
-
-    document.getElementById('formations-overlay')?.addEventListener('click', () => {
-      document.getElementById('rename-modal')!.style.display   = 'none';
-      document.getElementById('delete-modal')!.style.display   = 'none';
-      document.getElementById('formations-overlay')!.style.display = 'none';
-    });
-  }
-  initFormations();
-  document.addEventListener('astro:page-load', initFormations);
-</script>
+<script src="/scripts/formations.js" is:inline></script>
 
 <style>
 .form-section { padding: 3rem 0 4rem; }

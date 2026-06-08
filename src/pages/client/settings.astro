@@ -464,61 +464,7 @@ const optionVocal: boolean = meData?.option_vocal === true;
   </div>
 </section>
 
-<script>
-  function initRapportToggle() {
-    const toggle  = document.getElementById('rapport-toggle-input') as HTMLInputElement | null;
-    const label   = document.getElementById('rapport-toggle-label');
-    const errorEl = document.querySelector<HTMLElement>('.rapport-error');
-    if (!toggle || toggle.disabled || toggle.dataset.initialized) return;
-    toggle.dataset.initialized = 'true';
-    toggle.addEventListener('change', async () => {
-      const active = toggle.checked;
-      if (label) label.textContent = active ? 'Actif' : 'Inactif';
-      if (errorEl) errorEl.style.display = 'none';
-      try {
-        const res = await fetch('/api/config-update', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ config_type: 'rapport_video_active', value: active ? 'true' : 'false' }),
-        });
-        if (!res.ok) throw new Error();
-      } catch {
-        toggle.checked = !active;
-        if (label) label.textContent = !active ? 'Actif' : 'Inactif';
-        if (errorEl) { errorEl.textContent = 'Erreur lors de la sauvegarde.'; errorEl.style.display = ''; }
-      }
-    });
-  }
-  initRapportToggle();
-  document.addEventListener('astro:page-load', initRapportToggle);
-
-  function initVocalToggle() {
-    const toggle  = document.getElementById('vocal-toggle-input') as HTMLInputElement | null;
-    const label   = document.getElementById('vocal-toggle-label');
-    const errorEl = document.querySelector<HTMLElement>('.vocal-error');
-    if (!toggle || toggle.disabled || toggle.dataset.initialized) return;
-    toggle.dataset.initialized = 'true';
-    toggle.addEventListener('change', async () => {
-      const active = toggle.checked;
-      if (label) label.textContent = active ? 'Actif' : 'Inactif';
-      if (errorEl) errorEl.style.display = 'none';
-      try {
-        const res = await fetch('/api/config-update', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ config_type: 'vocal_ia_active', value: active ? 'true' : 'false' }),
-        });
-        if (!res.ok) throw new Error();
-      } catch {
-        toggle.checked = !active;
-        if (label) label.textContent = !active ? 'Actif' : 'Inactif';
-        if (errorEl) { errorEl.textContent = 'Erreur lors de la sauvegarde.'; errorEl.style.display = ''; }
-      }
-    });
-  }
-  initVocalToggle();
-  document.addEventListener('astro:page-load', initVocalToggle);
-</script>
+<script src="/scripts/settings.js" is:inline></script>
 
 </ClientLayout>
 

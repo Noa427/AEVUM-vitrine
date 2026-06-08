@@ -40,9 +40,7 @@ const showFormationsLink = formations.length > 1;
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <script is:inline>
-    (function(){var t=localStorage.getItem('aevum_theme'),p=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',t||p);})();
-  </script>
+  <script src="/theme-init.js" is:inline></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
   <meta name="description" content={description} />
@@ -52,7 +50,7 @@ const showFormationsLink = formations.length > 1;
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" media="print" />
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" /></noscript>
   <ClientRouter />
   <link rel="prefetch" href="/client/dashboard" />
@@ -168,72 +166,7 @@ const showFormationsLink = formations.length > 1;
 
   </div>
 
-  <script>
-    const hamburger = document.getElementById('cl-hamburger') as HTMLButtonElement | null;
-    const sidebar   = document.getElementById('cl-sidebar');
-    const overlay   = document.getElementById('cl-overlay');
-    function toggleMenu(open: boolean) {
-      sidebar?.classList.toggle('cl-sidebar--open', open);
-      overlay?.classList.toggle('cl-overlay--visible', open);
-      hamburger?.setAttribute('aria-expanded', String(open));
-    }
-    hamburger?.addEventListener('click', () => {
-      const isOpen = hamburger.getAttribute('aria-expanded') === 'true';
-      toggleMenu(!isOpen);
-    });
-    overlay?.addEventListener('click', () => toggleMenu(false));
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && hamburger?.getAttribute('aria-expanded') === 'true') {
-        toggleMenu(false);
-        hamburger?.focus();
-      }
-    });
-    document.addEventListener('astro:before-swap', () => toggleMenu(false));
-
-    function applyTheme() {
-      const t = localStorage.getItem('aevum_theme') ||
-        (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-      document.documentElement.setAttribute('data-theme', t);
-    }
-    applyTheme();
-    document.addEventListener('astro:after-swap', applyTheme);
-
-    function initThemeToggle() {
-      const btn = document.getElementById('theme-toggle') as HTMLButtonElement | null;
-      if (!btn || btn.dataset.initialized) return;
-      btn.dataset.initialized = 'true';
-      function update(theme: string) {
-        const sun = btn!.querySelector('.icon-sun') as HTMLElement | null;
-        const moon = btn!.querySelector('.icon-moon') as HTMLElement | null;
-        const label = btn!.querySelector('.cl-theme-label') as HTMLElement | null;
-        if (sun) sun.style.display = theme === 'dark' ? 'block' : 'none';
-        if (moon) moon.style.display = theme === 'light' ? 'block' : 'none';
-        if (label) label.textContent = theme === 'dark' ? 'Mode clair' : 'Mode sombre';
-        btn!.setAttribute('aria-label', theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre');
-      }
-      update(document.documentElement.getAttribute('data-theme') || 'dark');
-      btn.addEventListener('click', () => {
-        const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('aevum_theme', next);
-        update(next);
-      });
-    }
-    initThemeToggle();
-    document.addEventListener('astro:page-load', initThemeToggle);
-
-    function initFormationSelector() {
-      const sel = document.getElementById('formation-select') as HTMLSelectElement | null;
-      if (!sel || sel.dataset.initialized) return;
-      sel.dataset.initialized = 'true';
-      sel.addEventListener('change', () => {
-        document.cookie = `aevum_formation_id=${sel.value}; path=/; SameSite=Strict; Secure; Max-Age=86400`;
-        window.location.reload();
-      });
-    }
-    initFormationSelector();
-    document.addEventListener('astro:page-load', initFormationSelector);
-  </script>
+  <script src="/scripts/client-layout.js" is:inline></script>
 
 </body>
 </html>

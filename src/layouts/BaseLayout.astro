@@ -18,9 +18,7 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <script is:inline>
-    (function(){var t=localStorage.getItem('aevum_theme'),p=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',t||p);})();
-  </script>
+  <script src="/theme-init.js" is:inline></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
   <meta name="description" content={description} />
@@ -42,7 +40,7 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" media="print" />
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" /></noscript>
 
   <ClientRouter />
@@ -67,47 +65,7 @@ const fullCanonical = canonical ? `${siteUrl}${canonical}` : siteUrl + Astro.url
   </main>
   <Footer />
 
-  <script>
-    function initReveal() {
-      const observer = new IntersectionObserver(
-        (entries) => entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.remove('will-animate');
-            e.target.classList.add('visible');
-            observer.unobserve(e.target);
-          }
-        }),
-        { threshold: 0.08, rootMargin: '0px 0px -32px 0px' }
-      );
-      const vh = window.innerHeight;
-      document.querySelectorAll('.reveal:not(.visible)').forEach((el) => {
-        const top = el.getBoundingClientRect().top;
-        if (top < vh - 32) el.classList.add('visible');
-        else { el.classList.add('will-animate'); observer.observe(el); }
-      });
-    }
-    function initFAQ() {
-      document.querySelectorAll('.faq-question').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const item = btn.closest('.faq-item');
-          if (item) {
-            const isOpen = item.classList.contains('open');
-            item.parentElement?.querySelectorAll('.faq-item.open').forEach((el) => el.classList.remove('open'));
-            if (!isOpen) item.classList.add('open');
-          }
-        });
-      });
-    }
-    function applyTheme() {
-      const t = localStorage.getItem('aevum_theme') ||
-        (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-      document.documentElement.setAttribute('data-theme', t);
-    }
-    applyTheme();
-    initReveal();
-    initFAQ();
-    document.addEventListener('astro:after-swap', () => { applyTheme(); initReveal(); initFAQ(); });
-  </script>
+  <script src="/scripts/base-layout.js" is:inline></script>
 </body>
 </html>
 

@@ -66,41 +66,7 @@ const navLinks = [
   </div>
 </header>
 
-<script>
-  function initMenu() {
-    const toggle = document.querySelector('.nav__toggle') as HTMLButtonElement | null;
-    const mobile = document.getElementById('nav-mobile');
-    if (!toggle || !mobile) return;
-    toggle.addEventListener('click', () => {
-      const isOpen = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!isOpen));
-      mobile.classList.toggle('is-open');
-      mobile.setAttribute('aria-hidden', String(isOpen));
-    });
-  }
-  function initThemeToggle() {
-    const btn = document.getElementById('theme-toggle') as HTMLButtonElement | null;
-    if (!btn || btn.dataset.initialized) return;
-    btn.dataset.initialized = 'true';
-    function update(theme: string) {
-      const sun = btn!.querySelector('.icon-sun') as HTMLElement | null;
-      const moon = btn!.querySelector('.icon-moon') as HTMLElement | null;
-      if (sun) sun.style.display = theme === 'dark' ? 'block' : 'none';
-      if (moon) moon.style.display = theme === 'light' ? 'block' : 'none';
-      btn!.setAttribute('aria-label', theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre');
-    }
-    update(document.documentElement.getAttribute('data-theme') || 'dark');
-    btn.addEventListener('click', () => {
-      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('aevum_theme', next);
-      update(next);
-    });
-  }
-  initMenu();
-  initThemeToggle();
-  document.addEventListener('astro:after-swap', () => { initMenu(); initThemeToggle(); });
-</script>
+<script src="/scripts/header.js" is:inline></script>
 
 <style>
   /* ── Floating pill nav ── */

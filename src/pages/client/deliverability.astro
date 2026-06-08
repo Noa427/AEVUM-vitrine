@@ -190,47 +190,7 @@ const DMARC_VALUE = 'v=DMARC1; p=quarantine; rua=mailto:dmarc@votre-domaine.com'
   </div>
 </section>
 
-<script>
-  function initDeliverability() {
-    const STORAGE_KEY = 'aevum_deliverability_steps';
-    let done: number[] = [];
-    try { done = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]'); } catch {}
-
-    done.forEach((n) => {
-      document.querySelector(`.del-step[data-step="${n}"]`)?.classList.add('step--done');
-    });
-
-    document.querySelectorAll<HTMLButtonElement>('.del-complete-btn').forEach((btn) => {
-      if (btn.dataset.initialized) return;
-      btn.dataset.initialized = 'true';
-      btn.addEventListener('click', () => {
-        const step = parseInt(btn.dataset.step!);
-        if (!done.includes(step)) done.push(step);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
-        btn.closest('.del-step')?.classList.add('step--done');
-      });
-    });
-
-    document.querySelectorAll<HTMLButtonElement>('.del-copy-btn').forEach((btn) => {
-      if (btn.dataset.initialized) return;
-      btn.dataset.initialized = 'true';
-      btn.addEventListener('click', async () => {
-        const targetId = btn.dataset.target!;
-        const el = document.getElementById(targetId);
-        if (!el) return;
-        const text = el.textContent ?? '';
-        try {
-          await navigator.clipboard.writeText(text);
-          const orig = btn.textContent;
-          btn.textContent = 'Copié !';
-          setTimeout(() => { btn.textContent = orig; }, 1500);
-        } catch { /* ignore */ }
-      });
-    });
-  }
-  initDeliverability();
-  document.addEventListener('astro:page-load', initDeliverability);
-</script>
+<script src="/scripts/deliverability.js" is:inline></script>
 
 <style>
 .del-section { padding: 3rem 0 4rem; }

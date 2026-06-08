@@ -124,51 +124,7 @@ const ACTION_LABELS: Record<string, string> = {
 
 </ClientLayout>
 
-<script>
-  function initPagination() {
-    const PAGE_SIZE = 50;
-    const table = document.getElementById('hist-table');
-    if (!table) return;
-    // Remove existing pager if re-initialising after navigation
-    document.querySelector('.hist-pager')?.remove();
-    const rows = Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr'));
-    // Reset visibility from a previous visit
-    rows.forEach((r) => (r.style.display = ''));
-    if (rows.length <= PAGE_SIZE) return;
-
-    let currentPage = 0;
-    const totalPages = Math.ceil(rows.length / PAGE_SIZE);
-
-    const pager = document.createElement('div');
-    pager.className = 'hist-pager';
-    pager.innerHTML = `
-      <button class="btn btn-secondary hist-btn" id="hist-prev" disabled>← Précédent</button>
-      <span class="hist-page-info" id="hist-info"></span>
-      <button class="btn btn-secondary hist-btn" id="hist-next">Suivant →</button>
-    `;
-    table.closest('.hist-card')?.after(pager);
-
-    const prevBtn = document.getElementById('hist-prev') as HTMLButtonElement;
-    const nextBtn = document.getElementById('hist-next') as HTMLButtonElement;
-    const infoEl  = document.getElementById('hist-info');
-
-    function showPage(page: number) {
-      rows.forEach((row, i) => {
-        row.style.display = (i >= page * PAGE_SIZE && i < (page + 1) * PAGE_SIZE) ? '' : 'none';
-      });
-      currentPage = page;
-      if (infoEl) infoEl.textContent = `Page ${page + 1} / ${totalPages}`;
-      prevBtn.disabled = page === 0;
-      nextBtn.disabled = page === totalPages - 1;
-    }
-
-    prevBtn.addEventListener('click', () => showPage(currentPage - 1));
-    nextBtn.addEventListener('click', () => showPage(currentPage + 1));
-    showPage(0);
-  }
-  initPagination();
-  document.addEventListener('astro:page-load', initPagination);
-</script>
+<script src="/scripts/history.js" is:inline></script>
 
 <style>
   .history-section { padding-top: 0; }
