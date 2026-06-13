@@ -127,6 +127,8 @@ if (customAutoResult.status === 'fulfilled' && customAutoResult.value.ok) {
   customAutomations = Array.isArray(arr) ? arr : [];
 }
 
+const autoLimitReached = customAutomations.length >= 10;
+
 let whatsappConnected = false;
 let optionCheckout = false;
 if (meResult.status === 'fulfilled' && meResult.value.ok) {
@@ -1439,8 +1441,14 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
     <div class="auto-section">
       <div class="auto-section-header">
         <h2 class="auto-section-title">Mes automatisations personnalisées</h2>
-        <button type="button" class="btn btn-primary" id="btn-open-auto-modal">+ Créer une automatisation</button>
+        <button type="button" class="btn btn-primary" id="btn-open-auto-modal" disabled={autoLimitReached}>+ Créer une automatisation</button>
       </div>
+
+      {autoLimitReached && (
+        <p class="auto-limit-msg" role="status">
+          Limite de 10 automatisations personnalisées atteinte. Supprimez-en une pour en créer une nouvelle.
+        </p>
+      )}
 
       {errorType === 'create_automation' && (
         <div class="auto-create-error" id="auto-create-error" role="alert">
@@ -3259,6 +3267,14 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
 }
 .auto-section-title { font-size: 1rem; font-weight: 600; color: var(--ink); margin: 0; }
 .auto-empty { font-size: 0.875rem; color: var(--gray); margin: 0; }
+.auto-limit-msg {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+  font-size: 0.875rem;
+}
 .modal-overlay {
   position: fixed;
   inset: 0;
