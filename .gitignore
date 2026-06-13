@@ -24,3 +24,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# local tooling artifacts
+.superpowers/
+graphify-out/
