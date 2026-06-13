@@ -1477,20 +1477,51 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
               <label class="form-label">Date</label>
               <input type="date" name="trigger_date" class="form-input" />
             </div>
-            <label class="form-label">Sujet de l'email</label>
-            <input type="text" name="auto_subject" class="form-input" placeholder="Sujet..." required />
-            <label class="form-label">Corps de l'email</label>
-            <textarea name="auto_body" class="form-input cust-textarea modal-body-textarea" rows={5} placeholder="Corps..." required></textarea>
-            <div class="cust-hints">
-              <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
-              <div class="cust-hints-list">
-                {['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}'].map((v) => (
-                  <code class="cust-hint modal-hint" data-var={v}>{v}</code>
-                ))}
+            <div class="editor-tabs">
+              <button type="button" class="editor-tab active" data-tab="manual">✏️ Rédiger moi-même</button>
+              <button type="button" class="editor-tab" data-tab="generate">✨ Générer avec l'IA</button>
+            </div>
+
+            <div class="tab-panel" data-panel="manual">
+              <label class="form-label">Sujet de l'email</label>
+              <input type="text" name="auto_subject" class="form-input" placeholder="Sujet..." required />
+              <label class="form-label">Corps de l'email</label>
+              <textarea name="auto_body" class="form-input cust-textarea modal-body-textarea" rows={5} placeholder="Corps..." required></textarea>
+              <div class="cust-hints">
+                <p class="cust-hints-label">Variables disponibles — cliquez pour insérer :</p>
+                <div class="cust-hints-list">
+                  {['{{nom}}', '{{prenom}}', '{{email}}', '{{nom_formation}}', '{{lien_acces}}'].map((v) => (
+                    <code class="cust-hint modal-hint" data-var={v}>{v}</code>
+                  ))}
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary" id="modal-improve-btn" disabled>🔧 Améliorer avec l'IA</button>
+              <p class="ai-error" id="modal-improve-error"></p>
+            </div>
+
+            <div class="tab-panel hidden" data-panel="generate">
+              <input type="text" class="form-input gen-formation"
+                     placeholder="Nom de votre formation (ex: Maîtriser Instagram)" />
+              <select class="form-input gen-tone">
+                <option value="chaleureux">Chaleureux et bienveillant</option>
+                <option value="professionnel">Professionnel et direct</option>
+                <option value="motivant">Motivant et dynamique</option>
+              </select>
+              <input type="text" class="form-input gen-objective"
+                     placeholder="Objectif de cet email (ex: rassurer, engager, fidéliser)" />
+              <button type="button" class="btn btn-primary btn-generate"
+                      style="align-self:flex-start">✨ Générer l'email</button>
+              <p class="ai-error gen-error"></p>
+              <div class="generation-result hidden">
+                <input type="text" class="form-input subject-preview"
+                       readonly placeholder="Sujet généré" />
+                <textarea class="form-input body-preview" rows={4}
+                          readonly placeholder="Contenu généré"></textarea>
+                <button type="button" class="btn btn-secondary btn-use-result"
+                        style="align-self:flex-start">Utiliser ce contenu →</button>
               </div>
             </div>
-            <button type="button" class="btn btn-secondary" id="modal-improve-btn" disabled>🔧 Améliorer avec l'IA</button>
-            <p class="ai-error" id="modal-improve-error"></p>
+
             <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
               <button type="submit" class="btn btn-primary">Créer</button>
               <button type="button" class="btn btn-secondary" id="btn-close-auto-modal">Annuler</button>
