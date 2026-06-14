@@ -29,6 +29,7 @@ type AutomationData = {
   recouvrement?: boolean;
   support_ia?: boolean;
   upsell?: boolean;
+  sender_name?: string;
 };
 type HistoryEntry = { date: string; action: string; details?: string };
 type ConfigEntry = { config_type: string; value: string };
@@ -153,7 +154,7 @@ function fmtDate(iso: string): string {
     <div class="dash-header">
       <span class="accent-line" style="margin:0 0 1rem"></span>
       <h1 style="font-size:clamp(1.5rem,3vw,2rem)">Mon espace</h1>
-      <p style="margin-top:0.5rem">Bienvenue, {auth.email}</p>
+      <p style="margin-top:0.5rem">Bienvenue, {automations?.sender_name?.trim() || auth.email.split('@')[0]}</p>
       <p class="dash-plan-badge">
         Plan {plan === 'premium' ? 'Premium' : 'Standard'}
         {activeOptionLabels.length > 0 && <span class="dash-plan-options"> · {activeOptionLabels.join(', ')}</span>}
