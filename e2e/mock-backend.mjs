@@ -102,6 +102,14 @@ const server = createServer(async (req, res) => {
       return json(res, 200, state.automations);
     }
 
+    if (req.method === 'POST' && pathname === '/client/ai/generate') {
+      const body = await readJsonBody(req);
+      return json(res, 200, {
+        subject: `Sujet généré pour ${body.formationName || 'votre formation'}`,
+        body: `Bonjour {{nom}}, contenu généré (${body.tone}, ${body.objective}).`,
+      });
+    }
+
     if (req.method === 'POST' && pathname === '/client/automations/custom') {
       const body = await readJsonBody(req);
       const automation = {

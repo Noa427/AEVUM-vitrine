@@ -62,4 +62,41 @@ test.describe('Portail client — parcours complet', () => {
     await page.locator('#btn-delete-confirm').click();
     await expect(page.locator('.auto-item', { hasText: 'Relance personnalisée' })).toHaveCount(0);
   });
+
+  test('création automatisation via génération IA', async ({ page }) => {
+    await page.goto('/login');
+    await page.fill('#email', TEST_EMAIL);
+    await page.fill('#password', TEST_PASSWORD);
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL(/\/client\/dashboard$/);
+
+    await page.goto('/client/customize');
+    await page.locator('.cat-tab[data-cat="automations"]').click();
+
+    await page.locator('#btn-open-auto-modal').click();
+    const modal = page.locator('#auto-modal');
+    await expect(modal).toBeVisible();
+
+    await page.fill('input[name="auto_name"]', 'Upsell généré IA');
+    await page.fill('input[name="trigger_days"]', '14');
+
+    // Onglet "Générer avec l'IA"
+    await modal.locator('.editor-tab[data-tab="generate"]').click();
+    await expect(modal.locator('[data-panel="generate"]')).toBeVisible();
+    await modal.locator('.gen-formation').fill('Maîtriser Instagram');
+    await modal.locator('.btn-generate').click();
+
+    await expect(modal.locator('.generation-result')).toBeVisible();
+    await modal.locator('.btn-use-result').click();
+
+    // Retour sur l'onglet manuel avec le contenu généré
+    await expect(modal.locator('[data-panel="manual"]')).toBeVisible();
+    await expect(modal.locator('input[name="auto_subject"]')).toHaveValue(/Sujet généré pour Maîtriser Instagram/);
+    await expect(modal.locator('textarea[name="auto_body"]')).toHaveValue(/contenu généré/);
+
+    await modal.locator('button[type="submit"]').click();
+
+    await page.locator('.cat-tab[data-cat="automations"]').click();
+    await expect(page.locator('.auto-item', { hasText: 'Upsell généré IA' })).toBeVisible();
+  });
 });
