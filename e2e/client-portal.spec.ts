@@ -97,6 +97,38 @@ test.describe('Portail client — parcours complet', () => {
     await modal.locator('button[type="submit"]').click();
 
     await page.locator('.cat-tab[data-cat="automations"]').click();
-    await expect(page.locator('.auto-item', { hasText: 'Upsell généré IA' })).toBeVisible();
+    const autoItem = page.locator('.auto-item', { hasText: 'Upsell généré IA' });
+    await expect(autoItem).toBeVisible();
+
+    // Nettoyage : éviter de polluer l'état partagé du mock backend pour le test suivant
+    await autoItem.locator('.btn-auto-delete').click();
+    await expect(page.locator('#delete-modal')).toBeVisible();
+    await page.locator('#btn-delete-confirm').click();
+    await expect(page.locator('.auto-item', { hasText: 'Upsell généré IA' })).toHaveCount(0);
+  });
+
+  test('limite de 10 automatisations personnalisées atteinte', async ({ page }) => {
+    await page.goto('/login');
+    await page.fill('#email', TEST_EMAIL);
+    await page.fill('#password', TEST_PASSWORD);
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL(/\/client\/dashboard$/);
+
+    // Créer 10 automatisations via le modal pour atteindre la limite
+    await page.goto('/client/customize');
+    await page.locator('.cat-tab[data-cat="automations"]').click();
+    for (let i = 1; i <= 10; i++) {
+      await page.locator('#btn-open-auto-modal').click();
+      const modal = page.locator('#auto-modal');
+      await page.fill('input[name="auto_name"]', `Automatisation ${i}`);
+      await page.fill('input[name="trigger_days"]', '1');
+      await page.fill('input[name="auto_subject"]', `Sujet ${i}`);
+      await page.fill('textarea[name="auto_body"]', `Corps ${i}`);
+      await modal.locator('button[type="submit"]').click();
+      await page.locator('.cat-tab[data-cat="automations"]').click();
+    }
+
+    await expect(page.locator('#btn-open-auto-modal')).toBeDisabled();
+    await expect(page.locator('.auto-limit-msg')).toContainText('Limite de 10 automatisations personnalisées atteinte');
   });
 });
