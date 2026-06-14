@@ -2225,12 +2225,66 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
       }
     });
 
+    const modalTabs   = modal.querySelectorAll<HTMLButtonElement>('.editor-tab');
+    const modalPanels = modal.querySelectorAll<HTMLElement>('.tab-panel');
+    modalTabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        modalTabs.forEach((t) => t.classList.remove('active'));
+        modalPanels.forEach((p) => p.classList.add('hidden'));
+        tab.classList.add('active');
+        modal.querySelector<HTMLElement>(`[data-panel="${tab.dataset.tab}"]`)?.classList.remove('hidden');
+      });
+    });
+
+    const modalGenBtn    = modal.querySelector<HTMLButtonElement>('.btn-generate');
+    const modalGenError  = modal.querySelector<HTMLElement>('.gen-error');
+    modalGenBtn?.addEventListener('click', async () => {
+      const formationName = modal.querySelector<HTMLInputElement>('.gen-formation')?.value.trim() ?? '';
+      const tone          = modal.querySelector<HTMLSelectElement>('.gen-tone')?.value ?? 'chaleureux';
+      const objective     = modal.querySelector<HTMLInputElement>('.gen-objective')?.value.trim() ?? '';
+      if (modalGenError) { modalGenError.textContent = ''; modalGenError.classList.remove('visible'); }
+      modalGenBtn.classList.add('loading');
+      modalGenBtn.textContent = 'Génération en cours...';
+      try {
+        const res  = await fetch('/api/ai-generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emailType: 'custom_automation', formationName, tone, objective }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.subject) throw new Error();
+        const result  = modal.querySelector<HTMLElement>('.generation-result');
+        const subPrev = modal.querySelector<HTMLInputElement>('.subject-preview');
+        const bodPrev = modal.querySelector<HTMLTextAreaElement>('.body-preview');
+        if (subPrev) subPrev.value = data.subject;
+        if (bodPrev) bodPrev.value = data.body;
+        result?.classList.remove('hidden');
+      } catch {
+        if (modalGenError) { modalGenError.textContent = 'Erreur de génération'; modalGenError.classList.add('visible'); }
+      } finally {
+        modalGenBtn.classList.remove('loading');
+        modalGenBtn.textContent = '✨ Générer l\'email';
+      }
+    });
+
+    modal.querySelector<HTMLElement>('.btn-use-result')?.addEventListener('click', () => {
+      const subject = modal.querySelector<HTMLInputElement>('.subject-preview')?.value ?? '';
+      const body    = modal.querySelector<HTMLTextAreaElement>('.body-preview')?.value  ?? '';
+      if (modalSubjectInput) modalSubjectInput.value = subject;
+      if (modalTextarea)     modalTextarea.value     = body;
+      updateModalImproveState();
+      modal.querySelector<HTMLButtonElement>('[data-tab="manual"]')?.click();
+    });
+
     function openModal() {
       const form = modal?.querySelector<HTMLFormElement>('.auto-create-form');
       form?.reset();
       if (triggerSelect) triggerSelect.value = 'delay_after_purchase';
       updateTriggerVisibility();
       updateModalImproveState();
+      modal?.querySelector<HTMLButtonElement>('[data-tab="manual"]')?.click();
+      modal?.querySelector<HTMLElement>('.generation-result')?.classList.add('hidden');
+      if (modalGenError) { modalGenError.textContent = ''; modalGenError.classList.remove('visible'); }
       modal?.classList.remove('hidden');
     }
 
