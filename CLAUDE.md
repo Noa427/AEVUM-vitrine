@@ -149,7 +149,9 @@ Fournit : sidebar (logo, 8 liens nav dont Formations conditionnel si >1 formatio
   - onboarding j0 : `{{nom}}` `{{prenom}}` `{{email}}` `{{nom_formation}}` `{{lien_acces}}` `{{mot_de_passe}}`
   - onboarding j3/j7 : idem sans `{{mot_de_passe}}`
   - failed_payment_j1/j3/j7 : `{{nom}}` `{{prenom}}` `{{email}}` `{{montant}}` `{{lien_paiement}}`
-- **Automatisations personnalisées** : modal création (form POST SSR `action=create_automation`) avec bouton "Améliorer avec l'IA" (désactivé si corps vide), liste + toggle actif/inactif (`/api/automation-toggle` PUT), rename inline (`/api/automation-update` PUT `{name, subject?, body?}`), suppression avec modal confirm (`/api/automation-delete` DELETE)
+- **Automatisations personnalisées** : modal création (form POST SSR `action=create_automation`) avec le même éditeur à onglets que les templates par défaut — "✏️ Rédiger moi-même" (sujet/corps/hints + bouton "Améliorer avec l'IA", désactivé si corps vide) et "✨ Générer avec l'IA" (formation/ton/objectif → `/api/ai-generate` `{emailType:'custom_automation', ...}`, "Utiliser ce contenu →" remplit le tab manuel et bascule dessus), liste + toggle actif/inactif (`/api/automation-toggle` PUT), rename inline (`/api/automation-update` PUT `{name, subject?, body?}`), suppression avec modal confirm (`/api/automation-delete` DELETE)
+- **Limite 10 automatisations perso / formation** : `autoLimitReached = customAutomations.length >= 10` désactive `#btn-open-auto-modal` + affiche `.auto-limit-msg` ; check identique côté backend `AEVUM_LOGI_INFOPRENEUR/backend/src/routes/clientAuth.ts` (POST `/client/automations/custom` → 400 si déjà 10)
+- **Après création réussie** : `successType = 'create_automation'` → `initialCat = 'automations'` (reste sur l'onglet Automatisations au reload, comme pour les erreurs)
 
 ## API routes proxy (`src/pages/api/`)
 Toutes SSR (`prerender = false`). Pattern : auth via cookie → parse body → fetch backend avec Bearer token → forward réponse.
@@ -207,11 +209,12 @@ Options : Abandons checkout (+200€/mois), Vocale IA (+350€/mois + coûts d'a
 **`index.astro`** : preview Standard + Premium (pas les offres lancement). Piliers : Onboarding, Récupération impayés, Dashboard & stats ROI, Portail complet.
 
 ## TODO — prochaine session
-- Committer `src/pages/api/vocal-send.ts` (fichier présent mais non tracké git)
-- Tests E2E portail client (login → customize → save template → rename → delete automation)
 - Déploiement Vercel : vérifier variables d'env `AEVUM_URL` + `JWT_SECRET` en production
 - Mettre à jour `pricing.astro` quand les places lancement sont prises (supprimer la section "Offres de lancement")
 - F13 vocal IA : tester le bouton "Appel vocal IA" dans le drawer élève une fois le backend déployé
+- Vérification visuelle manuelle (`npm run dev`) du modal de création d'automatisation perso (onglets Rédiger/Générer IA, génération + "Utiliser ce contenu")
+- `npm test` (vitest) échoue globalement car il scanne `e2e/*.spec.ts` (conflit Playwright) — ajouter `exclude: ['e2e/**']` dans `vitest.config.ts` si souhaité
+- Backend `AEVUM_LOGI_INFOPRENEUR` : vérifier le commit du check de limite 10 dans `clientAuth.ts` (POST `/client/automations/custom`) une fois ce repo dans un état stable (autres fichiers modifiés en cours)
 
 ## CSS
 `global.css` est intentionnellement vide — tous les styles sont injectés via `<style is:global>` dans les layouts (pattern Astro, bypasse les caches).
@@ -241,7 +244,21 @@ JWT_SECRET=                # même secret que le backend
 ```bash
 npm test        # vitest — src/lib/auth.test.ts (5 tests JWT)
 npm run build   # vérification TypeScript + build Vercel
+npm run test:e2e # Playwright — e2e/*.spec.ts
 ```
+
+### E2E (Playwright)
+- Config : `playwright.config.ts` — deux `webServer` : `e2e/mock-backend.mjs` (port 4310, mock du backend AEVUM via `http`) + `npm run dev -- --port 4321` (Astro pointé sur le mock via `AEVUM_URL`/`JWT_SECRET` d'env injectés dans le `webServer`)
+- `e2e/fixtures.mjs` : ports, credentials de test (`TEST_EMAIL`/`TEST_PASSWORD`/`TEST_CLIENT_ID`), `JWT_SECRET` de test (distinct du `.env` réel, ok à commiter)
+- `e2e/mock-backend.mjs` : serveur Node `http` en mémoire, signe les JWT avec `jose`, implémente `/client/login`, `/client/me`, `/client/stats`, `/client/automations`, `/client/history`, `/client/formations`, `/client/configs`, `/client/automations/custom` (CRUD), `/client/ai/generate`
+- `e2e/auth-guard.spec.ts` : accès `/client/*` sans cookie → redirect `/login`
+- `e2e/client-portal.spec.ts` : login → `/client/customize` → édition+sauvegarde template → renommage onglet → création/toggle/suppression automatisation perso (manuel + génération IA) → limite 10 automatisations perso
+- Pièges connus :
+  - `h1` : scoper en `main h1` (la dev toolbar Astro injecte d'autres `h1`)
+  - Modal création automatisation : `trigger_days` est `required` par défaut (trigger `delay_after_purchase`) — toujours le remplir avant submit
+  - Si un `webServer` reste bloqué sur un port (4310/4321) suite à un run interrompu, `reuseExistingServer` réutilisera l'ancien process mal configuré → tuer le process avant de relancer
+  - `e2e/mock-backend.mjs` a un état en mémoire **partagé entre tous les tests** du run (1 worker) : chaque test qui crée une automatisation perso doit la supprimer en fin de test pour ne pas fausser le test de limite (10)
+  - `npm test` (vitest) scanne aussi `e2e/*.spec.ts` (conflit avec `test.describe` de Playwright) → la commande globale échoue même si les 5 tests `auth.test.ts` passent ; pas corrigé (`vitest.config.ts` n'exclut pas `e2e/`)
 
 ## Conventions
 - Appels parallèles : `Promise.allSettled` (jamais `Promise.all` pour des API indépendantes)
