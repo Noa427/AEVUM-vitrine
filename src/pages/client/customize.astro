@@ -44,6 +44,8 @@ if (Astro.request.method === 'POST') {
           const d = await res.json().catch(() => ({}));
           errorType  = 'create_automation';
           errorMsg   = (d as {message?: string; error?: string}).message ?? (d as {message?: string; error?: string}).error ?? 'Erreur lors de la création.';
+        } else {
+          successType = 'create_automation';
         }
       } catch {
         errorType = 'create_automation';
@@ -181,7 +183,7 @@ const initialSubTab: Record<string, string> = Object.fromEntries(
 let initialCat = 'onboarding';
 
 const feedbackKey = successType || errorType;
-if (errorType === 'create_automation') {
+if (errorType === 'create_automation' || successType === 'create_automation') {
   initialCat = 'automations';
 } else if (feedbackKey) {
   for (const [cat, keys] of Object.entries(CAT_KEYS)) {
