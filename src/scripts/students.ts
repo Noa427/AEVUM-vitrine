@@ -191,7 +191,7 @@ function openDrawer(studentId: string, name: string, email: string) {
 
       drawerBody.innerHTML = `
         <div class="drawer-meta">
-          <span class="stu-badge stu-badge--${escapeHtml(detail.status)}">${statusLabel}</span>
+          <span class="stu-badge stu-badge--${escapeHtml(detail.status)}">${escapeHtml(statusLabel)}</span>
           ${detail.churn_risk ? '<span class="stu-badge stu-badge--churn">À risque</span>' : ''}
           <span class="drawer-date">Inscrit le ${detail.created_at ? new Date(detail.created_at).toLocaleDateString('fr-FR', { dateStyle: 'short' }) : '—'}</span>
         </div>
