@@ -312,13 +312,17 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
     </div>
 
     <!-- ── Onglets niveau 1 (catégories) ── -->
-    <div class="cat-tab-nav tabs-level1" role="tablist">
-      <button class={`cat-tab${initialCat === 'onboarding'   ? ' active' : ''}`} data-cat="onboarding"   role="tab" type="button">Onboarding</button>
-      <button class={`cat-tab${initialCat === 'impayes'      ? ' active' : ''}`} data-cat="impayes"      role="tab" type="button">Impayés</button>
-      <button class={`cat-tab${initialCat === 'fidelisation' ? ' active' : ''}`} data-cat="fidelisation" role="tab" type="button">Fidélisation</button>
-      <button class={`cat-tab${initialCat === 'recuperation' ? ' active' : ''}`} data-cat="recuperation" role="tab" type="button">Récupération</button>
-      <button class={`cat-tab${initialCat === 'temoignages'  ? ' active' : ''}`} data-cat="temoignages"  role="tab" type="button">Témoignages</button>
-      <button class={`cat-tab${initialCat === 'automations'  ? ' active' : ''}`} data-cat="automations"  role="tab" type="button">Automatisations</button>
+    <div class="cat-tab-scroll">
+      <div class="cat-tab-nav tabs-level1" role="tablist">
+        <button class={`cat-tab${initialCat === 'onboarding'   ? ' active' : ''}`} data-cat="onboarding"   role="tab" type="button">Onboarding</button>
+        <button class={`cat-tab${initialCat === 'impayes'      ? ' active' : ''}`} data-cat="impayes"      role="tab" type="button">Impayés</button>
+        <button class={`cat-tab${initialCat === 'fidelisation' ? ' active' : ''}`} data-cat="fidelisation" role="tab" type="button">Fidélisation</button>
+        <button class={`cat-tab${initialCat === 'recuperation' ? ' active' : ''}`} data-cat="recuperation" role="tab" type="button">Récupération</button>
+        <button class={`cat-tab${initialCat === 'temoignages'  ? ' active' : ''}`} data-cat="temoignages"  role="tab" type="button">Témoignages</button>
+        <button class={`cat-tab${initialCat === 'automations'  ? ' active' : ''}`} data-cat="automations"  role="tab" type="button">Automatisations</button>
+      </div>
+      <button type="button" class="cat-tab-arrow cat-tab-arrow-left hidden" aria-label="Onglets précédents">‹</button>
+      <button type="button" class="cat-tab-arrow cat-tab-arrow-right hidden" aria-label="Onglets suivants">›</button>
     </div>
 
     <!-- ── Catégorie : Onboarding ── -->
@@ -2562,6 +2566,23 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
     if (!catNav || catNav.dataset.catInit) return;
     catNav.dataset.catInit = 'true';
 
+    const scrollWrap  = catNav.closest<HTMLElement>('.cat-tab-scroll');
+    const arrowLeft  = scrollWrap?.querySelector<HTMLButtonElement>('.cat-tab-arrow-left');
+    const arrowRight = scrollWrap?.querySelector<HTMLButtonElement>('.cat-tab-arrow-right');
+
+    function updateArrows() {
+      if (!arrowLeft || !arrowRight) return;
+      const maxScroll = catNav.scrollWidth - catNav.clientWidth;
+      arrowLeft.classList.toggle('hidden', catNav.scrollLeft <= 4);
+      arrowRight.classList.toggle('hidden', catNav.scrollLeft >= maxScroll - 4);
+    }
+
+    arrowLeft?.addEventListener('click', () => catNav.scrollBy({ left: -160, behavior: 'smooth' }));
+    arrowRight?.addEventListener('click', () => catNav.scrollBy({ left: 160, behavior: 'smooth' }));
+    catNav.addEventListener('scroll', updateArrows);
+    window.addEventListener('resize', updateArrows);
+    updateArrows();
+
     function activateCat(cat: string) {
       catNav.querySelectorAll<HTMLElement>('.cat-tab').forEach((t) => {
         t.classList.toggle('active', t.dataset.cat === cat);
@@ -2957,6 +2978,7 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
   .sender-input { max-width: 320px; }
 
   /* ── Onglets niveau 1 — catégories ── */
+  .cat-tab-scroll { position: relative; }
   .cat-tab-nav {
     display: flex;
     overflow-x: auto;
@@ -2969,6 +2991,30 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
     border-bottom: 2px solid var(--gray-border);
   }
   .cat-tab-nav::-webkit-scrollbar { display: none; }
+  .cat-tab-arrow {
+    position: absolute;
+    top: 0;
+    bottom: 1.75rem;
+    width: 2rem;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+  }
+  .cat-tab-arrow.hidden { display: none; }
+  .cat-tab-arrow-left {
+    left: 0;
+    justify-content: flex-start;
+    background: linear-gradient(to right, var(--bg) 40%, transparent);
+  }
+  .cat-tab-arrow-right {
+    right: 0;
+    justify-content: flex-end;
+    background: linear-gradient(to left, var(--bg) 40%, transparent);
+  }
   .cat-tab {
     background: none;
     border: none;
