@@ -91,7 +91,7 @@ const formationId = fmMatch?.[1] ?? null;
 | `/client/forgot-password` | POST `{email}` | demande reset mdp |
 | `/client/reset-password` | POST `{token, newPassword}` | reset mdp |
 
-Config types : `sender_name`, `template_onboarding_j0`, `template_onboarding_j3`, `template_onboarding_j7`, `template_failed_payment_j1`, `template_failed_payment_j3`, `template_failed_payment_j7`, `rapport_video_active`, `vocal_ia_active`
+Config types : `sender_name`, `template_onboarding_j0`, `template_onboarding_j3`, `template_onboarding_j7`, `template_failed_payment_j1`, `template_failed_payment_j3`, `template_failed_payment_j7`, `template_predunning`, `template_churn_reengagement`, `template_coaching_j14`, `coaching_ia_ton`, `coaching_ia_objectif`, `template_upsell_j30`, `template_checkout_abandon`, `testimonial_url`, `template_testimonial_j30`, `template_testimonial_j60`, `rapport_video_active`, `vocal_ia_active`
 
 **Templates par défaut (définis dans `customize.astro` → `DEFAULT_TEMPLATES`) :**
 - `template_onboarding_j0` : sujet "Bienvenue {{nom}}, voici vos accès"
@@ -136,19 +136,28 @@ Fournit : sidebar (logo, 8 liens nav dont Formations conditionnel si >1 formatio
 **Note** : `ClientLayout` fait un appel `getClientFromCookie` indépendant pour charger la liste de formations. Chaque page enfant fait le sien. Double décodage JWT intentionnellement laissé en place (non-cassant).
 
 ## customize.astro — état actuel (shipped)
-- 7 configs : `sender_name` (section indépendante), 6 templates email (onglets horizontaux : Bienvenue, J+3, J+7, Relance J+1, Relance J+3, Relance J+7)
-- **Éditeur** : onglet "✏️ Rédiger moi-même" + onglet "✨ Générer avec l'IA" (branché sur `/api/ai-generate`, `/api/ai-improve`)
+- **Navigation 2 niveaux** : `sender_name` en section indépendante hors onglets, puis 6 catégories de niveau 1 (`cat-tab`) — Onboarding, Impayés, Fidélisation, Récupération, Témoignages, Automatisations. `CAT_KEYS` mappe catégorie → liste de config keys ; sous-onglets (`config-tab`) par template dans chaque catégorie.
+- **Templates par catégorie** :
+  - Onboarding : `template_onboarding_j0/j3/j7` (Bienvenue, J+3, J+7)
+  - Impayés : `template_failed_payment_j1/j3/j7` (Relance J+1/J+3/J+7)
+  - Fidélisation : `template_predunning` (Pré-dunning — CB expire <14j), `template_churn_reengagement` (Re-engagement — 0 ouverture depuis 21j), `template_coaching_j14` (Coaching — 14j sans connexion, cible les élèves jamais démarrés), `template_upsell_j30` (Upsell J+30), `coaching_ia` (Coaching IA J+14 — voir ci-dessous)
+  - Récupération : `template_checkout_abandon` (30 min après abandon panier Stripe) — verrouillé visuellement (`.checkout-lock-overlay`) si `optionCheckout` (depuis `/client/me`) est `false`
+  - Témoignages : `testimonial_url` (URL formulaire, section indépendante hors onglets) + `template_testimonial_j30`/`template_testimonial_j60`
+- **Section "Coaching IA J+14"** (`coaching_ia`, ajoutée 2026-06-19) : pas de sujet/corps fixe — 2 champs `select` Ton (empathique/motivant/direct) et texte libre Objectif, sauvegardés comme 2 config_types séparés (`coaching_ia_ton`, `coaching_ia_objectif`) via un seul submit (`action=save_coaching_ia` géré côté SSR avec `Promise.allSettled` sur 2 PUT `/client/configs`). Libellé "Paramètres IA" (pas "template") pour signaler que le contenu est généré dynamiquement par l'IA à l'envoi, pas édité ici.
+- **Éditeur** (templates à sujet/corps fixe) : onglet "✏️ Rédiger moi-même" + onglet "✨ Générer avec l'IA" (branché sur `/api/ai-generate`, `/api/ai-improve`)
 - **Bouton "Améliorer avec l'IA"** : branché sur `/api/ai-improve` (présent dans chaque carte template ET dans le modal de création d'automatisation)
-- **Section "mail par défaut"** : collapsible "Voir le template par défaut ▾" + bouton "Utiliser ce template" dans chaque carte
+- **Bouton "📚 Bibliothèque"** (F3, `btn-library`) : présent sur Onboarding/Impayés/Récupération/Témoignages (pas Fidélisation). Ouvre `#lib-overlay`, liste des templates pré-écrits par type d'activité (`TEMPLATE_LIBRARY`/`LIBRARY_TYPE_LABELS` : vidéo, coaching 1-to-1, groupe privé, bootcamp) — 100% client-side, pas d'appel backend. "Utiliser ce template" remplit `.subject-input`/`.body-input` du panneau actif (confirm si contenu existant).
+- **Section "mail par défaut"** : collapsible "Voir le template par défaut ▾" + bouton "Utiliser ce template" dans chaque carte (Onboarding/Impayés uniquement, via `DEFAULT_TEMPLATES`)
 - **Sauvegarde** : form POST SSR → `value = JSON.stringify({subject, body, active, label?})` (via `.hidden-value` intercepté avant submit)
 - **Rétrocompat** : `parseConfig()` gère ancien format plain-text → `{subject:'', body: rawString, active: true}`
 - **Toggle actif/inactif** : par template, persisté via `/api/config-update` PUT avec `active` dans le JSON ; les panneaux inactifs sont désactivés visuellement (opacity 0.6)
 - **Rename** : double-clic sur onglet (contenteditable) OU bouton ✏️ dans la section (inline input), sauvegarde via `/api/config-update` PUT
-- **Bannière** : visible si `allDefaultTemplates` (les 6 templates tous vides), dismissible via sessionStorage `aevum_banner_dismissed`
-- **Variables** disponibles par template :
+- **Bannière** : visible si `allDefaultTemplates` (les 6 templates onboarding/impayés tous vides), dismissible via sessionStorage `aevum_banner_dismissed`
+- **Variables** disponibles par template (`VARIABLE_HINTS`) :
   - onboarding j0 : `{{nom}}` `{{prenom}}` `{{email}}` `{{nom_formation}}` `{{lien_acces}}` `{{mot_de_passe}}`
-  - onboarding j3/j7 : idem sans `{{mot_de_passe}}`
-  - failed_payment_j1/j3/j7 : `{{nom}}` `{{prenom}}` `{{email}}` `{{montant}}` `{{lien_paiement}}`
+  - onboarding j3/j7, churn_reengagement, coaching_j14, upsell_j30 : idem sans `{{mot_de_passe}}`
+  - failed_payment_j1/j3/j7, predunning, checkout_abandon : `{{nom}}` `{{prenom}}` `{{email}}` `{{montant}}`/`{{date_expiration}}` `{{lien_paiement}}`/`{{lien_checkout}}`
+  - testimonial_j30/j60 : `{{nom}}` `{{prenom}}` `{{nom_formation}}` `{{lien_temoignage}}`
 - **Automatisations personnalisées** : modal création (form POST SSR `action=create_automation`) avec le même éditeur à onglets que les templates par défaut — "✏️ Rédiger moi-même" (sujet/corps/hints + bouton "Améliorer avec l'IA", désactivé si corps vide) et "✨ Générer avec l'IA" (formation/ton/objectif → `/api/ai-generate` `{emailType:'custom_automation', ...}`, "Utiliser ce contenu →" remplit le tab manuel et bascule dessus), liste + toggle actif/inactif (`/api/automation-toggle` PUT), rename inline (`/api/automation-update` PUT `{name, subject?, body?}`), suppression avec modal confirm (`/api/automation-delete` DELETE)
 - **Limite 10 automatisations perso / formation** : `autoLimitReached = customAutomations.length >= 10` désactive `#btn-open-auto-modal` + affiche `.auto-limit-msg` ; check identique côté backend `AEVUM_LOGI_INFOPRENEUR/backend/src/routes/clientAuth.ts` (POST `/client/automations/custom` → 400 si déjà 10)
 - **Après création réussie** : `successType = 'create_automation'` → `initialCat = 'automations'` (reste sur l'onglet Automatisations au reload, comme pour les erreurs)
