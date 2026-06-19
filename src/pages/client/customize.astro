@@ -21,7 +21,36 @@ let errorMsg = '';
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
   const action = (form.get('action') as string ?? '');
-  if (action === 'create_automation') {
+  if (action === 'save_coaching_ia') {
+    const ton      = (form.get('coaching_ia_ton') as string ?? '').trim();
+    const objectif = (form.get('coaching_ia_objectif') as string ?? '').trim();
+    const [tonResult, objectifResult] = await Promise.allSettled([
+      fetch(`${base}/client/configs`, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config_type: 'coaching_ia_ton', value: ton }),
+        signal: AbortSignal.timeout(8000),
+      }),
+      fetch(`${base}/client/configs`, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config_type: 'coaching_ia_objectif', value: objectif }),
+        signal: AbortSignal.timeout(8000),
+      }),
+    ]);
+    const is401 = (r: PromiseSettledResult<Response>) => r.status === 'fulfilled' && r.value.status === 401;
+    if (is401(tonResult) || is401(objectifResult)) {
+      Astro.cookies.delete('aevum_token', { path: '/' });
+      return Astro.redirect('/login');
+    }
+    const isOk = (r: PromiseSettledResult<Response>) => r.status === 'fulfilled' && r.value.ok;
+    if (isOk(tonResult) && isOk(objectifResult)) {
+      successType = 'coaching_ia';
+    } else {
+      errorType = 'coaching_ia';
+      errorMsg  = 'Erreur lors de la sauvegarde.';
+    }
+  } else if (action === 'create_automation') {
     const name         = (form.get('auto_name') as string ?? '').trim();
     const triggerType  = (form.get('trigger_type') as string ?? '');
     const triggerDays  = form.get('trigger_days') ? Number(form.get('trigger_days')) : null;
@@ -171,7 +200,7 @@ const IMPAYES_CONFIGS    = EMAIL_CONFIGS.slice(3, 6);  // j1, j3, j7
 const CAT_KEYS: Record<string, readonly string[]> = {
   onboarding:   ['template_onboarding_j0', 'template_onboarding_j3', 'template_onboarding_j7'],
   impayes:      ['template_failed_payment_j1', 'template_failed_payment_j3', 'template_failed_payment_j7'],
-  fidelisation: ['template_predunning', 'template_churn_reengagement', 'template_coaching_j14', 'template_upsell_j30'],
+  fidelisation: ['template_predunning', 'template_churn_reengagement', 'template_coaching_j14', 'template_upsell_j30', 'coaching_ia'],
   recuperation: ['template_checkout_abandon'],
   temoignages:  ['template_testimonial_j30', 'template_testimonial_j60'],
 };
@@ -267,6 +296,8 @@ const predunningConfig = parseConfig(configs['template_predunning'] ?? '');
 const churnConfig = parseConfig(configs['template_churn_reengagement'] ?? '');
 const coachingConfig = parseConfig(configs['template_coaching_j14'] ?? '');
 const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
+const coachingIaTon      = configs['coaching_ia_ton'] || 'empathique';
+const coachingIaObjectif = configs['coaching_ia_objectif'] ?? '';
 ---
 
 <ClientLayout
@@ -662,6 +693,8 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
                 data-target="panel-template_coaching_j14" type="button">Coaching</button>
         <button class={`config-tab${isPanelActive('template_upsell_j30', 'fidelisation') ? ' active' : ''}`}
                 data-target="panel-template_upsell_j30" type="button">Upsell</button>
+        <button class={`config-tab${isPanelActive('coaching_ia', 'fidelisation') ? ' active' : ''}`}
+                data-target="panel-coaching_ia" type="button">Coaching IA J+14</button>
       </div>
       <p class="tab-rename-error" style="display:none"></p>
       <div class="card config-panel-wrap">
@@ -1088,6 +1121,39 @@ const upsellConfig = parseConfig(configs['template_upsell_j30'] ?? '');
           <button class="btn btn-secondary btn-use-result" style="align-self:flex-start">Utiliser ce contenu →</button>
         </div>
       </div>
+    </div>
+
+    <div class="cust-card config-panel"
+         id="panel-coaching_ia"
+         style={!isPanelActive('coaching_ia','fidelisation') ? 'display:none' : ''}>
+
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <h2 class="cust-card-title section-title" style="margin-bottom:0">Paramètres IA — Coaching J+14</h2>
+        </div>
+      </div>
+
+      <p class="card-note" style="margin:0 0 1rem;font-size:0.875rem;color:var(--fg-muted)">
+        Cet email est rédigé automatiquement par l'IA selon le ton et l'objectif ci-dessous — pas de sujet/corps fixe à éditer.
+      </p>
+
+      {successType === 'coaching_ia' && <div class="success-msg" role="alert"><span>Sauvegardé.</span></div>}
+      {errorType === 'coaching_ia' && <div class="cust-field-error" role="alert">{errorMsg}</div>}
+
+      <form method="POST" class="cust-form">
+        <input type="hidden" name="action" value="save_coaching_ia" />
+        <label class="form-label">Ton</label>
+        <select name="coaching_ia_ton" class="form-input">
+          <option value="empathique" selected={coachingIaTon === 'empathique'}>Empathique</option>
+          <option value="motivant" selected={coachingIaTon === 'motivant'}>Motivant</option>
+          <option value="direct" selected={coachingIaTon === 'direct'}>Direct</option>
+        </select>
+        <label class="form-label" style="margin-top:0.625rem">Objectif</label>
+        <input type="text" name="coaching_ia_objectif" class="form-input"
+               value={coachingIaObjectif}
+               placeholder="Ex : Encourager l'étudiant à reprendre là où il s'est arrêté" />
+        <button type="submit" class="btn btn-primary" style="margin-top:0.625rem;align-self:flex-start">Sauvegarder</button>
+      </form>
     </div>
       </div>
     </div>
